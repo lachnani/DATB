@@ -1,0 +1,22 @@
+# DATB gitignore file
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+**/.so
+
+# Build extensions
+**/.pyd
+
+# Distribution / packaging
+**/build
+
+# VS IDE Metadata
+**/.vs
+**/x64
+
+# Log files
+**/log

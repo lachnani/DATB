@@ -1,0 +1,29 @@
+---
+name: "frmBasic"
+dynamics:
+  status: True
+  dt: 1.0
+  kov:
+    type: "PRISM"
+    R: 1
+    I: 1
+    C: 1
+simDuration: 86400
+log: 
+  status: True
+  dt: 60.0
+visualizer: 
+  plots: False
+  animations: False
+fsw: 
+  status: False
+  dt: 1.0
+formation:
+  relStates: False
+  environments: False
+  measurements: False
+  orbit:
+    environments: False
+    elements: False
+
+

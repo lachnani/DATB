@@ -1,0 +1,29 @@
+---
+epoch: 793687467.009 
+chief:
+  state:
+    a: 42000.0
+    e: 0.0001
+    i: 0.000
+    RAAN: 0.000
+    argP: 0.000
+    M: 0.000
+  stateType: "STATE_KEPEL"
+deputy: 0 
+relState:
+  state:
+    relPosR: 0.5
+    relPosI: 0.0
+    relPosC: 0.0
+    relVelR: 0.0
+    relVelI: 0.0
+    relVelC: 0.0
+frmType: "FORMATION_CHIEF_ANCHOR"
+relStateType: "RELSTATE_RECTRIC"
+pert:
+  jnum: 6
+  solarGrav: True
+  lunarGrav: True
+  SRP: False
+  drag: False
+

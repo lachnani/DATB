@@ -1,0 +1,29 @@
+---
+epoch: 793687467.009 
+chief:
+  state:
+    a: 6738.0
+    e: 0.00059
+    i: 51.6384
+    RAAN: 144.1824
+    argP: 311.2672
+    M: 187.8960
+  stateType: "STATE_KEPEL"
+deputy: 0 
+relState:
+  state:
+    da: 5.0
+    de: 0.0001
+    di: 1.0
+    dRAAN: 0.0
+    darg: 0.0
+    dM: 0.0
+frmType: "FORMATION_CHIEF_ANCHOR"
+relStateType: "RELSTATE_DOE"
+pert:
+  jnum: 0
+  solarGrav: False
+  lunarGrav: False
+  SRP: False
+  drag: False
+

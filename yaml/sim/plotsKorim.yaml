@@ -1,0 +1,28 @@
+---
+name: "plotsDefault"
+dynamics:
+  status: True
+  dt: 1.0
+  kov:
+    type: "PRISM_CURV"
+    R: 1.0
+    I: 2.0
+    C: 1.5
+simDuration: 121620
+log: 
+  status: True
+  dt: 60.0
+visualizer: 
+  plots: True
+  animations: False
+fsw: 
+  status: False
+  dt: 1.0
+formation:
+  relStates: True
+  environments: True
+  measurements: True
+  orbit:
+    environments: True
+    elements: True
+

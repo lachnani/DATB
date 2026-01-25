@@ -1,0 +1,56 @@
+---
+dynamics:
+  status: True
+  dt: 1.0
+  kov:
+    type: "PRISM_CURV"
+    R: 0.5
+    I: 5.0
+    C: 0.75
+numSims: 10000
+oth: 
+  1
+  2
+propInt:
+  60.0
+  300.0
+  1800.0
+epoch: 0.0
+chief:
+  state:
+    a: 42000.0
+    e: 0.003
+    i: 0.0
+    RAAN: 0.0
+    argP: 0.0
+    M: 0.0
+  stateType: "STATE_KEPEL"
+relState:
+  limits:
+    A0:
+      min: 0.0
+      max: 5.0
+    alpha:
+      min: 0.0
+      max: 360.0
+    xOff: 
+      min: -5.0
+      max: 5.0
+    yOff:
+      min: -50.0
+      max: 50.0
+    B0:
+      min: 0.0
+      max: 5.0
+    beta:
+      min: 0.0
+      max: 360.0
+relStateType: "RELSTATE_CURV_CLROE"
+pert:
+  jnum: 6
+  solarGrav: True
+  lunarGrav: True
+  SRP: False
+  drag: False
+  Cd: 0.0
+  normalizedArea: 0.0
