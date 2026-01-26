@@ -204,12 +204,12 @@ class Formation():
         self.t = self.t + dt
         
         # Update State
-        if np.linalg.norm(self.chief.aCtrlInRic) > orb.eps:
+        if np.linalg.norm(self.chief.aCtrlInRic) > np.finfo(float).eps:
             self.chief.aCtrlInEci = np.matmul(np.transpose(self.dcmInr2Ric), self.chief.aCtrlInRic)
             self.chief.dvTot += np.linalg.norm(self.chief.aCtrlInRic) * dt
         else:
             self.chief.aCtrlInEci = np.zeros((3,))
-        if np.linalg.norm(self.deputy.aCtrlInRic) > orb.eps:
+        if np.linalg.norm(self.deputy.aCtrlInRic) > np.finfo(float).eps:
             self.deputy.aCtrlInEci = np.matmul(np.transpose(self.dcmInr2Ric), self.deputy.aCtrlInRic)
             self.deputy.dvTot += np.linalg.norm(self.deputy.aCtrlInRic) * dt
         else:

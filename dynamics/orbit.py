@@ -6,21 +6,6 @@ Created on 02/08/2025
 Orbit.py contains:
     - Parameters for various central bodies
     - The Orbit class
-    - Orbit utilities:
-        - E2f: Eccentric to true anomaly
-        - E2M: Eccentric to mean anomaly
-        - f2E: True to eccentric anomaly
-        - M2E: Mean to eccentric anomaly
-        - oe2rv: Keplerian elements to inertial states
-        - rv2oe: Inertial states to keplerian elements
-        - oe2ee: Keplerian elements to equinoctial elements
-        - rv2ee: Inertial states to equinoctial elements
-        - ee2rv: Equinoctial elements to inertial states
-        - grav: Gravitational acceleration
-        - atmosphericDensity
-        - atmosphericDrag
-        - jPerturb
-        - solarRad: solar radiation acceleration
         - oeMeanOscMap: J2 Osculating to/from mean kelplerian elements
     
 """
@@ -28,50 +13,10 @@ Orbit.py contains:
 # import required modules:
 import math
 import numpy as np
-from numpy import linalg as la
 from dynamics import ephemerides as eph
 from dynamics import dynamicsUtils as uDyn
 
-DB0_EPS = 1e-30
-eps = 1e-13
-maxIteration = 200
-tolerance = 1e-15
-
-AU = 149597870.693  # astronomical unit in units of kilometers #
-D2R = (np.pi / 180.)
-
-# Gravitational Constants mu = G*m, where m is the body of the attracting body.  All units are km^3/s^2.
-# Values are obtained from SPICE kernels in http://naif.jpl.nasa.gov/pub/naif/generic_kernels/
-MU_SUN = 132712440023.310
-MU_EARTH = 398600.436
-MU_MOON = 4902.799
-
-# body information for major solar system bodies. Units are in km.
-# data taken from http://nssdc.gsfc.nasa.gov/planetary/planets.html
-# Sun #
-REQ_SUN = 695000.  # km #
-SUN_ANGLE_FROM_EARTH = 0.00436332312998582
-
-# Earth #
-REQ_EARTH = 6378.1366  # km, from SPICE #
-RP_EARTH = 6356.7519  # km, from SPICE #
-J2_EARTH = 1082.616e-6
-J3_EARTH = -2.53881e-6
-J4_EARTH = -1.65597e-6
-J5_EARTH = -0.15e-6
-J6_EARTH = 0.57e-6
-SMA_EARTH = 1.00000011 * AU
-I_EARTH = 0.00005 * D2R
-E_EARTH = 0.01671022
-OMEGA_EARTH = 0.00007292115  # Earth's planetary rotation rate, rad/sec #
-
-# Moon #
-REQ_MOON = 1737.4
-J2_MOON = 202.7e-6
-SMA_MOON = 0.3844e6
-I_MOON = 5.154 * D2R 
-E_MOON = 0.0549
-
+MU_EARTH = 398600.436 #km^3/s^2
 
 class Orbit:
     def __new__(cls, *args, **kwargs):
@@ -189,133 +134,6 @@ class Orbit:
         if (self.settings["environments"] == True):
             self.inEclipse = uDyn.eclipse(self.r, self.sun.rUnit)
                                
-
-
-""" 
-Define all the utility functions:
-    Accelerations:
-        grav
-        
-    
-"""
-
-def atmosphericDensity(alt):
-    """
-    This program computes the atmospheric density based on altitude
-    supplied by user.  This function uses a curve fit based on
-    atmospheric data from the Standard Atmosphere 1976 Data. This
-    function is valid for altitudes ranging from 100km to 1000km.
-
-    .. note::
-
-        This code can only be applied to spacecraft orbiting the Earth
-
-    :param alt: altitude in km
-    :return:  density at the given altitude in kg/m^3
-    """
-    # Smooth exponential drop-off after 1000 km #
-    if alt > 1000.:
-        logdensity = (-7E-05) * alt - 14.464
-        density = math.pow(10., logdensity)
-        return density
-
-    # Calculating the density based on a scaled 6th order polynomial fit to the log of density #
-    val = (alt - 526.8000) / 292.8563
-    logdensity = 0.34047 * math.pow(val, 6) - 0.5889 * math.pow(val, 5) - 0.5269 * math.pow(val, 4) \
-                 + 1.0036 * math.pow(val, 3) + 0.60713 * math.pow(val, 2) - 2.3024 * val - 12.575
-
-    # Calculating density by raising 10 to the log of density #
-    density = math.pow(10., logdensity)
-
-    return density
-
-
-def atmosphericDrag(Cd, A, m, r, v):
-    """
-     This program computes the atmospheric drag acceleration
-     vector acting on a spacecraft.
-     Note the acceleration vector output is inertial, and is
-     only valid for altitudes up to 1000 km.
-     Afterwards the drag force is zero. Only valid for Earth.
-
-     :param Cd:  drag coefficient of the spacecraft
-     :param A: cross-sectional area of the spacecraft in m^2
-     :param m: mass of the spacecraft in kg
-     :param r: Inertial position vector of the spacecraft in km  [x;y;z]
-     :param v: Inertial velocity vector of the spacecraft in km/s [vx;vy;vz]
-     :return: The inertial acceleration vector due to atmospheric drag in km/sec^2
-    """
-    # find the altitude and velocity #
-    rMag = la.norm(r)
-    vMag = la.norm(v)
-    alt = rMag - REQ_EARTH
-    advec = np.zeros(3)
-
-    # Checking if user supplied a orbital position is insede the earth #
-    if alt <= 0.:
-        print("ERROR: atmosphericDrag() received r = [{} {} {}].". \
-            format(str(r[1]), str(r[2]), str(r[3])))
-        print('The value of r should produce a positive altitude for the Earth.')
-        advec.fill(np.NaN)
-        return
-
-    # get the Atmospheric density at the given altitude in kg/m^3 #
-    density = atmosphericDensity(alt)
-
-    # compute the magnitude of the drag acceleration #
-    ad = ((-0.5) * density * (Cd * A / m) * (math.pow(vMag * 1000., 2))) / 1000.
-
-    # computing the vector for drag acceleration #
-    advec = (ad / vMag) * v
-
-    return advec
-
-
-def solarRad(A, m, sunvec):
-    """
-    Computes the inertial solar radiation force vectors
-    based on cross-sectional Area and mass of the spacecraft
-    and the position vector of the body to the sun.
-
-    .. note::
-
-        It is assumed that the solar radiation pressure decreases quadratically with distance from sun (in AU)
-
-    Solar Radiation Equations obtained from
-    Earth Space and Planets Journal Vol. 51, 1999 pp. 979-986
-
-    :param A: Cross-sectional area of the spacecraft that is facing the sun in m^2.
-    :param m: The mass of the spacecraft in kg.
-    :param sunvec: Position vector to the Sun in units of AU. Earth has a distance of 1 AU.
-    :return:   arvec, The inertial acceleration vector due to the effects of Solar Radiation pressure in km/sec^2.  The vector
-               components of the output are the same as the vector
-               components of the sunvec input vector.
-    """
-    # Solar Radiation Flux #
-    flux = 1372.5398
-
-    # Speed of light #
-    c = 299792458.
-
-    # Radiation pressure coefficient #
-    Cr = 1.3
-
-    # Magnitude of position vector #
-    sundist = la.norm(sunvec)
-
-    # Computing the acceleration vector #
-    arvec = ((-Cr * A * flux) / (m * c * math.pow(sundist, 3)) / 1000.) * sunvec
-
-    return arvec
-
-
-def v3Normalize(v):
-    result = np.zeros(3)
-    norm = la.norm(v)
-    if norm > DB0_EPS:
-        result = (1. / norm) * v
-    return result
-
 
 def oeMeanOscMap(req, J2, oe, oep, sign):
     """

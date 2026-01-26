@@ -36,7 +36,7 @@ Running a Simulation:
 print("-----------------------------------------------------")
 print("-----------------------------------------------------")
 print("D.A.T.B: Differential Astrodynamics Test Bench")
-print("Version 0.3 --- June 2025")
+print("Version 0.4 --- January 2026")
 print("-----------------------------------------------------")
 
 root = tk.Tk()
