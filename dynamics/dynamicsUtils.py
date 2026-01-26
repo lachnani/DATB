@@ -80,6 +80,9 @@ def clroe2ric(IN_ARRAY1, n, t, arg4, arg5):
 def ric2clroe(arg1, arg2, n, t, INPLACE_ARRAY1):
     return _dynamicsUtils.ric2clroe(arg1, arg2, n, t, INPLACE_ARRAY1)
 
+def oe2dAmico(arg1, arg2, INPLACE_ARRAY1):
+    return _dynamicsUtils.oe2dAmico(arg1, arg2, INPLACE_ARRAY1)
+
 def measParams(arg1, arg2):
     return _dynamicsUtils.measParams(arg1, arg2)
 

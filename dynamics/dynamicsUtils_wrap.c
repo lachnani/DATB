@@ -4697,6 +4697,83 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_oe2dAmico(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  double *arg1 = (double *) (double *)0 ;
+  double *arg2 = (double *) (double *)0 ;
+  double *arg3 = (double *) (double *)0 ;
+  PyArrayObject *array1 = NULL ;
+  int is_new_object1 = 0 ;
+  PyArrayObject *array2 = NULL ;
+  int is_new_object2 = 0 ;
+  PyArrayObject *array3 = NULL ;
+  PyObject *swig_obj[3] ;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "oe2dAmico", 3, 3, swig_obj)) SWIG_fail;
+  {
+    npy_intp size[1] = {
+      6 
+    };
+    array1 = obj_to_array_contiguous_allow_conversion(swig_obj[0],
+      NPY_DOUBLE,
+      &is_new_object1);
+    if (!array1 || !require_dimensions(array1, 1) ||
+      !require_size(array1, size, 1)) SWIG_fail;
+    arg1 = (double *) array_data(array1);
+  }
+  {
+    npy_intp size[1] = {
+      6 
+    };
+    array2 = obj_to_array_contiguous_allow_conversion(swig_obj[1],
+      NPY_DOUBLE,
+      &is_new_object2);
+    if (!array2 || !require_dimensions(array2, 1) ||
+      !require_size(array2, size, 1)) SWIG_fail;
+    arg2 = (double *) array_data(array2);
+  }
+  {
+    npy_intp size[1] = {
+      6 
+    };
+    array3 = obj_to_array_no_conversion(swig_obj[2], NPY_DOUBLE);
+    if (!array3 || !require_dimensions(array3,1) || !require_size(array3, size, 1) ||
+      !require_contiguous(array3) || !require_native(array3)) SWIG_fail;
+    arg3 = (double *) array_data(array3);
+  }
+  oe2dAmico((double const (*))arg1,(double const (*))arg2,arg3);
+  resultobj = SWIG_Py_Void();
+  {
+    if (is_new_object1 && array1)
+    {
+      Py_DECREF(array1); 
+    }
+  }
+  {
+    if (is_new_object2 && array2)
+    {
+      Py_DECREF(array2); 
+    }
+  }
+  return resultobj;
+fail:
+  {
+    if (is_new_object1 && array1)
+    {
+      Py_DECREF(array1); 
+    }
+  }
+  {
+    if (is_new_object2 && array2)
+    {
+      Py_DECREF(array2); 
+    }
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_measParams(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   double *arg1 = (double *) (double *)0 ;
@@ -5921,6 +5998,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "rectRic2curvRic", _wrap_rectRic2curvRic, METH_VARARGS, NULL},
 	 { "clroe2ric", _wrap_clroe2ric, METH_VARARGS, NULL},
 	 { "ric2clroe", _wrap_ric2clroe, METH_VARARGS, NULL},
+	 { "oe2dAmico", _wrap_oe2dAmico, METH_VARARGS, NULL},
 	 { "measParams", _wrap_measParams, METH_VARARGS, NULL},
 	 { "Orbit_rk4", _wrap_Orbit_rk4, METH_VARARGS, NULL},
 	 { "eclipse", _wrap_eclipse, METH_VARARGS, NULL},

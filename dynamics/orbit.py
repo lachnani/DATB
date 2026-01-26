@@ -17,6 +17,7 @@ from dynamics import ephemerides as eph
 from dynamics import dynamicsUtils as uDyn
 
 MU_EARTH = 398600.436 #km^3/s^2
+D2R = np.pi/180.0
 
 class Orbit:
     def __new__(cls, *args, **kwargs):

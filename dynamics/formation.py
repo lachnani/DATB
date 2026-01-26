@@ -38,6 +38,7 @@ class Formation():
         self.relVelCurvRic = np.zeros((3,))
         self.doe = np.zeros((6,))
         self.dee = np.zeros((6,))
+        self.dAmico = np.zeros((6,))
         self.rectClroe = np.zeros((6,))
         self.curvClroe = np.zeros((6,))
         
@@ -161,6 +162,9 @@ class Formation():
         if relStateType != "RELSTATE_CURV_CLROE":
             uDyn.ric2clroe(self.relPosCurvRic, self.relVelCurvRic, self.chief.meanMotion, 0, self.curvClroe)
             
+        if relStateType != "RELSTATE_DAMICO":
+            uDyn.oe2dAmico(self.chief.oe, self.deputy.oe, self.dAmico)
+            
         # Set perturbations
         self.chief.pert = pert
         self.deputy.pert = pert
@@ -227,6 +231,7 @@ class Formation():
             # TODO: Fix to wrap angles appropriately...
             self.doe = self.deputy.oe - self.chief.oe
             self.dee = self.deputy.ee - self.chief.ee
+            uDyn.oe2dAmico(self.chief.oe, self.deputy.oe, self.dAmico)
             uDyn.ric2clroe(self.relPosRectRic, self.relVelRectRic, self.chief.meanMotion, 0, self.rectClroe)
             uDyn.ric2clroe(self.relPosCurvRic, self.relVelCurvRic, self.chief.meanMotion, 0, self.curvClroe)
             

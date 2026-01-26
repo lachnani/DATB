@@ -31,6 +31,7 @@ void    rectRic2curvRic(const double IN_ARRAY1[3], const double IN_ARRAY1[3],
         double INPLACE_ARRAY1[3], double INPLACE_ARRAY1[3]);
 void    clroe2ric(const double IN_ARRAY1[6], double n, double t, double INPLACE_ARRAY1[3], double INPLACE_ARRAY1[3]);
 void    ric2clroe(const double IN_ARRAY1[3], const double IN_ARRAY1[3], double n, double t, double INPLACE_ARRAY1[6]);
+void    oe2dAmico(const double IN_ARRAY1[6], const double IN_ARRAY1[6], double INPLACE_ARRAY1[6]);
 void    measParams(const double IN_ARRAY1[3], const double IN_ARRAY1[3], double *OUTPUT, double *OUTPUT, double *OUTPUT, double *OUTPUT);
 
 void    Orbit_rk4(

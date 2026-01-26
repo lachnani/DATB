@@ -18,6 +18,7 @@ void    rectRic2curvRic(const double r[3], const double v[3],
         double relPosCurvRic[3], double relVelCurvRic[3]);
 void    clroe2ric(const double L[6], double n, double t, double relPosRic[3], double relVelRic[3]);
 void    ric2clroe(const double relPosRic[3], const double relVelRic[3], double n, double t, double L[6]);
+void    oe2dAmico(const double oeChief[6], const double oeDeputy[6], double dAmico[6]);
 void    measParams(const double relPosRic[3], const double relVelRic[3], double *rng, double *rngRate, double *az, double *el);
 
 //Orbit 

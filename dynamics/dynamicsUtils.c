@@ -382,6 +382,46 @@ void ric2clroe(const double relPosRic[3], const double relVelRic[3], double n, d
     }
 }
 
+void oe2dAmico(const double oeChief[6], const double oeDeputy[6], double dAmico[6]) {
+    /*
+	Compute the d'Amico relative orbital elements from chief and deputy osculating orbital elements.
+
+	Parameters
+	----------
+	oeChief : Array
+	    Chief osculating orbital elements [a, e, i, RAAN, argPer, trueAnom]
+	oeDeputy : Array
+	    Deputy osculating orbital elements [a, e, i, RAAN, argPer, trueAnom]
+
+	Returns
+	-------
+	dAmico : Array
+	    d'Amico relative orbital elements [da, dlambda, de_x, de_y, di_x, di_y]
+    */
+	double aC = oeChief[0];
+	double eC = oeChief[1];
+	double iC = oeChief[2];
+	double raanC = oeChief[3];
+	double argPerC = oeChief[4];
+	double trueAnomC = oeChief[5];
+	double aD = oeDeputy[0];
+	double eD = oeDeputy[1];
+	double iD = oeDeputy[2];
+	double raanD = oeDeputy[3];
+	double argPerD = oeDeputy[4];
+	double trueAnomD = oeDeputy[5];
+	dAmico[0] = (aD - aC) / aC; // da
+	double uC = trueAnomC + argPerC; // chief argument of latitude
+	double uD = trueAnomD + argPerD; // deputy argument of latitude
+	double lambdaC = uC + raanC * cos(iC); // chief mean longitude
+	double lambdaD = uD + raanD * cos(iC); // deputy mean longitude (note: cos(iC), not cos(iD))
+	dAmico[1] = lambdaD - lambdaC; // dlambda
+	dAmico[2] = eD * cos(argPerD) - eC * cos(argPerC); // de_x
+	dAmico[3] = eD * sin(argPerD) - eC * sin(argPerC); // de_y
+	dAmico[4] = iD - iC; // di_x
+    dAmico[5] = (raanD - raanC) * sin(iC); // di_y
+}
+
 void measParams(const double relPosRic[3], const double relVelRic[3], double *rng, double *rngRate, double *az, double *el) {
     /*
     Parameters
