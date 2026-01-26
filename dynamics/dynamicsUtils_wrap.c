@@ -3966,6 +3966,57 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_dcmRic2Los(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  double *arg1 = (double *) (double *)0 ;
+  double (*arg2)[3] = (double (*)[3]) (double (*)[3])0 ;
+  PyArrayObject *array1 = NULL ;
+  int is_new_object1 = 0 ;
+  PyArrayObject *array2 = NULL ;
+  PyObject *swig_obj[2] ;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "dcmRic2Los", 2, 2, swig_obj)) SWIG_fail;
+  {
+    npy_intp size[1] = {
+      3 
+    };
+    array1 = obj_to_array_contiguous_allow_conversion(swig_obj[0],
+      NPY_DOUBLE,
+      &is_new_object1);
+    if (!array1 || !require_dimensions(array1, 1) ||
+      !require_size(array1, size, 1)) SWIG_fail;
+    arg1 = (double *) array_data(array1);
+  }
+  {
+    npy_intp size[2] = {
+      3, 3 
+    };
+    array2 = obj_to_array_no_conversion(swig_obj[1], NPY_DOUBLE);
+    if (!array2 || !require_dimensions(array2,2) || !require_size(array2, size, 2) ||
+      !require_contiguous(array2) || !require_native(array2)) SWIG_fail;
+    arg2 = (double (*)[3]) array_data(array2);
+  }
+  dcmRic2Los((double const (*))arg1,(double (*)[3])arg2);
+  resultobj = SWIG_Py_Void();
+  {
+    if (is_new_object1 && array1)
+    {
+      Py_DECREF(array1); 
+    }
+  }
+  return resultobj;
+fail:
+  {
+    if (is_new_object1 && array1)
+    {
+      Py_DECREF(array1); 
+    }
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_rv2ric(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   double *arg1 = (double *) (double *)0 ;
@@ -5992,6 +6043,7 @@ fail:
 
 static PyMethodDef SwigMethods[] = {
 	 { "dcmInr2Ric", _wrap_dcmInr2Ric, METH_VARARGS, NULL},
+	 { "dcmRic2Los", _wrap_dcmRic2Los, METH_VARARGS, NULL},
 	 { "rv2ric", _wrap_rv2ric, METH_VARARGS, NULL},
 	 { "ric2rv", _wrap_ric2rv, METH_VARARGS, NULL},
 	 { "curvRic2rectRic", _wrap_curvRic2rectRic, METH_VARARGS, NULL},

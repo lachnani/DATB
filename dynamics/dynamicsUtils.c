@@ -148,6 +148,50 @@ void dcmInr2Ric(const double r[3], const double v[3], double RN[3][3]) {
     }
 }
 
+void dcmRic2Los(const double relPosRectRic[3], double LR[3][3]) {
+    /*
+    Compute the RIC to LOS DCM LR
+    Assumes the LOS frame is defined with the z-axis along the line of sight vector,
+	the x-axis in the chief orbital plane, and the y-axis completing the right-handed system.
+
+	Parameters
+	----------
+    relPosRectRic : Array
+		Rectilinear RIC frame relative position
+
+	Returns
+	-------
+	LR : 3x3 double
+	    DCM that maps from the RIC frame to the LOS frame
+    */
+	double rho = v3_norm(relPosRectRic);
+    double ir[3];
+    if (rho > 0) {
+        for (int i = 0; i < 3; ++i)
+            ir[i] = relPosRectRic[i] / rho;
+    }
+    else {
+        v3_zero(ir);
+    }
+    double itheta[3] = { 0, 0, 1 }; // LOS z-axis
+    double ih[3];
+    v3_cross(itheta, ir, ih);
+    double norm_ih = v3_norm(ih);
+    if (norm_ih > 0) {
+        for (int i = 0; i < 3; ++i)
+            ih[i] /= norm_ih;
+    }
+    else {
+        v3_zero(ih);
+    }
+    v3_cross(ir, ih, itheta);
+    for (int i = 0; i < 3; ++i) {
+        LR[0][i] = ih[i];
+        LR[1][i] = itheta[i];
+        LR[2][i] = ir[i];
+	}
+}
+
 void rv2ric(const double r[3], const double v[3], const double r_d[3], const double v_d[3],
     double relPosRectRic[3], double relVelRectRic[3]) {
     /*

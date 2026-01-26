@@ -44,6 +44,7 @@ class Formation():
         
         # Declare DCM
         self.dcmInr2Ric = np.zeros((3,3))
+        self.dcmRic2Los = np.zeros((3,3))
         
         # Define default perturbations
         if (pert == None):
@@ -180,6 +181,9 @@ class Formation():
         # Define RIC frame 
         uDyn.dcmInr2Ric(self.chief.r, self.chief.v, self.dcmInr2Ric)
         
+        # Define the LOS frame
+        uDyn.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        
         # Compute environment angles
         self.losEarthAng, self.losMoonAng, self.losSunAng = \
             uDyn.envAngles(self.chief.r, self.deputy.r, self.deputy.moon.r, self.deputy.sun.r)
@@ -244,6 +248,7 @@ class Formation():
         if (self.settings["measurements"] == True):
             self.rng, self.rngRate, self.az, self.el = \
                 uDyn.measParams(self.relPosRectRic, self.relVelRectRic)
+            uDyn.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
         
 
 def ric2rv(r, v, relPosRectRic, relVelRectRic):

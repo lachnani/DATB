@@ -6,6 +6,7 @@
 
 //Formation
 void    dcmInr2Ric(const double r[3], const double v[3], double RN[3][3]);
+void    dcmRic2Los(const double relPosRectRic[3], double LR[3][3]);
 void    rv2ric(const double r[3], const double v[3], const double r_d[3], const double v_d[3],
         double relPosRectRic[3], double relVelRectRic[3]);
 void    ric2rv(const double r[3], const double v[3], const double relPosRectRic[3], const double relVelRectRic[3],

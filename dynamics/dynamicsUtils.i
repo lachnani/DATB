@@ -19,6 +19,7 @@ import_array();
 /* list functions to be interfaced: */
 
 void    dcmInr2Ric(const double IN_ARRAY1[3], const double IN_ARRAY1[3], double INPLACE_ARRAY2[3][3]);
+void    dcmRic2Los(const double IN_ARRAY1[3], double INPLACE_ARRAY2[3][3]);
 void    rv2ric(const double IN_ARRAY1[3], const double IN_ARRAY1[3], const double IN_ARRAY1[3], const double IN_ARRAY1[3],
         double INPLACE_ARRAY1[3], double INPLACE_ARRAY1[3]);
 void    ric2rv(const double IN_ARRAY1[3], const double IN_ARRAY1[3], const double IN_ARRAY1[3], const double IN_ARRAY1[3],

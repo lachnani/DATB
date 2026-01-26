@@ -62,6 +62,9 @@ class _SwigNonDynamicMeta(type):
 def dcmInr2Ric(arg1, arg2, INPLACE_ARRAY2):
     return _dynamicsUtils.dcmInr2Ric(arg1, arg2, INPLACE_ARRAY2)
 
+def dcmRic2Los(IN_ARRAY1, INPLACE_ARRAY2):
+    return _dynamicsUtils.dcmRic2Los(IN_ARRAY1, INPLACE_ARRAY2)
+
 def rv2ric(arg1, arg2, arg3, arg4, arg5, arg6):
     return _dynamicsUtils.rv2ric(arg1, arg2, arg3, arg4, arg5, arg6)
 

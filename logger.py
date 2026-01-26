@@ -69,6 +69,7 @@ class Log():
         self.relVelRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
         self.relPosCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
         self.relVelCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+        self.qInrToRic      = pd.DataFrame(np.zeros((size,4)), columns=['q0', 'q1', 'q2', 'q3']).T
         if (settings["formation"]["relStates"] == True):
             self.doe            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'de', 'di', 'dRAAN', 'dargP', 'dM']).T
             self.dee            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dl', 'dP1', 'dP2', 'dQ1', 'dQ2']).T
@@ -79,6 +80,7 @@ class Log():
             self.losAngles = pd.DataFrame(np.zeros((size,3)), columns=['Earth', 'Sun', 'Moon']).T
         if (settings["formation"]["measurements"] == True):
             self.measParams = pd.DataFrame(np.zeros((size,4)), columns=['Rng', 'Rng-Rate', 'Az', 'El']).T
+            self.qRicToLos  = pd.DataFrame(np.zeros((size,4)), columns=['q0', 'q1', 'q2', 'q3']).T
         
         # Vehicle Flight Software
         

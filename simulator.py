@@ -5,7 +5,7 @@ Created on Tue Mar 18 15:38:52 2025
 @author: Hakim Lachnani
 """
 
-
+from scipy.spatial.transform import Rotation as R
 import numpy as np
 
 from dynamics import formation as frm
@@ -195,6 +195,7 @@ class Simulator():
         self.log.relVelRectRic[self.log.i]  = self.frm.relVelRectRic
         self.log.relPosCurvRic[self.log.i]  = self.frm.relPosCurvRic
         self.log.relVelCurvRic[self.log.i]  = self.frm.relVelCurvRic
+        self.log.qInrToRic[self.log.i]      = R.from_matrix(self.frm.dcmInr2Ric).as_quat()
         if (self.settings["formation"]["relStates"] == True):
             self.log.doe[self.log.i]            = self.frm.doe
             self.log.dee[self.log.i]            = self.frm.dee
@@ -205,6 +206,7 @@ class Simulator():
             self.log.losAngles[self.log.i] = np.array((self.frm.losEarthAng, self.frm.losSunAng, self.frm.losMoonAng))
         if (self.settings["formation"]["measurements"] == True):
             self.log.measParams[self.log.i] = np.array((self.frm.rng, self.frm.rngRate, self.frm.az, self.frm.el))
+            self.log.qRicToLos[self.log.i]  = R.from_matrix(self.frm.dcmRic2Los).as_quat()
         
         if self.settings["fsw"]["status"] == True:
             # Log FSW
