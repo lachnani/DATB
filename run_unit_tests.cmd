@@ -1,7 +1,7 @@
-python -m unittest discover C:\Sandbox\srm\src\datb\dynamics
+python -m unittest discover dynamics
 
-python -m unittest discover C:\Sandbox\srm\src\datb\guidance
+python -m unittest discover guidance
 
-python -m unittest discover C:\Sandbox\srm\src\datb\planning
+python -m unittest discover planning
 
 pause
