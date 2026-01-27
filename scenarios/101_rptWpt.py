@@ -61,25 +61,23 @@ def scenario(sim, relPosRic = None, rptFreq = None, dtStart = None, stm = None):
         stm = lm.hcw(sim.frm.chief.meanMotion)
     
     # Immediately burn to target the first waypoint
-    dv = wg.wptBurn(stm.Phi(sim.frm.t,wptTbl.t[0]), 
+    dvRic = wg.wptBurn(stm.Phi(sim.frm.t,wptTbl.t[0]), 
                     sim.frm.relPosRectRic, 
                     sim.frm.relVelRectRic, 
                     wptTbl.relPosRic[:,0])
-    sim.frm.deputy.aCtrlInRic = dv/sim.settings["dynamics"]["dt"]
-    print(f"SCR: Executing [{1000*dv[0]:.2f},{1000*dv[1]:.2f},{1000*dv[2]:.2f}] m/s DV to target waypoint 1")
-    sim.run(sim.t + sim.settings["dynamics"]["dt"])
-    sim.frm.deputy.aCtrlInRic = np.zeros((3,))
+    dvEci = np.matmul(np.transpose(sim.frm.dcmInr2Ric), dvRic)
+    sim.impulsiveBurn(dvEci)
+    print(f"SCR: Executing [{1000*dvRic[0]:.4f},{1000*dvRic[1]:.4f},{1000*dvRic[2]:.4f}] m/s RIC DV to target waypoint 1")
     
     for wpt in range(numWpts-1):
         sim.run(wptTbl.t[wpt])
-        dv = wg.wptBurn(stm.Phi(sim.frm.t,wptTbl.t[wpt+1]), 
+        dvRic = wg.wptBurn(stm.Phi(sim.frm.t,wptTbl.t[wpt+1]), 
                         sim.frm.relPosRectRic, 
                         sim.frm.relVelRectRic, 
                         wptTbl.relPosRic[:,wpt+1])
-        sim.frm.deputy.aCtrlInRic = dv/sim.settings["dynamics"]["dt"]
-        print(f"SCR: Executing [{1000*dv[0]:.2f},{1000*dv[1]:.2f},{1000*dv[2]:.2f}] m/s DV to target waypoint {wpt+2}")
-        sim.run(sim.t + sim.settings["dynamics"]["dt"])
-        sim.frm.deputy.aCtrlInRic = np.zeros((3,))
+        dvEci = np.matmul(np.transpose(sim.frm.dcmInr2Ric), dvRic)
+        sim.impulsiveBurn(dvEci)
+        print(f"SCR: Executing [{1000*dvRic[0]:.4f},{1000*dvRic[1]:.4f},{1000*dvRic[2]:.4f}] m/s RIC DV to target waypoint {wpt+2}")
     
     sim.run(sim.settings["simDuration"])
     sim.terminate()

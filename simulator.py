@@ -52,6 +52,10 @@ class Simulator():
         self.frm.settings = self.settings["formation"]
         self.fsw = flightsoftware 
         
+        # Burn perturbations
+        self.burnPertAngDeg = 0.0 
+        self.burnPertMagPerc = 0.0
+        
         self.initStatus()
         if self.status and self.settings["log"]["status"]:
             # Initialize log
@@ -170,7 +174,7 @@ class Simulator():
         self.log.posVehEci[self.log.i]      = self.frm.deputy.r
         self.log.velVehEci[self.log.i]      = self.frm.deputy.v
         self.log.accThrVehEci[self.log.i]   = self.frm.deputy.aCtrlInEci
-        self.log.accThrVehRic[self.log.i]   = self.frm.deputy.aCtrlInRic
+        self.log.accThrVehRic[self.log.i]   = np.matmul(self.frm.dcmInr2Ric, self.frm.deputy.aCtrlInEci)
         self.log.dvTotVeh[self.log.i]       = self.frm.deputy.dvTot
         if (self.settings["formation"]["orbit"]["elements"] == True):
             self.log.oeVeh[self.log.i]          = self.frm.deputy.oe
@@ -182,7 +186,7 @@ class Simulator():
         self.log.posRsoEci[self.log.i]      = self.frm.chief.r
         self.log.velRsoEci[self.log.i]      = self.frm.chief.v
         self.log.accThrRsoEci[self.log.i]   = self.frm.chief.aCtrlInEci
-        self.log.accThrRsoRic[self.log.i]   = self.frm.chief.aCtrlInRic
+        self.log.accThrRsoRic[self.log.i]   = np.matmul(self.frm.dcmInr2Ric, self.frm.chief.aCtrlInEci)
         self.log.dvTotRso[self.log.i]       = self.frm.chief.dvTot
         if (self.settings["formation"]["orbit"]["elements"] == True):
             self.log.oeRso[self.log.i]          = self.frm.chief.oe 
@@ -221,5 +225,44 @@ class Simulator():
             print("SIM:", self.settings["name"], "failed!")
             print("SIM:", self.settings["name"], "terminating")
             
-    
+    def impulsiveBurn(self, dvEci, sv = "Deputy"):
+        """
+        Executes impulsive burn
+        """
+        # Perturb Delta-V
+        dvEciPert = pertVec(dvEci, self.burnPertAngDeg, self.burnPertMagPerc)
         
+        # Apply delta-v by moving the inertial velocity and incrementing the
+        # accumulated delta-v
+        if sv == "Deputy":
+            self.frm.deputy.v       += dvEciPert
+            self.frm.deputy.dvTot   += np.linalg.norm(dvEciPert)
+        else:
+            self.frm.chief.v        += dvEciPert
+            self.frm.chief.dvTot    += np.linalg.norm(dvEciPert)        
+            
+    
+def pertVec(v, angDeg, magPerc):
+    """
+    Randomly perturbs vector. Assumes Gaussian perturbation distributions, 
+    and 3-sigma input magnitudes.
+    """
+    if magPerc > 0.0:
+        magPert = np.random.normal(0.0, 0.01*magPerc/3) + 1 # Magnitude perturbation as ratio
+    else:
+        magPert = 1.0;
+    
+    if angDeg > 0.0:
+        angPert = np.random.normal(0.0, angDeg/3) # Angle perturbation in degrees
+        randVec = np.random.rand(3,)
+        rotVec = np.cross(v, randVec) # Forces an orthogonal rotation vector
+        rotVec = rotVec / np.linalg.norm(rotVec) # Normalize
+        r = R.from_rotvec(angPert * rotVec, degrees=True)   
+        return magPert*r.apply(v)
+    else:
+        return magPert*v
+    
+    
+    
+    
+    

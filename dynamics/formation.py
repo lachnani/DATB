@@ -211,17 +211,11 @@ class Formation():
         # Update Time
         self.t = self.t + dt
         
+        # Increment Delta-V counter if accelerating
+        self.chief.dvTot += np.linalg.norm(self.chief.aCtrlInEci) * dt
+        self.deputy.dvTot += np.linalg.norm(self.deputy.aCtrlInEci) * dt
+        
         # Update State
-        if np.linalg.norm(self.chief.aCtrlInRic) > np.finfo(float).eps:
-            self.chief.aCtrlInEci = np.matmul(np.transpose(self.dcmInr2Ric), self.chief.aCtrlInRic)
-            self.chief.dvTot += np.linalg.norm(self.chief.aCtrlInRic) * dt
-        else:
-            self.chief.aCtrlInEci = np.zeros((3,))
-        if np.linalg.norm(self.deputy.aCtrlInRic) > np.finfo(float).eps:
-            self.deputy.aCtrlInEci = np.matmul(np.transpose(self.dcmInr2Ric), self.deputy.aCtrlInRic)
-            self.deputy.dvTot += np.linalg.norm(self.deputy.aCtrlInRic) * dt
-        else:
-            self.deputy.aCtrlInEci = np.zeros((3,))
         self.chief.propagate(dt)
         self.deputy.propagate(dt)
         

@@ -95,7 +95,6 @@ class Orbit:
             self.inEclipse = False
         
         #Set the control acceleration to 0
-        self.aCtrlInRic = np.zeros(3)
         self.aCtrlInEci = np.zeros(3)
         
         #Set the accumulated Delta-V to 0
