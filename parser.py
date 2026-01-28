@@ -9,6 +9,42 @@ import numpy as np
 from dynamics import formation as frm
 from dynamics import orbit as orb
 
+def unpackClroe(stateDict):
+    return np.array([
+        stateDict["A0"],
+        np.deg2rad(stateDict["alpha"]),
+        stateDict["xOff"],
+        stateDict["yOff"],
+        stateDict["B0"],
+        np.deg2rad(stateDict["beta"])])
+
+def unpackKepEl(stateDict):
+    return np.array([
+        stateDict["a"],
+        stateDict["e"],
+        np.deg2rad(stateDict["i"]),
+        np.deg2rad(stateDict["RAAN"]),
+        np.deg2rad(stateDict["argP"]),
+        np.deg2rad(stateDict["M"])])
+
+def unpackDoe(stateDict):
+    return np.array([
+        stateDict["da"],
+        stateDict["de"],
+        np.deg2rad(stateDict["di"]),
+        np.deg2rad(stateDict["dRAAN"]),
+        np.deg2rad(stateDict["dargP"]),
+        np.deg2rad(stateDict["dM"])])
+
+def unpackRelPosVel(stateDict):
+    return np.array([
+        stateDict["relPosR"],
+        stateDict["relPosI"],
+        stateDict["relPosC"],
+        stateDict["relVelR"],
+        stateDict["relVelI"],
+        stateDict["relVelC"]])
+
 def parseFormation(yaml):
     """
     Parse Formation yaml file
@@ -32,16 +68,9 @@ def parseFormation(yaml):
         (yaml["frmType"] == "FORMATION_DUAL_ABS")):
         # Define the chief
         if yaml["chief"]["stateType"] == "STATE_KEPEL":
-            chiefState = np.array((
-                yaml["chief"]["state"]["a"],
-                yaml["chief"]["state"]["e"],
-                yaml["chief"]["state"]["i"]*orb.D2R,
-                yaml["chief"]["state"]["RAAN"]*orb.D2R,
-                yaml["chief"]["state"]["argP"]*orb.D2R,
-                yaml["chief"]["state"]["M"]*orb.D2R))
             chief = orb.Orbit(
                 yaml["epoch"], 
-                chiefState,
+                unpackKepEl(yaml["chief"]["state"]),
                 stateType = yaml["chief"]["stateType"],
                 pert = yaml["pert"])
             
@@ -49,16 +78,9 @@ def parseFormation(yaml):
         (yaml["frmType"] == "FORMATION_DUAL_ABS")):
         # Define the deputy
         if yaml["deputy"]["stateType"] == "STATE_KEPEL":
-            deputyState = np.array((
-                yaml["deputy"]["state"]["a"],
-                yaml["deputy"]["state"]["e"],
-                yaml["deputy"]["state"]["i"]*orb.D2R,
-                yaml["deputy"]["state"]["RAAN"]*orb.D2R,
-                yaml["deputy"]["state"]["argP"]*orb.D2R,
-                yaml["deputy"]["state"]["M"]*orb.D2R))
             deputy = orb.Orbit(
                 yaml["epoch"], 
-                deputyState,
+                unpackKepEl(yaml["deputy"]["state"]),
                 stateType = yaml["deputy"]["stateType"],
                 pert = yaml["pert"]) 
             
@@ -66,31 +88,13 @@ def parseFormation(yaml):
         (yaml["frmType"] == "FORMATION_DEPUTY_ANCHOR")):
         # Define the relative state
         if yaml["relStateType"] == "RELSTATE_DOE":
-            relState = np.array((
-                yaml["relState"]["state"]["da"],
-                yaml["relState"]["state"]["de"],
-                yaml["relState"]["state"]["di"]*orb.D2R,
-                yaml["relState"]["state"]["dRAAN"]*orb.D2R,
-                yaml["relState"]["state"]["darg"]*orb.D2R,
-                yaml["relState"]["state"]["dM"]*orb.D2R))
+            relState = unpackDoe(yaml["relState"]["state"])
         if ((yaml["relStateType"] == "RELSTATE_RECT_CLROE") or 
             (yaml["relStateType"] == "RELSTATE_CURV_CLROE")):
-            relState = np.array((
-                yaml["relState"]["state"]["A0"],
-                yaml["relState"]["state"]["alpha"]*orb.D2R,
-                yaml["relState"]["state"]["xOff"],
-                yaml["relState"]["state"]["yOff"],
-                yaml["relState"]["state"]["B0"],
-                yaml["relState"]["state"]["beta"]*orb.D2R))
+            relState = unpackClroe(yaml["relState"]["state"])
         if ((yaml["relStateType"] == "RELSTATE_RECTRIC") or 
             (yaml["relStateType"] == "RELSTATE_CURVRIC")):
-            relState = np.array((
-                yaml["relState"]["state"]["relPosR"],
-                yaml["relState"]["state"]["relPosI"],
-                yaml["relState"]["state"]["relPosC"],
-                yaml["relState"]["state"]["relVelR"],
-                yaml["relState"]["state"]["relVelI"],
-                yaml["relState"]["state"]["relVelC"]))
+            relState = unpackRelPosVel(yaml["relState"]["state"])
             
     return frm.Formation(
         chief, 

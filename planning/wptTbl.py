@@ -9,7 +9,8 @@ import numpy as np
 from dynamics import dynamicsUtils as uDyn
 
 class waypointTable():
-    """ Base waypoint table class
+    """ 
+    Base waypoint table class
     
     """
     
@@ -28,6 +29,11 @@ class waypointTable():
         self.t = np.append(self.t, wptTimes)
         self.relPosRic = np.append(self.relPosRic, wptPos, axis=1)
         self.numWpts += wptTimes.size
+        
+    def truncate(self, numWpts):
+        self.t = self.t[0:numWpts]
+        self.relPosRic = self.relPosRic[:,0:numWpts]
+        self.numWpts = numWpts
         
     def genClroeWpts(self, L, n, t0, tf, numWpts):
         """
@@ -82,4 +88,3 @@ class waypointTable():
                         pos = L[0]*pos/np.linalg.norm(pos)
                     self.relPosRic = np.append(self.relPosRic, np.reshape(pos, (-1, 1)), axis=1)
                     self.numWpts += 1
-        

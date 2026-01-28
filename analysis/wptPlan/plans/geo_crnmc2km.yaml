@@ -1,0 +1,15 @@
+---
+tblStartTime: 1000.0
+tblEndTime: 345600.0
+numWpts: 32
+generator:
+  type: "CLROE"
+  L:
+    A0: 1.0
+    alpha: 0.0
+    xOff: 0.0
+    yOff: 0.0
+    B0: 1.7320508075688772
+    beta: 0.0
+  meanMotion: 7.27220521664304e-05
+relStateNatural: True

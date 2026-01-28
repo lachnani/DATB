@@ -69,6 +69,10 @@ class TestOrbit(unittest.TestCase):
             self.assertAlmostEqual(self.frm1.chief.oe[stateIdx], self.state[stateIdx],4)
             self.assertAlmostEqual(self.frm1.doe[stateIdx], self.doe[stateIdx], 4) 
             
+        # Chief and deputy ephemerides should match exactly
+        self.assertEqual(np.all(self.frm1.chief.moon.r), np.all(self.frm1.deputy.moon.r))
+        self.assertEqual(np.all(self.frm1.chief.sun.r), np.all(self.frm1.deputy.sun.r))
+            
     def test_rect2curv(self):
         """
         Test rectilinear to curvilinear transformations
