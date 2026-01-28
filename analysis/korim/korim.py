@@ -157,7 +157,7 @@ for simNum in range(cfg["numSims"]):
         np.deg2rad(cfg["relState"]["limits"]["beta"]["max"]))
     
     # Initialize the sim
-    sim = simulator.Simulator(settings_case, parser.parseFormation(frm_sim), 0, monteCarlo = True)
+    sim = simulator.Simulator(settings_case, parser.parseFormation(frm_sim), 0, quiet = True)
     if (frm_base["relStateType"] == "RELSTATE_CURV_CLROE"):
         initConds[simNum,:] = sim.frm.curvClroe
     elif (frm_base["relStateType"] == "RELSTATE_RECT_CLROE"):
@@ -315,7 +315,7 @@ for othNum in range(numOth):
             frm_sim["relState"]["state"]["beta"] = initConds[simNum,5]
             
             # Initialize the sim
-            sim = simulator.Simulator(settings_fp, parser.parseFormation(frm_sim), 0, monteCarlo = True)
+            sim = simulator.Simulator(settings_fp, parser.parseFormation(frm_sim), 0, quiet = True)
             
             # Run the Sim
             sim.run(simDuration)

@@ -23,6 +23,8 @@ import matplotlib.pyplot as plt
 from itertools import product, combinations
 
 from planning import wptTbl as wt
+from dynamics import dynamicsUtils as uDyn
+from dynamics import formation as frmClass
 import parser
 
 def savePlan(frm, wptTbl, path = None, name = None):
@@ -50,6 +52,19 @@ print("-----------------------------------------------------")
 Generate the Formation
 """
 
+""" Load the initial state """
+print("Choose initial state yaml file")
+state_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
+                                       initialdir = os.getcwd())
+state_file = ntpath.basename(state_file_path)[:-5]
+with open(state_file_path) as stream:
+    try:
+        formation = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+frm = parser.parseFormation(formation)
+
 
 """
 Generate the Waypoint Table
@@ -68,12 +83,28 @@ with open(cfg_file_path) as stream:
 
 generator = cfg.pop("generator")
 if generator["type"] == "CLROE":
-    wptTbl = wt.wptTbl()
+    wptTbl = wt.waypointTable()
     wptTbl.genClroeWpts(
         parser.unpackClroe(generator["L"]),
         generator["meanMotion"],
         cfg["tblStartTime"],
         cfg["tblEndTime"],
-        cfg["numWPts"])
+        cfg["numWpts"])
     
-    
+    if cfg["relStateNatural"]:
+        # Replace the formation deputy position with the natural path.
+        # Assume curvilinear for long-range accuracy
+        frm = frmClass.Formation(
+            frm.chief, 
+            frm.deputy, 
+            parser.unpackClroe(generator["L"]),
+            "FORMATION_CHIEF_ANCHOR",
+            "RELSTATE_CURV_CLROE",
+            frm.chief.pert)
+        
+"""
+Save the Plan
+"""
+
+print(f"Saving waypoint plan as {cfg_file}.pkl")
+savePlan(frm, wptTbl, 'analysis/wptPlan/plans', cfg_file)

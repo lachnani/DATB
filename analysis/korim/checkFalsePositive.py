@@ -55,7 +55,7 @@ for othNum in range(numOth):
             frm_sim["relState"]["state"]["beta"] = initConds[simNum,5]
             
             # Initialize the sim
-            sim = simulator.Simulator(settings_fp, parser.parseFormation(frm_sim), 0, monteCarlo = True)
+            sim = simulator.Simulator(settings_fp, parser.parseFormation(frm_sim), 0, quiet = True)
             
             # Run the Sim
             sim.run(simDuration)

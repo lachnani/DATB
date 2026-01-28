@@ -119,7 +119,7 @@ scr = importlib.import_module('scenarios.' + scr_file)
 sim = simulator.Simulator(settings_case, 
                           parser.parseFormation(frm_case), 
                           0, 
-                          monteCarlo = True)
+                          quiet = True)
 
 # Run the sim
 scr.scenario(sim, wptTbl)

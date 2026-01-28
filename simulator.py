@@ -29,12 +29,13 @@ class Simulator():
     
     def __init__(
             self, settings,
-            formation, flightsoftware, monteCarlo = False
+            formation, flightsoftware, quiet = False
             ):
         
         # Initialize simulation
         self.t = 0 
         self.cycle = 1
+        self.quiet = quiet
         
         self.settings = settings
         self.kovType = self.settings["dynamics"]["kov"]["type"]
@@ -64,7 +65,7 @@ class Simulator():
             self.log.kovLim = self.kovLim
             self.updateLog()
             
-        if self.status == True and not monteCarlo:
+        if self.status == True and not self.quiet:
             print("SIM:", settings["name"], "initialized")
         
     def initStatus(self):
@@ -220,7 +221,8 @@ class Simulator():
         
         if self.status == True:
             self.status = False
-            print("SIM:", self.settings["name"], "terminating successfully")
+            if not self.quiet:
+                print("SIM:", self.settings["name"], "terminating successfully")
         else:
             print("SIM:", self.settings["name"], "failed!")
             print("SIM:", self.settings["name"], "terminating")
