@@ -21,11 +21,12 @@ import numpy as np
 from numpy import random as rand
 import matplotlib.pyplot as plt
 from itertools import product, combinations
+from copy import deepcopy
 
 import simulator
 import parser
-from dynamics import orbit as orb
-from planning import passiveSafety as ps
+from dynamics import formation
+from planning import wptTbl as wt
 
         
 """ 
@@ -39,18 +40,6 @@ Simulates a waypoint plan in different configurations:
 
 """
 
-def loadPlan():
-    print("Choose waypoint plan .pkl file")
-    file_path = filedialog.askopenfilename(initialdir = os.getcwd())
-    if ntpath.basename(file_path)[-4:] == '.pkl':
-        """ We are loading a log file, not running a fresh sim """
-        log_file_path = file_path
-        with open(log_file_path, 'rb') as inp:
-            plan = pickle.load(inp)
-            frm = plan[0]
-            wptTbl = plan[1]
-        return frm, wptTbl
-
 print("-----------------------------------------------------")
 print("-----------------------------------------------------")
 print("D.A.T.B: Differential Astrodynamics Test Bench")
@@ -61,11 +50,63 @@ print("-----------------------------------------------------")
 root = tk.Tk()
 root.withdraw()
 
-"""Load the waypoint plan"""
-frm_base, wptTbl = loadPlan()
+"""
+Generate the Formation from the Initial State
+"""
+
+print("Choose initial state yaml file")
+state_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
+                                       initialdir = os.getcwd())
+state_file = ntpath.basename(state_file_path)[:-5]
+with open(state_file_path) as stream:
+    try:
+        formationCfg = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+frm_base = parser.parseFormation(formationCfg)
+
+
+"""
+Generate the Waypoint Table
+"""
+
+print("Choose waypoint table generator yaml file")        
+cfg_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
+                                       initialdir = os.getcwd())
+cfg_file = ntpath.basename(cfg_file_path)[:-5]
+with open(cfg_file_path) as stream:
+    try:
+        cfg = yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+        print(exc)
+
+generator = cfg.pop("generator")
+if generator["type"] == "CLROE":
+    wptTbl = wt.waypointTable()
+    wptTbl.genClroeWpts(
+        parser.unpackClroe(generator["L"]),
+        generator["meanMotion"],
+        cfg["tblStartTime"],
+        cfg["tblEndTime"],
+        cfg["numWpts"])
+    
+    if cfg["relStateNatural"]:
+        # Replace the formation deputy position with the natural path.
+        # Assume curvilinear for long-range accuracy
+        frm_base = formation.Formation(
+            frm_base.chief, 
+            frm_base.deputy, 
+            parser.unpackClroe(generator["L"]),
+            "FORMATION_CHIEF_ANCHOR",
+            "RELSTATE_CURV_CLROE",
+            frm_base.chief.pert)
+        
+"""
+Configure Simulation Settings
+"""
         
 print("Choose analysis settings yaml file")        
-""" Load the config parameters """
 cfg_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
                                        initialdir = os.getcwd())
 cfg_file = ntpath.basename(cfg_file_path)[:-5]
@@ -94,7 +135,7 @@ formation = {
 settings_base = {
     "name": "analyzeWptPlan",
     "dynamics": cfg["dynamics"],
-    "simDuration": 1,
+    "simDuration": wptTbl.t[-1],
     "log": log,
     "visualizer": visualizer,
     "fsw": fsw,
@@ -107,7 +148,7 @@ Nominal plan simulation
 """
 
 settings_case = settings_base.copy()
-frm_case = frm_base.copy()
+frm_case = deepcopy(frm_base)
 
 print("Choose scenario file")
 scr_file_path = filedialog.askopenfilename(defaultextension = '.py',
@@ -117,7 +158,7 @@ scr = importlib.import_module('scenarios.' + scr_file)
 
 # Initialize the simulation
 sim = simulator.Simulator(settings_case, 
-                          parser.parseFormation(frm_case), 
+                          frm_case, 
                           0, 
                           quiet = True)
 
