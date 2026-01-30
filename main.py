@@ -7,12 +7,10 @@ Created on Tue Mar 18 15:38:52 2025
 
 import os
 
-import yaml
 import tkinter as tk
 from tkinter import filedialog
 import importlib
 import ntpath
-import time
 from datetime import datetime
 import pickle
 from pathlib import Path
@@ -43,39 +41,15 @@ root = tk.Tk()
 root.withdraw()
 
 """ Load the sim config parameters """
-print("Choose simulation parameter yaml file")
-sim_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
-                                       initialdir = os.getcwd())
-sim_file = ntpath.basename(sim_file_path)[:-5]
-with open(sim_file_path) as stream:
-    try:
-        settings = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
+settings, sim_file = parser.loadFile('simulation parameter')
         
 """ Load the initial state """
-print("Choose initial state yaml file")
-state_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
-                                       initialdir = os.getcwd())
-state_file = ntpath.basename(state_file_path)[:-5]
-with open(state_file_path) as stream:
-    try:
-        formation = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
+formation, state_file = parser.loadFile('initial state')
 
         
 """ Load the FSW """
 if settings["fsw"]["status"] ==  True:
-    print("Choose FSW yaml file")
-    fsw_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
-                                           initialdir = os.getcwd())
-    fsw_file = ntpath.basename(fsw_file_path)[:-5]
-    with open(fsw_file_path) as stream:
-        try:
-            fsw_config = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
+    fsw_config, fsw_file = parser.loadFile('FSW')
 else:
     fsw_config = 0
     fsw_file = 'noFSW'
@@ -95,16 +69,10 @@ sim = simulator.Simulator(
     parser.parseFormation(formation), 
     fsw_config)
 
-start_time = time.time()
 
 """ Run the sim """
 scr.scenario(sim)
 
-end_time = time.time()
-elapsed_time = end_time - start_time
-print("-----------------------------------------------------")
-print("Simulation completed in %.1f seconds" % elapsed_time)
-print("Realtime factor: %.2f" % (settings["simDuration"]/elapsed_time))
 
 """ Log the data """
 if settings["log"]["status"] ==  True:

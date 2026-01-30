@@ -5,9 +5,27 @@ Created on Thu Mar 20 18:33:02 2025
 @author: Hakim Lachnani
 """
 
+import os
+
+import yaml
+from tkinter import filedialog
+import ntpath
 import numpy as np
+
 from dynamics import formation as frm
 from dynamics import orbit as orb
+from planning import wptTbl as wt
+
+def loadFile(promptStr = ''):
+    print("Choose " + promptStr + " yaml file")
+    file_path = filedialog.askopenfilename(defaultextension = '.yaml',
+                                           initialdir = os.getcwd())
+    file = ntpath.basename(file_path)[:-5]
+    with open(file_path) as stream:
+        try:
+            return yaml.safe_load(stream), file
+        except yaml.YAMLError as exc:
+            print(exc)
 
 def unpackClroe(stateDict):
     return np.array([
@@ -103,3 +121,40 @@ def parseFormation(yaml):
         yaml["frmType"],
         yaml["relStateType"],
         yaml["pert"])
+
+def parseWptTbl(yaml, formation = None):
+    """
+    Parse Waypoint Plan yaml file
+
+    Parameters
+    ----------
+    yaml : dictionary from yaml
+    formation
+
+    Returns
+    -------
+    wptTbl object
+
+    """
+    generator = yaml.pop("generator")
+    if generator["type"] == "CLROE":
+        wptTbl = wt.waypointTable()
+        wptTbl.genClroeWpts(
+            unpackClroe(generator["L"]),
+            generator["meanMotion"],
+            yaml["tblStartTime"],
+            yaml["tblEndTime"],
+            yaml["numWpts"])
+        
+        if yaml["relStateNatural"]:
+            # Replace the formation deputy position with the natural path.
+            # Assume curvilinear for long-range accuracy
+            formation = frm.Formation(
+                formation.chief, 
+                formation.deputy, 
+                unpackClroe(generator["L"]),
+                "FORMATION_CHIEF_ANCHOR",
+                "RELSTATE_CURV_CLROE",
+                formation.chief.pert)
+            
+    return wptTbl, formation

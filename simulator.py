@@ -7,6 +7,7 @@ Created on Tue Mar 18 15:38:52 2025
 
 from scipy.spatial.transform import Rotation as R
 import numpy as np
+import time
 
 from dynamics import formation as frm
 from dynamics import orbit as orb
@@ -36,6 +37,9 @@ class Simulator():
         self.t = 0 
         self.cycle = 1
         self.quiet = quiet
+        
+        # Save start time
+        self.startTime = time.time()
         
         self.settings = settings
         self.kovType = self.settings["dynamics"]["kov"]["type"]
@@ -226,6 +230,13 @@ class Simulator():
         else:
             print("SIM:", self.settings["name"], "failed!")
             print("SIM:", self.settings["name"], "terminating")
+            
+        if not self.quiet:
+            endTime = time.time()
+            elapsed_time = endTime - self.startTime
+            print("SIM: Simulation completed in %.1f seconds" % elapsed_time)
+            print("SIM: Realtime factor: %.2f" % (self.t/elapsed_time))
+            print("-----------------------------------------------------")
             
     def impulsiveBurn(self, dvEci, sv = "Deputy"):
         """

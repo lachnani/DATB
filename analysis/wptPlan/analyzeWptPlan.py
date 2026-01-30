@@ -11,7 +11,6 @@ import yaml
 import tkinter as tk
 from tkinter import filedialog
 import ntpath
-import time
 import importlib
 from datetime import datetime
 import pickle
@@ -25,8 +24,6 @@ from copy import deepcopy
 
 import simulator
 import parser
-from dynamics import formation
-from planning import wptTbl as wt
 
         
 """ 
@@ -53,68 +50,21 @@ root.withdraw()
 """
 Generate the Formation from the Initial State
 """
-
-print("Choose initial state yaml file")
-state_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
-                                       initialdir = os.getcwd())
-state_file = ntpath.basename(state_file_path)[:-5]
-with open(state_file_path) as stream:
-    try:
-        formationCfg = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
-
+formationCfg, state_file = parser.loadFile('initial state')
 frm_base = parser.parseFormation(formationCfg)
 
 
 """
 Generate the Waypoint Table
-"""
-
-print("Choose waypoint table generator yaml file")        
-cfg_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
-                                       initialdir = os.getcwd())
-cfg_file = ntpath.basename(cfg_file_path)[:-5]
-with open(cfg_file_path) as stream:
-    try:
-        cfg = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
-
-generator = cfg.pop("generator")
-if generator["type"] == "CLROE":
-    wptTbl = wt.waypointTable()
-    wptTbl.genClroeWpts(
-        parser.unpackClroe(generator["L"]),
-        generator["meanMotion"],
-        cfg["tblStartTime"],
-        cfg["tblEndTime"],
-        cfg["numWpts"])
-    
-    if cfg["relStateNatural"]:
-        # Replace the formation deputy position with the natural path.
-        # Assume curvilinear for long-range accuracy
-        frm_base = formation.Formation(
-            frm_base.chief, 
-            frm_base.deputy, 
-            parser.unpackClroe(generator["L"]),
-            "FORMATION_CHIEF_ANCHOR",
-            "RELSTATE_CURV_CLROE",
-            frm_base.chief.pert)
+"""   
+wptGen, wptGen_file = parser.loadFile('waypoint table generator')
+wptTbl, frm_base = parser.parseWptTbl(wptGen, frm_base)
         
+
 """
 Configure Simulation Settings
 """
-        
-print("Choose analysis settings yaml file")        
-cfg_file_path = filedialog.askopenfilename(defaultextension = '.yaml',
-                                       initialdir = os.getcwd())
-cfg_file = ntpath.basename(cfg_file_path)[:-5]
-with open(cfg_file_path) as stream:
-    try:
-        cfg = yaml.safe_load(stream)
-    except yaml.YAMLError as exc:
-        print(exc)
+cfg, cfg_file = parser.loadFile('analysis settings')
         
 """ Create the default settings dictionary """
 print("MC: Loading Dynamics ...")
