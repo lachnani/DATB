@@ -29,9 +29,11 @@ def plotAll(log, path, tag, settings):
     AccelDv_Plot(log, path, tag)
     if (settings["formation"]["relStates"] == True):
         ChiefOe_Plot(log, path, tag)
+        ChiefEe_Plot(log, path, tag)
         CurvRicProj_Plot(log, path, tag)
         CurvRic_Plot(log, path, tag)
         Doe_Plot(log, path, tag)
+        Dee_Plot(log, path, tag)
         DAmicoPhase_Plot(log, path, tag)
         RectClroe_Plot(log, path, tag)
         CurvClroe_Plot(log, path, tag)
@@ -508,6 +510,62 @@ def ChiefOe_Plot(log, path, tag):
     fullFigPath = path + r"\chiefOe_" + tag + r".png"
     plt.savefig(fullFigPath)
     
+def ChiefEe_Plot(log, path, tag):
+    """
+    Chief Equinoctial Elements plot
+
+    """
+    
+    fig_chiefEe_plt = plt.figure()
+    plt.suptitle('Chief Equinoctial Elements')
+    
+    ax = plt.subplot(3,2,1)
+    ax.plot(log.time.loc['simTime',:], log.eeRso.loc['a',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a [km]")
+    plt.title('Semimajor-Axis')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.eeRso.loc['l',:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("l [deg]")
+    plt.title('Mean Longitude')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    ax.plot(log.time.loc['simTime',:], log.eeRso.loc['P1',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("P1")
+    plt.title('P1')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    ax.plot(log.time.loc['simTime',:], log.eeRso.loc['P2',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("P2")
+    plt.title('P2')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    ax.plot(log.time.loc['simTime',:], log.eeRso.loc['Q1',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Q1")
+    plt.title('Q1')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    ax.plot(log.time.loc['simTime',:], log.eeRso.loc['Q2',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Q2")
+    plt.title('Q2')
+    plt.grid()
+       
+    fig_chiefEe_plt.tight_layout()
+    
+    fullFigPath = path + r"\chiefEe_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
 def Doe_Plot(log, path, tag):
     """
     Delta Keplerian Orbit elements plot
@@ -562,6 +620,62 @@ def Doe_Plot(log, path, tag):
     fig_doe_plt.tight_layout()
     
     fullFigPath = path + r"\doe_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def Dee_Plot(log, path, tag):
+    """
+    Differential Equinoctial Elements plot
+
+    """
+    
+    fig_dee_plt = plt.figure()
+    plt.suptitle('Differential Equinoctial Elements')
+    
+    ax = plt.subplot(3,2,1)
+    ax.plot(log.time.loc['simTime',:], log.dee.loc['da',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta a [km]$")
+    plt.title('Delta Semimajor-Axis')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.dee.loc['dl',:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta l [deg]$")
+    plt.title('Delta Mean Longitude')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    ax.plot(log.time.loc['simTime',:], log.dee.loc['dP1',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta P1$")
+    plt.title('Delta P1')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    ax.plot(log.time.loc['simTime',:], log.dee.loc['dP2',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta P2$")
+    plt.title('Delta P2')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    ax.plot(log.time.loc['simTime',:], log.dee.loc['dQ1',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta Q1$")
+    plt.title('Delta Q1')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    ax.plot(log.time.loc['simTime',:], log.dee.loc['dQ2',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta Q2$")
+    plt.title('Delta Q2')
+    plt.grid()
+       
+    fig_dee_plt.tight_layout()
+    
+    fullFigPath = path + r"\dee_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def RectClroe_Plot(log, path, tag):

@@ -14,6 +14,7 @@ import ntpath
 from datetime import datetime
 import pickle
 from pathlib import Path
+import inspect
 
 import simulator
 import parser
@@ -60,6 +61,12 @@ scr_file_path = filedialog.askopenfilename(defaultextension = '.py',
                                        initialdir = os.getcwd())
 scr_file = ntpath.basename(scr_file_path)[:-3]
 scr = importlib.import_module('scenarios.' + scr_file)
+scrArguments = inspect.getfullargspec(scr.scenario).args
+
+if 'wptTbl' in scrArguments:
+    """ Generate the Waypoint Table """   
+    wptGen, wptGen_file = parser.loadFile('waypoint table generator')
+    wptTbl, formation = parser.parseWptTbl(wptGen, formation)
     
 
 """ Initialize the sim """
