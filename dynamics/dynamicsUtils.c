@@ -279,23 +279,30 @@ void curvRic2rectRic(const double r[3], const double v[3],
     relVelRectRic : Array
         Rectilinear RIC frame relative velocity
     */
+
+	/* Chief Parameters */ 
     double rMag = v3_norm(r);
+    double rMagDot = v3_dot(r, v) / rMag;
+
+    /* Curvilinear Paramters */
     double dr = relPosCurvRic[0];
     double dTheta = relPosCurvRic[1] / rMag;
     double dPhi = relPosCurvRic[2] / rMag;
     double drDot = relVelCurvRic[0];
-    double dThetaDot = (relVelCurvRic[1] - drDot * dTheta) / rMag;
-    double dPhiDot = (relVelCurvRic[2] - drDot * dPhi) / rMag;
-    double rMagDot = v3_dot(r, v) / rMag;
+    double dThetaDot = (relVelCurvRic[1] - rMagDot * dTheta) / rMag;
+    double dPhiDot = (relVelCurvRic[2] - rMagDot * dPhi) / rMag;
+
+    /* Position Transformation */
     double rP = rMag + dr;
     double rPDot = rMagDot + drDot;
     double cdTheta = cos(dTheta), sdTheta = sin(dTheta);
     double cdPhi = cos(dPhi), sdPhi = sin(dPhi);
+
     relPosRectRic[0] = rP * cdTheta * cdPhi - rMag;
     relPosRectRic[1] = rP * sdTheta * cdPhi;
     relPosRectRic[2] = rP * sdPhi;
     relVelRectRic[0] = rPDot * cdTheta * cdPhi - rP * (dThetaDot * sdTheta * cdPhi + dPhiDot * cdTheta * sdPhi) - rMagDot;
-    relVelRectRic[1] = rPDot * sdTheta * cdPhi + rP * (dThetaDot * cdTheta * cdPhi + dPhiDot * sdTheta * sdPhi);
+    relVelRectRic[1] = rPDot * sdTheta * cdPhi + rP * (dThetaDot * cdTheta * cdPhi - dPhiDot * sdTheta * sdPhi);
     relVelRectRic[2] = rPDot * sdPhi + rP * dPhiDot * cdPhi;
 }
 
@@ -321,26 +328,25 @@ void rectRic2curvRic(const double r[3], const double v[3],
     R : Array
         Curvilinear RIC frame relative vel
     */
+
+    /* Chief Parameters */
     double rMag = v3_norm(r);
-    double rMagDot = v3_dot(v, r) / rMag;
-    double r_d_Ric[3], v_d_Ric[3];
-    for (int i = 0; i < 3; ++i) {
-        r_d_Ric[i] = relPosRectRic[i];
-        v_d_Ric[i] = relVelRectRic[i];
-    }
-    r_d_Ric[0] += rMag;
-    v_d_Ric[0] += rMagDot;
-    double rP = v3_norm(r_d_Ric);
-    double dr = rP - rMag;
-    double drDot = (r_d_Ric[0] * v_d_Ric[0] + r_d_Ric[1] * v_d_Ric[1] + r_d_Ric[2] * v_d_Ric[2]) / rP - rMagDot;
-    double dTheta = atan2(r_d_Ric[1], r_d_Ric[0]);
-    double dThetaDot = (1.0 / (1.0 + pow(r_d_Ric[1] / r_d_Ric[0], 2.0))) *
-        (r_d_Ric[0] * v_d_Ric[1] - r_d_Ric[1] * v_d_Ric[0]) / (r_d_Ric[0] * r_d_Ric[0]);
-    double r_d_InPlane2 = r_d_Ric[0] * r_d_Ric[0] + r_d_Ric[1] * r_d_Ric[1];
-    double r_d_InPlane = sqrt(r_d_InPlane2);
-    double dPhi = atan2(r_d_Ric[2], r_d_InPlane);
-    double dPhiDot = (1.0 / (1.0 + (r_d_Ric[2] * r_d_Ric[2]) / r_d_InPlane2)) *
-        (r_d_InPlane * v_d_Ric[2] - r_d_Ric[2] * (r_d_Ric[0] * v_d_Ric[0] + r_d_Ric[1] * v_d_Ric[1])) / r_d_InPlane2;
+    double rMagDot = v3_dot(r, v) / rMag;
+
+    /* Position Transformation */
+	double rMagX = rMag + relPosRectRic[0];
+	double rMagX2 = rMagX * rMagX;
+	double Y2 = relPosRectRic[1] * relPosRectRic[1];
+	double dr = sqrt(rMagX2 + Y2 + relPosRectRic[2] * relPosRectRic[2]) - rMag;
+	double dTheta = atan2(relPosRectRic[1], rMagX);
+	double dPhi = atan2(relPosRectRic[2], sqrt(rMagX2 + Y2));
+
+	/* Velocity Transformation */
+    double drDot = (rMagX * relVelRectRic[0] + relPosRectRic[1] * relVelRectRic[1] + relPosRectRic[2] * relVelRectRic[2]) / (rMag + dr);
+	double dThetaDot = (rMagX * relVelRectRic[1] - relPosRectRic[1] * relVelRectRic[0]) / (rMagX2 + Y2);
+	double dPhiDot = (relVelRectRic[2] * (rMagX2 + Y2) - relPosRectRic[2] * (rMagX * relVelRectRic[0] + relPosRectRic[1] * relVelRectRic[1])) / ((rMag + dr) * (rMag + dr) * sqrt(rMagX2 + Y2));
+
+    /* Output */
     relPosCurvRic[0] = dr;
     relPosCurvRic[1] = rMag * dTheta;
     relPosCurvRic[2] = rMag * dPhi;
