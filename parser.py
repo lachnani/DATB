@@ -136,25 +136,30 @@ def parseWptTbl(yaml, formation = None):
     wptTbl object
 
     """
-    generator = yaml.pop("generator")
-    if generator["type"] == "CLROE":
-        wptTbl = wt.waypointTable()
-        wptTbl.genClroeWpts(
-            unpackClroe(generator["L"]),
-            generator["meanMotion"],
-            yaml["tblStartTime"],
-            yaml["tblEndTime"],
-            yaml["numWpts"])
+    wptTbl = wt.waypointTable()
+    
+    for ii in range(yaml["numWptGen"]):
+        wptGenStr = "wptGen" + str(ii+1)
+        wptGen = yaml[wptGenStr]
         
-        if yaml["relStateNatural"]:
-            # Replace the formation deputy position with the natural path.
-            # Assume curvilinear for long-range accuracy
-            formation = frm.Formation(
-                formation.chief, 
-                formation.deputy, 
+        generator = wptGen["generator"]
+        if generator["type"] == "CLROE":
+            wptTbl.genClroeWpts(
                 unpackClroe(generator["L"]),
-                "FORMATION_CHIEF_ANCHOR",
-                "RELSTATE_CURV_CLROE",
-                formation.chief.pert)
+                generator["meanMotion"],
+                wptGen["startTime"],
+                wptGen["endTime"],
+                wptGen["numWpts"])
+            
+            if yaml["relStateNatural"]:
+                # Replace the formation deputy position with the natural path.
+                # Assume curvilinear for long-range accuracy
+                formation = frm.Formation(
+                    formation.chief, 
+                    formation.deputy, 
+                    unpackClroe(generator["L"]),
+                    "FORMATION_CHIEF_ANCHOR",
+                    "RELSTATE_CURV_CLROE",
+                    formation.chief.pert)
             
     return wptTbl, formation
