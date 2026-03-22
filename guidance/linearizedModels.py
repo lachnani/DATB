@@ -21,6 +21,8 @@ class hcw():
         Initialize Class
 
         """
+        self.domain = "TIME"
+        self.dim = 6
         self.n = meanMotion
         
     def A(self):
@@ -137,6 +139,8 @@ class clroe():
         Initialize Class
 
         """
+        self.domain = "TIME"
+        self.dim = 6
         self.n = meanMotion
         
     def A(self):

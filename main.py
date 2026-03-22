@@ -46,7 +46,7 @@ settings, sim_file = parser.loadFile('simulation parameter')
         
 """ Load the initial state """
 formation, state_file = parser.loadFile('initial state')
-
+frm = parser.parseFormation(formation)
         
 """ Load the FSW """
 if settings["fsw"]["status"] ==  True:
@@ -66,19 +66,21 @@ scrArguments = inspect.getfullargspec(scr.scenario).args
 if 'wptTbl' in scrArguments:
     """ Generate the Waypoint Table """   
     wptGen, wptGen_file = parser.loadFile('waypoint table generator')
-    wptTbl, formation = parser.parseWptTbl(wptGen, formation)
+    wptTbl, frm = parser.parseWptTbl(wptGen, frm)
+    if settings["simDuration"] < wptTbl.t[-1]:
+        settings["simDuration"] = wptTbl.t[-1]
     
 
 """ Initialize the sim """
 print("-----------------------------------------------------")
-sim = simulator.Simulator(
-    settings, 
-    parser.parseFormation(formation), 
-    fsw_config)
+sim = simulator.Simulator(settings, frm, fsw_config)
 
 
 """ Run the sim """
-scr.scenario(sim)
+if 'wptTbl' in scrArguments:
+    scr.scenario(sim, wptTbl)
+else:
+    scr.scenario(sim)
 
 
 """ Log the data """
