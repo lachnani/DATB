@@ -10,7 +10,7 @@
 #include "dynamicsConstants.h"
 #include "dynamicsUtils.h"
 
-// Helper vector math functions (implement or use your own library)
+// Helper vector math functions
 static double clamp(double x, double min, double max) {
     if (x < min) return min;
     if (x > max) return max;
@@ -90,16 +90,18 @@ static void mat3_transpose(const double M[3][3], double MT[3][3]) {
 static double atmosphericDensity(double alt)
 {
     /*
-     *   This function uses a curve fit based on
-     *   atmospheric data from the Standard Atmosphere 1976 Data. This
-     *   function is valid for altitudes ranging from 100km to 1000km.
-     *
-     *   Note: This code can only be applied to spacecraft orbiting the Earth
-     * Inputs:
-     *   alt = altitude in km
-     * Outputs:
-     *   density = density at the given altitude in kg/m^3
-     */
+	Computes atmospheric density at a given altitude using a curve fit to the Standard Atmosphere 1976 data.
+
+	Parameters
+    ----------
+    alt : double
+		Altitude in kilometers (valid range: 100 km to 1000 km)
+
+    Returns
+    -------
+	density : double
+	    Atmospheric density at the given altitude in kg/m^3
+    */
 
     double logdensity;
     double density;
@@ -130,9 +132,18 @@ static double atmosphericDensity(double alt)
 void dcmInr2Ric(const double r[3], const double v[3], double RN[3][3]) {
     /*
     Compute the RIC frame DCM RN
-    :param r: inertial position
-    :param v: inertial velocity
-    :return: RN: DCM that maps from the inertial frame N to the RIC (i.e. orbit) frame
+
+    Parameters
+    ----------
+    r : Array
+		Inertial position vector
+    v : Array
+		Inertial velocity vector
+
+    Returns
+    -------
+    RN : 3x3 double
+		DCM that maps from the inertial frame N to the RIC (i.e. orbit) frame
     */
     double ir[3], h[3], ih[3], itheta[3];
     double norm_r = v3_norm(r);
@@ -150,7 +161,7 @@ void dcmInr2Ric(const double r[3], const double v[3], double RN[3][3]) {
 
 void dcmRic2Los(const double relPosRectRic[3], double LR[3][3]) {
     /*
-    Compute the RIC to LOS DCM LR
+    Compute the RIC to Line-of-Sight frame (LOS) DCM LR
     Assumes the LOS frame is defined with the z-axis along the line of sight vector,
 	the x-axis in the chief orbital plane, and the y-axis completing the right-handed system.
 
@@ -197,11 +208,23 @@ void rv2ric(const double r[3], const double v[3], const double r_d[3], const dou
     /*
     Express the deputy position and velocity vector as chief by the chief RIC frame.
 
-    :param r: chief inertial position
-    :param v: chief inertial velocity
-    :param r_d: deputy inertial position
-    :param v_d: deputy inertial velocity
-    :return: relRvRic: RIC frame relative position and velocity vectors
+    Parameters
+    ----------
+    r : Array
+		Chief inertial position
+	v : Array
+	    Chief inertial velocity
+    r_d : Array
+        Deputy inertial position
+    v_d : Array
+        Deputy inertial velocity
+
+    Returns
+    -------
+	relPosRectRic : Array
+	    Relative position in rectilinear RIC frame
+	relVelRectRic : Array
+	    Relative velocity in rectilinear RIC frame
     */
     double RN[3][3];
     dcmInr2Ric(r, v, RN);
@@ -228,12 +251,23 @@ void ric2rv(const double r[3], const double v[3], const double relPosRectRic[3],
     /*
     Map the deputy position and velocity vector relative to the chief RIC frame to inertial frame.
 
-    :param r: chief inertial position
-    :param v: chief inertial velocity
-    :param relPosRectRic: RIC frame relative position
-    :param relVelRectRic: RIC frame relative velocity
-    :return: r_d: deputy inertial position
-             v_d: deputy inertial velocity
+    Parameters
+    ----------
+    r : Array
+		Chief inertial position
+	v : Array
+	    Chief inertial velocity
+	relPosRectRic : Array
+	    Relative position in rectilinear RIC frame
+	relVelRectRic : Array
+	    Relative velocity in rectilinear RIC frame
+
+    Returns
+    -------
+	r_d : Array
+	    Deputy inertial position
+	v_d : Array
+	    Deputy inertial velocity
     */
     double RN[3][3], NR[3][3];
     dcmInr2Ric(r, v, RN);
@@ -507,7 +541,6 @@ void measParams(const double relPosRic[3], const double relVelRic[3], double *rn
 * Orbit Functions
 */
 
-// Orbit acceleration (gravity, perturbations, thrust)
 void acceleration(
     const int solarGrav,
     const int lunarGrav,
@@ -521,7 +554,41 @@ void acceleration(
 	const double v[3],
 	const double aCtrlInEci[3],
     double a[3]) {
-    /*Orbit Acceleration (Gravity, Perturbations, and Thrust)*/
+    /*
+    Orbit acceleration due to gravity, perturbations, and thrust
+
+    Parameters
+    ----------
+    solarGrav: int
+        Flag to include solar gravity perturbation (1 to include, 0 to exclude)
+    lunarGrav: int
+        Flag to include lunar gravity perturbation (1 to include, 0 to exclude)
+    drag: int
+        Flag to include atmospheric drag perturbation (1 to include, 0 to exclude)
+    jnum: int
+        Number of zonal harmonics to include in Earth's gravity model (0 for point mass, 2 for J2, etc.)
+    moon_r: Array
+        Position vector of the Moon in kilometers [x;y;z]. Required if lunarGrav is 1.
+    sun_r: Array
+        Position vector of the Sun in kilometers [x;y;z]. Required if solarGrav is 1.
+    Cd: double
+        Drag coefficient for atmospheric drag calculation. Required if drag is 1.
+    normA: double
+        Spacecraft cross-sectional area divided by mass (A/m) for atmospheric drag calculation. Required if drag is 1.
+    r: Array
+		Position vector in kilometers [x;y;z] at the current time step.
+    v: Array
+		Velocity vector in kilometers per second [vx;vy;vz] at the current time step.
+    aCtrlInEci: Array
+        Control acceleration vector in ECI frame in km/s^2. Can be zero if no control acceleration.
+
+    Returns
+    -------
+	a: Array
+		Total acceleration vector in kilometers per second squared [ax;ay;az] at the current time step, 
+        including gravity, perturbations, and control acceleration.
+    */
+
     double aEarth[3], aMoon[3], aSun[3], aDrag[3], aCtrl[3], tmp[3];
 	double earth_r[3] = { 0, 0, 0 }; // Earth at origin
 
@@ -578,6 +645,38 @@ void stateUpdate(
     const double aCtrlInEci[3], 
     const double y[6], 
     double yDot[6]) {
+    /*
+	State update equations for RK4 integration. 
+    Computes the time derivative of the state vector y = [r(3), v(3)] given the current state and acceleration.
+
+    Parameters
+    ----------
+    solarGrav: int
+        Flag to include solar gravity perturbation (1 to include, 0 to exclude)
+    lunarGrav: int
+        Flag to include lunar gravity perturbation (1 to include, 0 to exclude)
+    drag: int
+        Flag to include atmospheric drag perturbation (1 to include, 0 to exclude)
+    jnum: int
+        Number of zonal harmonics to include in Earth's gravity model (0 for point mass, 2 for J2, etc.)
+    moon_r: Array
+        Position vector of the Moon in kilometers [x;y;z]. Required if lunarGrav is 1.
+    sun_r: Array
+        Position vector of the Sun in kilometers [x;y;z]. Required if solarGrav is 1.
+    Cd: double
+        Drag coefficient for atmospheric drag calculation. Required if drag is 1.
+    normA: double
+        Spacecraft cross-sectional area divided by mass (A/m) for atmospheric drag calculation. Required if drag is 1.
+    aCtrlInEci: Array
+        Control acceleration vector in ECI frame in km/s^2. Can be zero if no control acceleration.
+    y: Array
+		State vector [r(3), v(3)] at the current time step.
+
+    Returns
+    -------
+	yDot: Array
+		State derivative vector [rDot(3), vDot(3)] where rDot = v and vDot = acceleration(r) at the current time step.
+    */
 
     /* State update: y = [r(3), v(3)], yDot = [v, a] */
 
@@ -593,7 +692,6 @@ void stateUpdate(
     v3_copy(vDot, yDot + 3);
 }
 
-// Propagate orbit using RK4
 void Orbit_rk4(
     const int solarGrav,
     const int lunarGrav,
@@ -607,8 +705,39 @@ void Orbit_rk4(
     double dt,
     double r[3],
     double v[3]) {
+    /*
+	Propagates orbit using 4th order Runge-Kutta numerical integration method with the state update function defined above.
 
-	/* Propagate orbit using RK4 method */
+    Parameters
+    ----------
+    solarGrav: int
+		Flag to include solar gravity perturbation (1 to include, 0 to exclude)
+	lunarGrav: int
+		Flag to include lunar gravity perturbation (1 to include, 0 to exclude)
+	drag: int
+	    Flag to include atmospheric drag perturbation (1 to include, 0 to exclude)
+	jnum: int
+	    Number of zonal harmonics to include in Earth's gravity model (0 for point mass, 2 for J2, etc.)
+	moon_r: Array
+	    Position vector of the Moon in kilometers [x;y;z]. Required if lunarGrav is 1.
+	sun_r: Array
+	    Position vector of the Sun in kilometers [x;y;z]. Required if solarGrav is 1.
+	Cd: double
+	    Drag coefficient for atmospheric drag calculation. Required if drag is 1.
+	normA: double
+	    Spacecraft cross-sectional area divided by mass (A/m) for atmospheric drag calculation. Required if drag is 1.
+	aCtrlInEci: Array
+	    Control acceleration vector in ECI frame in km/s^2. Can be zero if no control acceleration.
+    dt: double
+		Time step for propagation in seconds.
+
+    Returns
+    -------
+    r: Array
+		Updated position vector in kilometers [x;y;z] after propagation.
+	v: Array
+		Updated velocity vector in kilometers per second [vx;vy;vz] after propagation.
+    */
 
     double y0[6], k1[6], k2[6], k3[6], k4[6], y[6], tmp[6];
     // y0 = [r, v]
@@ -642,6 +771,23 @@ void Orbit_rk4(
 
 
 int eclipse(const double rSc[3], const double sun_rUnit[3]) {
+    /*
+	Determines whether Earth-orbiting spacecraft is in eclipse by the Sun using geometric calculations 
+    based on the apparent size of the Earth and Sun from the spacecraft's perspective.
+
+    Parameters
+    ----------
+    rSc: Array
+		Spacecraft position vector in kilometers [x;y;z].
+    sun_rUnit: Array
+		Unit vector from Earth to Sun in the inertial frame [x;y;z]
+
+    Returns
+    -------
+    eclipseFlag: int
+		Flag for spacecraft eclipse status (1 if in eclipse, 0 if not in eclipse)
+    */
+
     double rScMag = v3_norm(rSc);
 
     // rScUnit = rSc / rScMag
@@ -684,11 +830,19 @@ void grav(const double r[3], const int body, const double rBody[3], double agrav
     /*
     Computes the gravitational acceleration
 
-    :param r: Cartesian Position vector in kilometers [x;y;z].
-    :param body: body variable
-	:param rBody: position vector of the body exerting gravity
-    :return: agrav, The total acceleration vector due to the gravity in 
-                km/sec^2 [accelx;accely;accelz]
+    Parameters
+    ----------
+	r: Array
+	    Cartesian Position vector in kilometers [x;y;z].
+	body: int
+	    Celestial body for which to calculate gravity (CELESTIAL_EARTH, CELESTIAL_MOON, CELESTIAL_SUN)
+	rBody: Array
+	    Position vector of the body exerting gravity in kilometers [x;y;z]
+
+    Returns
+    -------
+	agrav: Array
+	    The total acceleration vector due to the gravity in km/sec^2 [accelx;accely;accelz]
     */
     double mu = 0.0;
     switch (body)
@@ -728,6 +882,24 @@ void grav(const double r[3], const int body, const double rBody[3], double agrav
 
 void jPerturb(const double r[3], int num, const int body, double ajtot[3])
 {
+    /*
+	J-perturbation acceleration for Earth and Moon. Sun is not oblate, so no J perturbations are applied.
+
+    Parameters
+    ----------
+    r: Array
+		Cartesian Position vector in kilometers [x;y;z].
+    num: int
+		Number of zonal harmonics to include (2-6)
+	body: int
+	    Celestial body for which to calculate J perturbations (CELESTIAL_EARTH, CELESTIAL_MOON, CELESTIAL_SUN)
+
+    Returns
+    -------
+    ajtot: Array
+		Total acceleration vector due to J perturbations in km/sec^2 [accelx;accely;accelz]
+    */
+
     double mu;
     double req;
     double J2, J3, J4, J5, J6;
@@ -816,11 +988,10 @@ void jPerturb(const double r[3], int num, const int body, double ajtot[3])
     }
 }
 
-void    oe2rv(double mu, const double oe[6], double r[3], double v[3])
+void oe2rv(double mu, const double oe[6], double r[3], double v[3])
 {
-
     /*
-    Translates the orbit elements :
+    Translates the Keplerian orbit elements :
 
     =======================================
     a   semi - major axis         km
@@ -832,9 +1003,20 @@ void    oe2rv(double mu, const double oe[6], double r[3], double v[3])
     =======================================
 
     to the inertial Cartesian position and velocity vectors.
-    The attracting body is specified through the supplied
-    gravitational constant mu(units of km ^ 3 / s ^ 2).
+    
+    Parameters
+    ----------
+    mu : double
+        Gravitational parameter in  km^3/s^2
+    oe : Array
+        Keplerian orbit elements (as defined above)
 
+    Returns
+    -------
+    r : Array
+        Inertial position vector of the spacecraft in km  [x;y;z]
+    v : Array
+        Inertial velocity vector of the spacecraft in km/s [vx;vy;vz]
      */
 
 
@@ -854,7 +1036,7 @@ void    oe2rv(double mu, const double oe[6], double r[3], double v[3])
     /* define what is a small numerical value */
     eps = 1e-12;
 
-    /* map classical elements structure into local variables */
+    /* map Keplerian elements structure into local variables */
     a = oe[0];
     e = oe[1];
     i = oe[2];
@@ -898,7 +1080,7 @@ void rv2oe(double mu, const double r[3], const double v[3], double oe[6])
     /*
     Translates the orbit elements inertial Cartesian position
     vector r and velocity vector v into the corresponding
-    classical orbit elements where
+    Keplerian orbit elements where
 
     === ========================= =======
     a   semi-major axis           km
@@ -909,10 +1091,19 @@ void rv2oe(double mu, const double r[3], const double v[3], double oe[6])
     f   true anomaly angle        rad
     === ========================= =======
 
-    If the orbit is rectilinear, then this will be the eccentric or hyperbolic anomaly
+    Parameters
+    ----------
+    mu : double
+        Gravitational parameter in  km^3/s^2
+    r : Array
+        Inertial position vector of the spacecraft in km  [x;y;z]
+    v : Array
+        Inertial velocity vector of the spacecraft in km/s [vx;vy;vz]
 
-    The attracting body is specified through the supplied
-    gravitational constant mu (units of km^3/s^2).
+    Returns
+    -------
+    oe : Array
+        Keplerian orbit elements (as defined above)
     */
 
     double hVec[3];             /* orbit angular momentum vector */
@@ -926,8 +1117,6 @@ void rv2oe(double mu, const double r[3], const double v[3], double oe[6])
     double p;                   /* the parameter or the semi-latus rectum */
     double argP;                /* argument of perigee */
     double RAAN;                /* argument of the ascending node */
-	double rPeriap;             /* perigee radius */
-	double rApoap;              /* apogee radius */
 	double alpha;               /* semi-major axis parameter */
     double v3[3];               /* temp vector */
     double n1Hat[3];            /* 1st inertial frame base vector */
@@ -942,7 +1131,7 @@ void rv2oe(double mu, const double r[3], const double v[3], double oe[6])
     double eps;                 /* small numerical value parameter */
 
     /* define what is a small numerical value */
-    eps = 1e-12;
+    eps = 1e-16;
 
     /* define inertial frame axes */
     v3_set(1.0, 0.0, 0.0, n1Hat);
@@ -974,7 +1163,6 @@ void rv2oe(double mu, const double r[3], const double v[3], double oe[6])
     v3_scale(v, v3_dot(r, v) / mu, v3);
     v3_sub(eVec, v3, eVec);
     e = v3_norm(eVec);
-    rPeriap = p / (1.0 + e);
 
     /* Orbit eccentricity unit vector */
     if (e > eps) {
@@ -990,12 +1178,10 @@ void rv2oe(double mu, const double r[3], const double v[3], double oe[6])
     if (fabs(alpha) > eps) {
         /* elliptic or hyperbolic case */
         a = 1.0 / alpha;
-        rApoap = p / (1.0 - e);
     }
     else {
         /* parabolic case */
         a = 0.0;
-        rApoap = 0.0;
     }
 
     /* Calculate the inclination */
@@ -1060,10 +1246,15 @@ void oe2ee(const double oe[6], double ee[6])
     Q2  tan(i/2) * cos(RAAN)   
     === =================================== =======
 
-    If the orbit is rectilinear, then this will be the eccentric or hyperbolic anomaly
+    Parameters
+    ----------
+    oe : Array
+        Keplerian orbit elements (as defined above)
 
-    The attracting body is specified through the supplied
-    gravitational constant mu (units of km^3/s^2).
+    Returns
+    -------
+    ee : Array
+        Equinoctial elements (as defined above)
     */
 
     double a = oe[0];
@@ -1109,6 +1300,20 @@ void rv2ee(double mu, const double r[3], const double v[3], double ee[6])
     gravitational constant mu (units of km^3/s^2).
     
     Ref: "Satellite Orbits," Montenbruck & Gill
+
+    Parameters
+    ----------
+    mu : double
+        Gravitational parameter
+    r : Array
+        Inertial position vector of the spacecraft in km  [x;y;z]
+    v : Array
+        Inertial velocity vector of the spacecraft in km/s [vx;vy;vz]
+
+    Returns
+    -------
+    ee : Array
+        Equinoctial elements (as defined above)
     */
 
     const double eps = 1e-13;
@@ -1222,6 +1427,20 @@ void ee2rv(double mu, const double ee[6], double r[3], double v[3])
     gravitational constant mu (units of km^3/s^2).
     
     Ref: Battin page 494
+
+    Parameters
+    ----------
+    mu : double
+        Gravitational parameter
+    ee : Array
+        Equinoctial elements (as defined above)
+
+    Returns
+    -------
+    r : Array
+        Inertial position vector of the spacecraft in km  [x;y;z]
+    v : Array
+        Inertial velocity vector of the spacecraft in km/s [vx;vy;vz]
     */
 
     double a = ee[0];
@@ -1274,6 +1493,22 @@ void ee2rv(double mu, const double ee[6], double r[3], double v[3])
 
 double E2f(double Ecc, double e)
 {
+    /*
+    Eccentric to True Anomaly
+
+    Parameters
+    ----------
+    E : double
+        Eccentric anomaly
+    e : double
+        eccentricity
+
+    Returns
+    -------
+    f : double
+        True anomaly
+    */
+
     double f;
 
     if((e >= 0) && (e < 1)) {
@@ -1287,6 +1522,22 @@ double E2f(double Ecc, double e)
 
 double E2M(double Ecc, double e)
 {
+    /*
+    Eccentric to Mean Anomaly 
+
+    Parameters
+    ----------
+    E : double
+        Eccentric anomaly
+    e : double
+        eccentricity
+
+    Returns
+    -------
+    M : double
+        Mean anomaly
+    */
+
     double M;
 
     if((e >= 0) && (e < 1)) {
@@ -1300,6 +1551,22 @@ double E2M(double Ecc, double e)
 
 double f2E(double f, double e)
 {
+    /*
+    True to Eccentric Anomaly
+
+    Parameters
+    ----------
+    f : double
+        True anomaly
+    e : double
+        eccentricity
+
+    Returns
+    -------
+    E : double
+        Eccentric anomaly
+    */
+
     double Ecc;
 
     if((e >= 0) && (e < 1)) {
@@ -1313,21 +1580,37 @@ double f2E(double f, double e)
 
 double M2E(double M, double e)
 {
-    double eps = 1e-13;
-    double dE = 10 * eps;
+    /*
+    Mean to Eccentric Anomaly (Solves Kepler's equation using Newton's method)
+
+    Parameters
+    ----------
+    M : double
+        Mean anomaly
+    e : double
+        eccentricity
+
+    Returns
+    -------
+    E : double
+        Eccentric anomaly
+    */
+
+    double eps = 1e-16;
+    double dE;
     double EPrev = M;
     double E;
     int    count = 0;
     int    maxIteration = 200;
 
     if((e >= 0) && (e < 1)) {
-        while(fabs(dE) > eps) {
+        for (int j = 0; j < maxIteration; ++j) {
             E = M + e * sin(EPrev);
             dE = E - EPrev;
             EPrev = E;
             count += 1;
-            if(++count > maxIteration) {
-                dE = 0.;
+            if(fabs(dE) < eps) {
+                return E;
             }
         }
     } else {
@@ -1340,15 +1623,24 @@ double M2E(double M, double e)
 void dragPerturb(const double Cd, const double normA, const double r[3], const double v[3], double ad[3]) {
 
     /*
-     * Inputs:
-     *   Cd = drag coefficient of the spacecraft
-	 *   normA = cross-sectional area of the spacecraft in m^2 divided by the mass of the spacecraft in kg
-     *   r = Inertial position vector of the spacecraft in km  [x;y;z]
-     *   v = Inertial velocity vector of the spacecraft in km/s [vx;vy;vz]
-     * Outputs:
-     *   as = The inertial acceleration vector due to atmospheric
-     *             drag in km/sec^2
-     */
+    Drag perturbation acceleration
+
+    Parameters
+    ----------
+    Cd : double
+        drag coefficient
+    normA : double
+        cross-sectional area of the spacecraft in m^2 divided by the mass of the spacecraft in kg
+    r : Array
+        Inertial position vector of the spacecraft in km  [x;y;z]
+    v : Array
+        Inertial velocity vector of the spacecraft in km/s [vx;vy;vz]
+
+    Returns
+    -------
+    ad : Array
+        Inertial acceleration vector due to atmospheric drag in km/sec^2
+    */
 
     double rMag;
     double vMag;
@@ -1383,10 +1675,22 @@ void dragPerturb(const double Cd, const double normA, const double r[3], const d
 
 void moonEph(double tJ2000, double rUnit[3], double r[3])
 {
-
     /*
     Moon Ephemeris relative to Earth
-    Ref: "An Alternative Lunar Ephemeris Model for On-board Flight Software Use" by David Simpson
+
+    Ref: David Simpson, "An Alternative Lunar Ephemeris Model for On-board Flight Software Use"
+
+    Parameters
+	----------
+	tJ2000 : double
+	    Time in seconds since J2000 epoch (January 1, 2000, 12:00 TT)
+
+	Returns
+	-------
+    rUnit : Array
+		Unit vector from Earth to Moon in ECI frame [x; y; z]
+	r : Array
+	    Vector from Earth to Moon in ECI frame in km [x; y; z]
     */
 
     double T = 0.0;
@@ -1473,10 +1777,22 @@ void moonEph(double tJ2000, double rUnit[3], double r[3])
 
 void sunEph(double tJ2000, double rUnit[3], double r[3])
 {
-
     /*
     Sun Ephemeris relative to Earth
+
     Ref: 2017 Astronomical Almanac Section C5    
+
+	Parameters
+	----------
+	tJ2000 : double
+	    Time in seconds since J2000 epoch (January 1, 2000, 12:00 TT)
+
+	Returns
+	-------
+    rUnit : Array
+		Unit vector from Earth to Sun in ECI frame [x; y; z]
+	r : Array
+	    Vector from Earth to Sun in ECI frame in km [x; y; z]
     */
     
     double n;
@@ -1524,6 +1840,8 @@ void sunEph(double tJ2000, double rUnit[3], double r[3])
 void envAngles(const double rChief[3], const double rDeputy[3], const double rMoon[3], const double rSun[3],
     double *losEarthAng, double *losMoonAng, double *losSunAng) {
     /*
+	Environmental Line-of-Sight Angles
+   
     Parameters
     ----------
     rChief : Array
