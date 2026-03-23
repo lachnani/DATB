@@ -151,7 +151,7 @@ def parseWptTbl(yaml, formation = None):
                 wptGen["endTime"],
                 wptGen["numWpts"])
             
-            if yaml["relStateNatural"]:
+            if yaml["relStateNatural"] and ii == 0:
                 # Replace the formation deputy position with the natural path.
                 # Assume curvilinear for long-range accuracy
                 formation = frm.Formation(

@@ -6,6 +6,7 @@ Created on Sun Apr 20 19:07:30 2025
 """
 
 import numpy as np
+from guidance import linearizedModels as lm
 
 def korim(L, oth, kovLim):
     """
@@ -348,8 +349,7 @@ def clroeProp(L, n, oth, tStep, kovLim, kovType = 'PRISM'):
             return False
         
     return True
-            
-        
+                    
         
 def clroeEval(L, nt):
     """
@@ -381,6 +381,47 @@ def clroeEval(L, nt):
     rho[2] = L[4]*np.cos(nt + L[5])
     
     return rho    
+
+def hcwProp(r, v, n, oth, tStep, kovLim, kovType = 'PRISM'):
+    """
+    Assesses passive safety using HCW propagation
+
+    Parameters
+    ----------
+    r : 3x1 double
+        Initial relative position in RIC
+    v : 3x1 double
+        Initial relative velocity in RIC
+    n : double
+        Chief orbit mean motion
+    oth : double
+        Operational time horizon (sec)
+    tStep: double
+        time step
+    KovLim : nx1 double
+        Keep out volume limits.
+    KovType : TYPE, optional
+        Keep out volume type. The default is 'PRISM'.
+
+    Returns
+    -------
+    psa : boolean
+        Passive safety assessment
+
+    """
+    
+    t = 0 
+    
+    stm = lm.hcw(n).Phi(0, tStep)
+    
+    while t < oth:
+        t = t + tStep    
+        r, v = lm.multPhi(stm, r, v)
+        kovBreach = checkKovBreach(r, kovLim, kovType)
+        if kovBreach:
+            return False
+        
+    return True
     
     
 def checkKovBreach(rho, kovLim, kovType = 'PRISM'):
