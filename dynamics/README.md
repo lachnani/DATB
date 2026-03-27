@@ -2,8 +2,6 @@
 
 The DATB dynamics module contains models and utilities for orbital mechanics and translational aspects of relative motion.
 
-## Primary Classes
-
 There are four dynamics classes in DATB:
 
 * Moon Ephemeris
@@ -11,7 +9,7 @@ There are four dynamics classes in DATB:
 * Orbit
 * Formation
 
-### Ephemerides
+## Ephemerides
 
 There are classes for moon and sun ephemerides contained in ephemerides.py. Each classes contains three attributes:
 
@@ -21,7 +19,7 @@ There are classes for moon and sun ephemerides contained in ephemerides.py. Each
 
 The update(tJ2000) method updates the time and position of the ephemeris.
 
-### Orbit
+## Orbit
 
 The orbit class is contained in orbit.py. The orbit class contains the following attributes:
 
@@ -45,7 +43,7 @@ The orbit class is contained in orbit.py. The orbit class contains the following
 
 The propagate(dt) method uses and RK4 routine to propagate the orbit and ephemerides.
 
-### Formation
+## Formation
 
 The formation class is contained in formation.py. The formation class contains the following attributes:
 

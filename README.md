@@ -1,6 +1,6 @@
 # DATB: Differential Astrodynamics Test Bench
 
-DATB (Differential Astrodynamics Test Bench) is a modular planning, test, simulation, and visualization suite for relative orbital motion.
+DATB (Differential Astrodynamics Test Bench) is a modular planning, test, simulation, and visualization suite for relative orbital motion and spacecraft formation flying.
 
 DATB is built with a C backend and a Python front end for easy scripting and rapid runtimes.
 
