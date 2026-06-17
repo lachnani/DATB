@@ -12,6 +12,7 @@ import math
 import numpy as np
 from dynamics import ephemerides as eph
 from dynamics import dynamicsUtils as uDyn
+from kinematics import kinematicsUtils as uKin
 
 MU_EARTH = 398600.436 #km^3/s^2
 D2R = np.pi/180.0
@@ -44,16 +45,16 @@ class Orbit:
         if stateType == "STATE_POSVEL":
             self.r = state[0:3]
             self.v = state[3:6]
-            uDyn.rv2ee(self.mu, self.r, self.v, self.ee)
-            uDyn.rv2oe(self.mu, self.r, self.v, self.oe)
+            uKin.rv2ee(self.mu, self.r, self.v, self.ee)
+            uKin.rv2oe(self.mu, self.r, self.v, self.oe)
         elif stateType == "STATE_KEPEL":
             self.oe = state
-            uDyn.oe2ee(self.oe, self.ee)
-            uDyn.oe2rv(self.mu, self.oe, self.r, self.v)
+            uKin.oe2ee(self.oe, self.ee)
+            uKin.oe2rv(self.mu, self.oe, self.r, self.v)
         elif stateType == "STATE_EQEL":
             self.ee = state
-            uDyn.ee2rv(self.mu, self.ee, self.r, self.v)
-            uDyn.rv2oe(self.mu, self.r, self.v, self.oe)      
+            uKin.ee2rv(self.mu, self.ee, self.r, self.v)
+            uKin.rv2oe(self.mu, self.r, self.v, self.oe)      
             
         self.meanMotion = np.sqrt(self.mu/self.oe[0]**3)
 
@@ -119,8 +120,8 @@ class Orbit:
         self.tJ2000 = self.tJ2000 + dt
         
         if (self.settings["elements"] == True):
-            uDyn.rv2ee(self.mu, self.r, self.v, self.ee)
-            uDyn.rv2oe(self.mu, self.r, self.v, self.oe)
+            uKin.rv2ee(self.mu, self.r, self.v, self.ee)
+            uKin.rv2oe(self.mu, self.r, self.v, self.oe)
             if self.oe[0] > 0:
                 self.meanMotion = np.sqrt(self.mu/self.oe[0]**3)
             else:
