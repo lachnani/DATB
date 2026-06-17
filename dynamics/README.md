@@ -57,7 +57,7 @@ The formation class is contained in formation.py. The formation class contains t
 * relVelCurvRic: relative velocity in the curvilinear RIC frame
 * doe: differential Keplerian orbit elements
 * dee: differential Equinoctial elements
-* dAmico: d'Amico relative orbital elements
+* roe: d'Amico relative orbital elements
 * rectClroe: rectilinear CLROEs
 * curvClroe: curvilinear CLROEs
 * dcmInr2Ric: ECI to RIC frame DCM
