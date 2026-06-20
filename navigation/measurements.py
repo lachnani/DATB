@@ -18,6 +18,7 @@ include:
     - anglesRangeRate: Azimuth, Elevation, Range, and Range-Rate
     - cv3dof: Relative Position (in RIC)
     - cv6dof: Relative Position and Velocity (in RIC)
+    - pnt: Inertial deputy PNT
     
 For each function, the inputs are the formation struct frm, and the measurement 
 covariance R.
@@ -49,5 +50,8 @@ def cv3dof(frm, R):
 def cv6dof(frm, R):
     return np.array([frm.relPosRectRic,frm.relVelRectRic]) + \
         rand.multivariate_normal(np.zeros(2,),R)  
+        
+def pnt(frm, R):
+    return frm.deputy.r + rand.multivariate_normal(np.zeros(3,),R) 
               
     
