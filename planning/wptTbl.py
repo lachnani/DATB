@@ -6,7 +6,7 @@ Created on Sun Dec 14 16:35:34 2025
 """
 
 import numpy as np
-from dynamics import dynamicsUtils as uDyn
+from kinematics import kinematicsUtils as uKin
 
 class waypointTable():
     """ 
@@ -45,7 +45,7 @@ class waypointTable():
         relPosRectRic = np.zeros((3,))
         relVelRectRic = np.zeros((3,))
         for wpt in range(numWpts):
-            uDyn.clroe2ric(L, n, wptTimes[wpt], relPosRectRic, relVelRectRic) 
+            uKin.clroe2ric(L, n, wptTimes[wpt], relPosRectRic, relVelRectRic) 
             wptPos[:,wpt] = relPosRectRic
             wptVel[:,wpt] = relVelRectRic
         self.t = np.append(self.t, wptTimes)
@@ -83,7 +83,7 @@ class waypointTable():
                 for wpt in range(numWpts):
                     t = t0 + wpt*dt + rev*revTime
                     self.t = np.append(self.t, t)
-                    uDyn.clroe2ric(L, n*speedSf, t, pos, vel)    
+                    uKin.clroe2ric(L, n*speedSf, t, pos, vel)    
                     if constantRange:
                         pos = L[0]*pos/np.linalg.norm(pos)
                     self.relPosRic = np.append(self.relPosRic, np.reshape(pos, (-1, 1)), axis=1)

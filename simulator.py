@@ -208,7 +208,7 @@ class Simulator():
         if (self.settings["formation"]["relStates"] == True):
             self.log.doe[self.log.i]            = self.frm.doe
             self.log.dee[self.log.i]            = self.frm.dee
-            self.log.dAmico[self.log.i]         = self.frm.dAmico
+            self.log.roe[self.log.i]            = self.frm.roe
             self.log.rectClroe[self.log.i]      = self.frm.rectClroe
             self.log.curvClroe[self.log.i]      = self.frm.curvClroe
         if (self.settings["formation"]["environments"] == True):

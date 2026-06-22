@@ -11,8 +11,8 @@ sys.path.insert(0, '..')
 import unittest
 import orbit as orb
 import formation as frm
-import dynamicsUtils as uDyn
 import numpy as np
+from kinematics import kinematicsUtils as uKin
 
 
 class TestOrbit(unittest.TestCase):
@@ -41,7 +41,7 @@ class TestOrbit(unittest.TestCase):
         oe2 = self.frm1.deputy.oe
         relPosRectRic = np.zeros((3,))
         relVelRectRic = np.zeros((3,))
-        uDyn.rv2ric(self.frm1.chief.r, self.frm1.chief.v, \
+        uKin.rv2ric(self.frm1.chief.r, self.frm1.chief.v, \
             self.frm1.deputy.r, self.frm1.deputy.v, relPosRectRic, relVelRectRic)
         
         self.assertAlmostEqual(np.all(oe2-self.state), np.all(self.doe), 4)
@@ -84,24 +84,24 @@ class TestOrbit(unittest.TestCase):
         relVelCurvRic0 = np.array([0,-np.linalg.norm(v)*np.pi/2,0])
         relPosRectRic = np.zeros((3,))
         relVelRectRic = np.zeros((3,))
-        uDyn.curvRic2rectRic(r, v, relPosCurvRic0, relVelCurvRic0, relPosRectRic, relVelRectRic)
+        uKin.curvRic2rectRic(r, v, relPosCurvRic0, relVelCurvRic0, relPosRectRic, relVelRectRic)
         relPosCurvRic = np.zeros((3,))
         relVelCurvRic = np.zeros((3,))
-        uDyn.rectRic2curvRic(r, v, relPosRectRic, relVelRectRic, relPosCurvRic, relVelCurvRic)
+        uKin.rectRic2curvRic(r, v, relPosRectRic, relVelRectRic, relPosCurvRic, relVelCurvRic)
         self.assertAlmostEqual(np.all(relPosCurvRic), np.all(relPosCurvRic0))
         self.assertAlmostEqual(np.all(relVelCurvRic), np.all(relVelCurvRic0))
         
         relPosCurvRic0 = np.array([0,0,np.linalg.norm(r)*np.pi/2])
         relVelCurvRic0 = np.array([0,0,0])
-        uDyn.curvRic2rectRic(r, v, relPosCurvRic0, relVelCurvRic0, relPosRectRic, relVelRectRic)
-        uDyn.rectRic2curvRic(r, v, relPosRectRic, relVelRectRic, relPosCurvRic, relVelCurvRic)
+        uKin.curvRic2rectRic(r, v, relPosCurvRic0, relVelCurvRic0, relPosRectRic, relVelRectRic)
+        uKin.rectRic2curvRic(r, v, relPosRectRic, relVelRectRic, relPosCurvRic, relVelCurvRic)
         self.assertAlmostEqual(np.all(relPosCurvRic), np.all(relPosCurvRic0))
         self.assertAlmostEqual(np.all(relVelCurvRic), np.all(relVelCurvRic0))
         
         relPosCurvRic0 = np.array([10,0,0])
         relVelCurvRic0 = np.array([0,0,0])
-        uDyn.curvRic2rectRic(r, v, relPosCurvRic0, relVelCurvRic0, relPosRectRic, relVelRectRic)
-        uDyn.rectRic2curvRic(r, v, relPosRectRic, relVelRectRic, relPosCurvRic, relVelCurvRic)
+        uKin.curvRic2rectRic(r, v, relPosCurvRic0, relVelCurvRic0, relPosRectRic, relVelRectRic)
+        uKin.rectRic2curvRic(r, v, relPosRectRic, relVelRectRic, relPosCurvRic, relVelCurvRic)
         self.assertAlmostEqual(np.all(relPosCurvRic), np.all(relPosCurvRic0))
         self.assertAlmostEqual(np.all(relVelCurvRic), np.all(relVelCurvRic0))
         
@@ -115,12 +115,12 @@ class TestOrbit(unittest.TestCase):
         relVelRectRic0 = np.array([0.0,0.0,0.0])
         clroe0 = np.array([0.0,0.0,0.0,1000.0,0.0,0.0])
         clroe = np.zeros((6,))
-        uDyn.ric2clroe(relPosRectRic0, relVelRectRic0, self.frm1.chief.meanMotion, 0.0, clroe)
+        uKin.ric2clroe(relPosRectRic0, relVelRectRic0, self.frm1.chief.meanMotion, 0.0, clroe)
         self.assertAlmostEqual(np.all(clroe), np.all(clroe0))
         
         relPosRectRic = np.zeros((3,))
         relVelRectRic = np.zeros((3,))
-        uDyn.clroe2ric(clroe, self.frm1.chief.meanMotion, 0.0, relPosRectRic, relVelRectRic)
+        uKin.clroe2ric(clroe, self.frm1.chief.meanMotion, 0.0, relPosRectRic, relVelRectRic)
         self.assertAlmostEqual(np.all(relPosRectRic), np.all(relPosRectRic0))
         self.assertAlmostEqual(np.all(relVelRectRic), np.all(relVelRectRic0))
         
@@ -128,7 +128,7 @@ class TestOrbit(unittest.TestCase):
         clroe0 = np.array([10,0.0,0.0,0.0,0.0,0.0])
         relPosRectRic = np.zeros((3,))
         relVelRectRic = np.zeros((3,))
-        uDyn.clroe2ric(clroe0, self.frm1.chief.meanMotion, 0.0, relPosRectRic, relVelRectRic)
+        uKin.clroe2ric(clroe0, self.frm1.chief.meanMotion, 0.0, relPosRectRic, relVelRectRic)
         self.assertNotAlmostEqual(relPosRectRic[0], 0.0)
         self.assertAlmostEqual(relPosRectRic[1], 0.0)
         self.assertAlmostEqual(relPosRectRic[2], 0.0)

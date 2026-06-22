@@ -34,7 +34,7 @@ def plotAll(log, path, tag, settings):
         CurvRic_Plot(log, path, tag)
         Doe_Plot(log, path, tag)
         Dee_Plot(log, path, tag)
-        DAmicoPhase_Plot(log, path, tag)
+        RoePhase_Plot(log, path, tag)
         RectClroe_Plot(log, path, tag)
         CurvClroe_Plot(log, path, tag)
     if (settings["formation"]["environments"] == True):
@@ -891,32 +891,32 @@ def MeasParam_Plot(log, path, tag):
     fullFigPath = path + r"\measParam_" + tag + r".png"
     plt.savefig(fullFigPath)
     
-def DAmicoPhase_Plot(log, path, tag):
+def RoePhase_Plot(log, path, tag):
     """
     D'Amico ROE Phase plots
 
     """
     
-    fig_dAmicoPhase_plt = plt.figure()
+    fig_roePhase_plt = plt.figure()
     plt.suptitle("D'Amico ROE Phase")
     
     ax1 = plt.subplot(1,2,1)
-    de = ax1.plot(log.dAmico.loc['dex',:], log.dAmico.loc['dey',:], color='r')[0]
-    deEnd = ax1.scatter(log.dAmico.loc['dex',log.i], log.dAmico.loc['dey',log.i], color='r')
+    de = ax1.plot(log.roe.loc['dex',:], log.roe.loc['dey',:], color='r')[0]
+    deEnd = ax1.scatter(log.roe.loc['dex',log.i], log.roe.loc['dey',log.i], color='r')
     ax1.set_xlabel(r"$\delta$$e_x$")
     ax1.set_ylabel(r"$\delta$$e_y$")
     # ax1.set_aspect('equal', adjustable='datalim')
     plt.grid()
     
     ax2 = plt.subplot(1,2,2)
-    de = ax2.plot(log.dAmico.loc['dix',:], log.dAmico.loc['diy',:], color='r')[0]
-    deEnd = ax2.scatter(log.dAmico.loc['dix',log.i], log.dAmico.loc['diy',log.i], color='r')
+    de = ax2.plot(log.roe.loc['dix',:], log.roe.loc['diy',:], color='r')[0]
+    deEnd = ax2.scatter(log.roe.loc['dix',log.i], log.roe.loc['diy',log.i], color='r')
     ax2.set_xlabel(r"$\delta$$i_x$")
     ax2.set_ylabel(r"$\delta$$i_y$")
     # ax2.set_aspect('equal', adjustable='datalim')
     plt.grid()
     
-    fig_dAmicoPhase_plt.tight_layout()
+    fig_roePhase_plt.tight_layout()
     
-    fullFigPath = path + r"\dAmicoPhase_" + tag + r".png"
+    fullFigPath = path + r"\roePhase_" + tag + r".png"
     plt.savefig(fullFigPath)
