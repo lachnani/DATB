@@ -34,7 +34,7 @@ class TestEstimator(unittest.TestCase):
             A[2,3] = dt 
             return A 
         self.F = F 
-        def f(dt,x,u):
+        def f(dt,x,u,param):
             return np.matmul(F(dt,x),x)
         self.f = f
         def z(x):
@@ -68,7 +68,7 @@ class TestEstimator(unittest.TestCase):
         self.x = self.x0 + rand.multivariate_normal(np.zeros(4,),self.Q(dt))
         for ii in range(10):
             self.t = self.t + dt
-            self.x = self.f(dt, self.x, u) + rand.multivariate_normal(np.zeros(4,),self.Q(dt))
+            self.x = self.f(dt, self.x, u, None) + rand.multivariate_normal(np.zeros(4,),self.Q(dt))
             self.ekf.propagate(dt, u)
             
         self.assertEqual(self.t, self.ekf.t)

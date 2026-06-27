@@ -25,6 +25,25 @@ covariance R.
 
 """
 
+def get(frm, measType, R):
+    if measType == "angles":
+        return angles(frm, R)
+    elif measType == "relRange":
+        return relRange(frm, R)
+    elif measType == "anglesRange":
+        return anglesRange(frm, R)
+    elif measType == "relRangeRate":
+        return relRangeRate(frm, R)
+    elif measType == "anglesRangeRate":
+        return anglesRangeRate(frm, R)
+    elif measType == "cv3dof":
+        return cv3dof(frm, R)
+    elif measType == "cv6dof":
+        return cv6dof(frm, R) 
+    elif measType == "pnt":
+        return pnt(frm, R)
+    return
+
 def angles(frm, R):
     return np.array([frm.az,frm.el]) + \
         rand.multivariate_normal(np.zeros(2,),R) 

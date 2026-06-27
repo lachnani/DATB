@@ -8,11 +8,13 @@ Created on Fri Jun 19 23:18:57 2026
 import numpy as np
 from numpy import linalg as la
 from dynamics import dynamicsUtils as uDyn
+from kinematics import kinematicsUtils as uKin
 from dynamics import orbit as orb
+from dynamics import ephemerides as eph
 
-class InertialEKF:
+class DualInertialEKF:
     """
-    Inertial EKF is based on:
+    Dual Inertial EKF is based on:
     Woffinden, David Charles, "Angles-Only Navigation for Autonomous 
     Orbital Rendezvous" (2008). All Graduate Theses and Dissertations. 12.
     https://digitalcommons.usu.edu/etd/12
@@ -20,77 +22,106 @@ class InertialEKF:
     
     def __init__(
             self,
-            t, rc, vc, Pc, rd, vd, Pd, procVar, dvVar, sensor = None
+            tJ2000, rc, vc, Pc, rd, vd, Pd, procVar, dvVar, pert = None
             ):
         
-        # Initialize the nav states
-        self.t = t 
-        self.rc = rc
-        self.vc = vc
-        self.Pc = Pc
-        self.rd = rd
-        self.vd = vd
-        self.Pd = Pd
-        self.procVar = procVar
-        self.dvVar = dvVar
-        self.sensor = sensor
+        # Initialize the inertial nav states nav states
+        self.tJ2000 = tJ2000
+        self.rsoPosInr = rc
+        self.rsoVelInr = vc
+        self.rsoCovInr = Pc
+        self.svPosInr = rd
+        self.svVelInr = vd
+        self.svCovInr = Pd
+        
+        # Initialize DCMs
+        self.dcmInr2Ric = np.zeros((3,3))
+        self.dcmRic2Los = np.zeros((3,3))
+        uKin.dcmInr2Ric(self.rsoPosInr, self.rsoVelInr, self.dcmInr2Ric)
+        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        
+        # Initialize sun and moon ephemeris
+        self.sun = eph.SunEphemeris(self.tJ2000)
+        self.moon = eph.MoonEphemeris(self.tJ2000)    
         
         # Initialize the filter
-        x = np.array([self.rc, self,vc, self.rd, self.vd])
+        x = np.array([self.rsoPosInr, self.rsoVelInr, self.svPosInr, self.svVelInr])
         P = np.block([
                 [Pc,               np.zeros((6, 6))],
                 [np.zeros((6, 6)), Pd              ]])
-        S = dvVar*np.eye(3)
+        S = np.block([
+            [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+            [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+            [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+            [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),dvVar*np.eye(3)]])
+        def processNoise(dt):
+            ncvQ = ncvProcessNoise(dt)
+            Q = procVar*np.block([
+                    [ncvQ,             np.zeros((6, 6))],
+                    [np.zeros((6, 6)), ncvQ            ]])
+            return Q
+        self.ekf = ExtendedKalmanFilter(
+            self.tJ2000, 
+            x, 
+            P, 
+            processNoise, 
+            stateUpdateDualInertial, 
+            stmDualInertial, 
+            S)
         
+        # Derived relative states
+        self.relPosRectRic = np.zeros((3,))
+        self.relVelRectRic = np.zeros((3,))
+        uKin.rv2ric(self.rsoPosInr, self.rsoVelInr, self.svPosInr, self.svVelInr, self.relPosRectRic, self.relVelRectRic)
+        self.relCovRectRic = covInrToRic(P,self.dcmInr2Ric)
         
-    def stateUpdate(self, dt, x, u):
-        """
-        State update function. RK4 orbit propagator for chief and deputy 
-        inertial states
-
-        """
-        rc = x[0:3]
-        vc = x[3:6]
-        rd = x[6:9]
-        vd = x[9:12]
-        uDyn.Orbit_rk4(self.pert["solarGrav"], self.pert["lunarGrav"], self.pert["drag"], self.pert["jnum"], \
-                       self.moon.r, self.sun.r, self.Cd, self.normA, \
-                       np.zeros((3,)), dt, rc, vc)
-        uDyn.Orbit_rk4(self.pert["solarGrav"], self.pert["lunarGrav"], self.pert["drag"], self.pert["jnum"], \
-                       self.moon.r, self.sun.r, self.Cd, self.normA, \
-                       u, dt, rd, vd)
-        return np.array([rc, vc, rd, vd])
-    
-    def stateTransitionMatrix(self, dt, x):
-        """
-        State transition function. Assumes point mass gravity
-
-        """
-        # State vectors
-        rc = x[0:3]
-        rd = x[6:9]
-        rcMag = la.norm(rc)
-        rdMag = la.norm(rd)
-        rcHat = rc/rcMag
-        rdHat = rd/rdMag 
-        # State transition matrix
-        FC1 = np.eye(3)
-        FC2 = -(orb.MU_EARTH/(rcMag**3))*(np.eye(3)-3*np.matmul(rcHat,np.transpose(rcHat)))
-        FD1 = np.eye(3)
-        FD2 = -(orb.MU_EARTH/(rdMag**3))*(np.eye(3)-3*np.matmul(rdHat,np.transpose(rdHat)))
-        F = np.block([
-                [np.zeros((3,3)),FC1,np.zeros((3,3)),np.zeros((3,3))],
-                [FC2,np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
-                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),FD1],
-                [np.zeros((3,3)),np.zeros((3,3)),FD2,np.zeros((3,3))]])
-        return np.eye(12) + F*dt
-    
-    def processNoise(self, dt):
-        ncvQ = ncvProcessNoise(dt)
-        Q = self.procVar*np.block([
-                [ncvQ,             np.zeros((6, 6))],
-                [np.zeros((6, 6)), ncvQ            ]])
-        return Q
+        # Compute measurement parameters
+        self.rng, self.rngRate, self.az, self.el = \
+            uKin.measParams(self.relPosRectRic, self.relVelRectRic)
+        
+        def propagate(self, dt, u):
+            self.ekf.propagate(dt, u)
+            self.sync()
+            
+        def update(self, z, measType):
+            # Determine expected measurement, residual, and measurement sensitivity matrix
+            if measType == "angles":
+                zHat = np.array([self.az,self.el])
+            elif measType == "relRange":
+                zHat = self.rng 
+            elif measType == "anglesRange":
+                zHat = np.array([self.az,self.el,self.rng])
+            elif measType == "relRangeRate":
+                zHat = np.array([self.rng,self.rngRate])
+            elif measType == "anglesRangeRate":
+                zHat = np.array([self.az,self.el,self.rng,self.rngRate])
+            elif measType == "cv3dof":
+                zHat = self.relPosRectRic
+            elif measType == "cv6dof":
+                zHat = np.array([self.relPosRectRic,self.relVelRectRic])
+            elif measType == "pnt":
+                zHat = self.svPosInr
+            
+        def sync(self):
+            # Time
+            self.tJ2000 = self.ekf.t
+            # Absolute states from ekf
+            self.rsoPosInr = self.ekf.x[0:3]
+            self.rsoVelInr = self.ekf.x[3:6]
+            self.rsoCovInr = self.ekf.P[0:6,0:6]
+            self.svPosInr = self.ekf.x[6:9]
+            self.svVelInr = self.ekf.x[9:12]
+            self.svCovInr = self.ekf.P[6:12,6:12]
+            # Inertial to RIC DCM
+            uKin.dcmInr2Ric(self.rsoPosInr, self.rsoVelInr, self.dcmInr2Ric)
+            # Relative states from absolute states
+            uKin.rv2ric(self.rsoPosInr, self.rsoVelInr, self.svPosInr, self.svVelInr, self.relPosRectRic, self.relVelRectRic)
+            self.relCovRectRic = covInrToRic(self.ekf.P,self.dcmInr2Ric)
+            uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+            # Compute measurement parameters
+            self.rng, self.rngRate, self.az, self.el = \
+                uKin.measParams(self.relPosRectRic, self.relVelRectRic)
+        
         
 
 class ExtendedKalmanFilter:
@@ -107,7 +138,7 @@ class ExtendedKalmanFilter:
     Q: function
         process noise funtion Q(dt)
     f: function
-        state update function f(dt, x, u)
+        state update function f(dt, x, u, param)
     F: function
         state transition matrix function F(dt, x)
     S: nxn float
@@ -125,7 +156,7 @@ class ExtendedKalmanFilter:
     """
     def __init__(
             self, 
-            t, x, P, Q, f, F, S
+            t, x, P, Q, f, F, S, param = None
             ):
         
         # Initialize the filter state
@@ -136,6 +167,7 @@ class ExtendedKalmanFilter:
         self.f = f
         self.F = F
         self.S = S
+        self.param = param
         self.n = np.size(x,0)
         
     def propagate(self, dt, u):
@@ -154,7 +186,7 @@ class ExtendedKalmanFilter:
         """
         self.t = self.t + dt
         F = self.F(dt, self.x)
-        self.x = self.f(dt, self.x, u)
+        self.x = self.f(dt, self.x, u, self.param)
         if la.norm(u) > 0.0:
             self.P = np.matmul(F,np.matmul(self.P,np.transpose(F))) + self.Q(dt) + self.S
         else:
@@ -196,3 +228,86 @@ def ncvProcessNoise(dt):
     return np.block([
                     [np.eye(3)*(dt**3)/3,np.eye(3)*(dt**2)/2],
                     [np.eye(3)*(dt**2)/2,np.eye(3)*dt]])
+
+def stateUpdateInertial(dt, x, u, param = None):
+    r = x[0:3]
+    v = x[3:6]
+    if param == None:
+        param.pert["solarGrav"] = False
+        param.pert["lunarGrav"] = False
+        param.pert["drag"] = False
+        param.pert["jnum"] = 0
+        param.moon.r = np.zeros((3,))
+        param.sun.r = np.zeros((3,))
+        param.Cd = 0.0
+        param.normA = 0.0
+        
+    uDyn.Orbit_rk4(param.pert["solarGrav"], param.pert["lunarGrav"], param.pert["drag"], param.pert["jnum"], \
+                   param.moon.r, param.sun.r, param.Cd, param.normA, \
+                   u, dt, r, v)
+    return np.array([r, v])
+
+def stateUpdateDualInertial(dt, x, u, param = None):
+    xc = x[0:6]
+    xd = x[6:12]
+    if param == None:
+        param.chief = None
+        param.deputy = None
+        
+    return np.array([stateUpdateInertial(dt, xc, np.zeros((3,)), param.chief), 
+                     stateUpdateInertial(dt, xd, u, param.deputy)])
+
+def stmInertial(dt, x):
+    # State parameters
+    r = x[0:3]
+    rMag = la.norm(r)
+    rHat = r/rMag
+    # State transition matrix
+    F1 = np.eye(3)
+    F2 = -(orb.MU_EARTH/(rMag**3))*(np.eye(3)-3*np.matmul(rHat,np.transpose(rHat)))
+    F = np.block([
+            [np.zeros((3,3)),F1],
+            [F2,np.zeros((3,3))]])
+    return np.eye(6) + F*dt
+
+def stmDualInertial(dt, x):
+    xc = x[0:6]
+    xd = x[6:12]
+    return np.block([
+            [stmInertial(dt,xc), np.zeros((6, 6))  ],
+            [np.zeros((6, 6))  , stmInertial(dt,xd)]])
+
+def covInrToRic(Pi,RN):
+    """
+    Converts dual inertial convariance to relative RIC covariance.
+    Per Eq. 9.11, 9.12 of Woffinden.
+
+    Parameters
+    ----------
+    Pi : 12x12 double
+        Dual inertial covariance.
+    RN : 3x3 double
+        Inertial to RIC DCM.
+
+    Returns
+    -------
+    Pric: 6x6 double
+        Relative Covariance in RIC.
+
+    """
+    Hr = np.block([-np.eye(3),np.zeros((3,3)),np.eye(3),np.zeros((3,3))])
+    Hv = np.block([np.zeros((3,3)),-np.eye(3),np.zeros((3,3)),np.eye(3)])
+    PrRic = np.matmul(RN,
+                      np.matmul(Hr,
+                                np.matmul(Pi,
+                                          np.matmul(np.transpose(Hr),
+                                                    np.transpose(RN)))))
+    PvRic = np.matmul(RN,
+                      np.matmul(Hv,
+                                np.matmul(Pi,
+                                          np.matmul(np.transpose(Hv),
+                                                    np.transpose(RN)))))
+    return np.block([
+                    [np.zeros((3,3)),PrRic],
+                    [PvRic,np.zeros((3,3))]])
+
