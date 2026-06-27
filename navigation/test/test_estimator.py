@@ -23,9 +23,11 @@ class TestEstimator(unittest.TestCase):
         Create EKF class 
         """
         self.t = 0 
-        self.Q = np.diag(np.array([0,0.2,0,0.2]))
+        def Q(dt):
+            return dt*np.diag(np.array([0,0.2,0,0.2]))
+        self.Q = Q
         self.x0 = np.array([50,1,50,0])
-        self.P0 = 10 * self.Q
+        self.P0 = 10 * self.Q(1)
         def F(dt,x):
             A = np.eye(4)
             A[0,1] = dt 
@@ -57,15 +59,16 @@ class TestEstimator(unittest.TestCase):
     def test_ekf(self):
         """
         Test state propagation and measurement update
+        Based on: https://www.cs.cmu.edu/~16385/s17/Slides/16.4_Extended_Kalman_Filter.pdf
 
         """
         ### Propagation
         dt = 1
         u = np.zeros((2,))
-        self.x = self.x0 + rand.multivariate_normal(np.zeros(4,),self.Q)
+        self.x = self.x0 + rand.multivariate_normal(np.zeros(4,),self.Q(dt))
         for ii in range(10):
             self.t = self.t + dt
-            self.x = self.f(dt, self.x, u) + rand.multivariate_normal(np.zeros(4,),self.Q)
+            self.x = self.f(dt, self.x, u) + rand.multivariate_normal(np.zeros(4,),self.Q(dt))
             self.ekf.propagate(dt, u)
             
         self.assertEqual(self.t, self.ekf.t)

@@ -7,6 +7,91 @@ Created on Fri Jun 19 23:18:57 2026
 
 import numpy as np
 from numpy import linalg as la
+from dynamics import dynamicsUtils as uDyn
+from dynamics import orbit as orb
+
+class InertialEKF:
+    """
+    Inertial EKF is based on:
+    Woffinden, David Charles, "Angles-Only Navigation for Autonomous 
+    Orbital Rendezvous" (2008). All Graduate Theses and Dissertations. 12.
+    https://digitalcommons.usu.edu/etd/12
+    """
+    
+    def __init__(
+            self,
+            t, rc, vc, Pc, rd, vd, Pd, procVar, dvVar, sensor = None
+            ):
+        
+        # Initialize the nav states
+        self.t = t 
+        self.rc = rc
+        self.vc = vc
+        self.Pc = Pc
+        self.rd = rd
+        self.vd = vd
+        self.Pd = Pd
+        self.procVar = procVar
+        self.dvVar = dvVar
+        self.sensor = sensor
+        
+        # Initialize the filter
+        x = np.array([self.rc, self,vc, self.rd, self.vd])
+        P = np.block([
+                [Pc,               np.zeros((6, 6))],
+                [np.zeros((6, 6)), Pd              ]])
+        S = dvVar*np.eye(3)
+        
+        
+    def stateUpdate(self, dt, x, u):
+        """
+        State update function. RK4 orbit propagator for chief and deputy 
+        inertial states
+
+        """
+        rc = x[0:3]
+        vc = x[3:6]
+        rd = x[6:9]
+        vd = x[9:12]
+        uDyn.Orbit_rk4(self.pert["solarGrav"], self.pert["lunarGrav"], self.pert["drag"], self.pert["jnum"], \
+                       self.moon.r, self.sun.r, self.Cd, self.normA, \
+                       np.zeros((3,)), dt, rc, vc)
+        uDyn.Orbit_rk4(self.pert["solarGrav"], self.pert["lunarGrav"], self.pert["drag"], self.pert["jnum"], \
+                       self.moon.r, self.sun.r, self.Cd, self.normA, \
+                       u, dt, rd, vd)
+        return np.array([rc, vc, rd, vd])
+    
+    def stateTransitionMatrix(self, dt, x):
+        """
+        State transition function. Assumes point mass gravity
+
+        """
+        # State vectors
+        rc = x[0:3]
+        rd = x[6:9]
+        rcMag = la.norm(rc)
+        rdMag = la.norm(rd)
+        rcHat = rc/rcMag
+        rdHat = rd/rdMag 
+        # State transition matrix
+        FC1 = np.eye(3)
+        FC2 = -(orb.MU_EARTH/(rcMag**3))*(np.eye(3)-3*np.matmul(rcHat,np.transpose(rcHat)))
+        FD1 = np.eye(3)
+        FD2 = -(orb.MU_EARTH/(rdMag**3))*(np.eye(3)-3*np.matmul(rdHat,np.transpose(rdHat)))
+        F = np.block([
+                [np.zeros((3,3)),FC1,np.zeros((3,3)),np.zeros((3,3))],
+                [FC2,np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),FD1],
+                [np.zeros((3,3)),np.zeros((3,3)),FD2,np.zeros((3,3))]])
+        return np.eye(12) + F*dt
+    
+    def processNoise(self, dt):
+        ncvQ = ncvProcessNoise(dt)
+        Q = self.procVar*np.block([
+                [ncvQ,             np.zeros((6, 6))],
+                [np.zeros((6, 6)), ncvQ            ]])
+        return Q
+        
 
 class ExtendedKalmanFilter:
     """ Base EKF class
@@ -19,8 +104,8 @@ class ExtendedKalmanFilter:
         state
     P: nxn float
         covariance
-    Q: nxn float
-        process noise
+    Q: function
+        process noise funtion Q(dt)
     f: function
         state update function f(dt, x, u)
     F: function
@@ -71,9 +156,9 @@ class ExtendedKalmanFilter:
         F = self.F(dt, self.x)
         self.x = self.f(dt, self.x, u)
         if la.norm(u) > 0.0:
-            self.P = np.matmul(F,np.matmul(self.P,np.transpose(F))) + self.Q + self.S
+            self.P = np.matmul(F,np.matmul(self.P,np.transpose(F))) + self.Q(dt) + self.S
         else:
-            self.P = np.matmul(F,np.matmul(self.P,np.transpose(F))) + self.Q
+            self.P = np.matmul(F,np.matmul(self.P,np.transpose(F))) + self.Q(dt)
             
     def update(self, nu, H, R):
         """
@@ -93,10 +178,21 @@ class ExtendedKalmanFilter:
         S = residualCov(self.P, H, R)
         W = kalmanGain(self.P, H, S)
         self.x = self.x + np.matmul(W, nu)
-        self.P = self.P - np.matmul(W,np.matmul(S,np.transpose(W)))
+        self.P = np.matmul(np.eye(self.n) - np.matmul(W,H),self.P)
         
 def residualCov(P, H, R):
     return np.matmul(H,np.matmul(P,np.transpose(H))) + R
         
 def kalmanGain(P, H, S):
     return np.matmul(P,np.matmul(np.transpose(H),la.inv(S)))
+
+def normEstErrSqr(dx, P):
+    return np.matmul(np.transpose(dx),np.matmul(np.inv(P),dx))
+
+def normInvnSqr(nu, S):
+    return np.matmul(np.transpose(nu),np.matmul(np.inv(S),nu))
+
+def ncvProcessNoise(dt):
+    return np.block([
+                    [np.eye(3)*(dt**3)/3,np.eye(3)*(dt**2)/2],
+                    [np.eye(3)*(dt**2)/2,np.eye(3)*dt]])
