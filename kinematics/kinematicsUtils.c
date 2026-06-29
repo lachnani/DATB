@@ -161,8 +161,8 @@ void dcmInr2Ric(const double r[3], const double v[3], double RN[3][3]) {
 void dcmRic2Los(const double relPosRectRic[3], double LR[3][3]) {
     /*
     Compute the RIC to Line-of-Sight frame (LOS) DCM LR
-    Assumes the LOS frame is defined with the z-axis along the line of sight vector,
-	the x-axis in the chief orbital plane, and the y-axis completing the right-handed system.
+    Assumes the LOS frame is defined with the x-axis along the line of sight vector,
+	the y-axis in the chief orbital plane, and the z-axis completing the right-handed system.
 
 	Parameters
 	----------
@@ -175,30 +175,31 @@ void dcmRic2Los(const double relPosRectRic[3], double LR[3][3]) {
 	    DCM that maps from the RIC frame to the LOS frame
     */
 	double rho = v3_norm(relPosRectRic);
-    double ir[3];
+    double ux[3];
+	double uy[3];
+	double uz[3];
     if (rho > 0) {
         for (int i = 0; i < 3; ++i)
-            ir[i] = relPosRectRic[i] / rho;
+            ux[i] = relPosRectRic[i] / rho;
     }
     else {
-        v3_zero(ir);
+        v3_zero(ux);
     }
-    double itheta[3] = { 0, 0, 1 }; // LOS z-axis
-    double ih[3];
-    v3_cross(itheta, ir, ih);
-    double norm_ih = v3_norm(ih);
-    if (norm_ih > 0) {
+	double hHat[3] = { 0, 0, 1 }; // Assuming chief orbital plane is in the x-y plane of RIC frame
+	v3_cross(hHat, ux, uy); // y-axis of LOS frame
+	double norm_uy = v3_norm(uy);
+    if (norm_uy > 0) {
         for (int i = 0; i < 3; ++i)
-            ih[i] /= norm_ih;
+            uy[i] /= norm_uy;
     }
     else {
-        v3_zero(ih);
-    }
-    v3_cross(ir, ih, itheta);
+        v3_zero(uy);
+	}
+	v3_cross(ux, uy, uz); // y-axis of LOS frame
     for (int i = 0; i < 3; ++i) {
-        LR[0][i] = ih[i];
-        LR[1][i] = itheta[i];
-        LR[2][i] = ir[i];
+        LR[0][i] = ux[i];
+        LR[1][i] = uy[i];
+        LR[2][i] = uz[i];
 	}
 }
 

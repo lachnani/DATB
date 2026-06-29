@@ -30,10 +30,40 @@ function is the estimated state. H is (numMeas) x (numStates).
 
 Note: Only pnt maps to the deputyInertial state
 
+Variables are based on the following:
+    1. Woffinden, David Charles, "Angles-Only Navigation for Autonomous 
+    Orbital Rendezvous" (2008). All Graduate Theses and Dissertations. 12.
+    https://digitalcommons.usu.edu/etd/12
+
 """
 
-def angles_dualInertial(x):
-    return 0.0
+def angles_dualInertial(ekf):
+    # Partials of the LOS unit vector wrt az and el in LOS frame (Eq 6.86)
+    P_az_los = np.array([-np.cos(ekf.el)*np.sin(ekf.az),np.cos(ekf.el)*np.cos(ekf.az),0.0])
+    P_el_los = np.array([-np.sin(ekf.el)*np.cos(ekf.az),-np.sin(ekf.el)*np.sin(ekf.az),0.0])
+    # Partials of the LOS unit vector wrt az and el in Inr frame 
+    P_az_inr = np.matmul(np.transpose(ekf.dcmInr2Los),P_az_los)
+    P_el_inr = np.matmul(np.transpose(ekf.dcmInr2Los),P_el_los)
+    # Partials with respect to position (Eq 6.104)
+    H_az_r = np.transpose(P_az_inr)/(ekf.rng*np.cos(ekf.el)**2)
+    H_el_r = np.transpose(P_el_inr)/ekf.rng
+    # Construct full H matrix
+    H = np.block([
+        [H_az_r, np.zeros((1,3)), -H_az_r, np.zeros((1,3))],
+        [H_el_r, np.zeros((1,3)), -H_el_r, np.zeros((1,3))]])
+    return H
+
+def relRange_dualInertial(ekf):
+    # Unit LOS vector in the inertial frame
+    losUnitInr = (ekf.rsoPosInr - ekf.svPosInr)/ekf.rng
+    # Partial with respect to position (Eq 6.104)
+    H_rng_r = np.transpose(losUnitInr)
+    # Construct H matrix 
+    H = np.block([H_rng_r, np.zeros((1,3)), -H_rng_r, np.zeros((1,3))])
+    return H
+
+def anglesRange_dualInertial(ekf):
+    return np.block([[angles_dualInertial(ekf)],[relRange_dualInertial(ekf)]])
 
 def angles_rectRic(x):
     H = np.zeros((2,6))

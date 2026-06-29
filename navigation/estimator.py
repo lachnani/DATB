@@ -11,6 +11,8 @@ from dynamics import dynamicsUtils as uDyn
 from kinematics import kinematicsUtils as uKin
 from dynamics import orbit as orb
 from dynamics import ephemerides as eph
+import measurements as meas
+import measurementSensitivity as ms
 
 class DualInertialEKF:
     """
@@ -37,15 +39,15 @@ class DualInertialEKF:
         # Initialize DCMs
         self.dcmInr2Ric = np.zeros((3,3))
         self.dcmRic2Los = np.zeros((3,3))
+        self.dcmInr2Los = np.zeros((3,3))
         uKin.dcmInr2Ric(self.rsoPosInr, self.rsoVelInr, self.dcmInr2Ric)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
         
         # Initialize sun and moon ephemeris
         self.sun = eph.SunEphemeris(self.tJ2000)
         self.moon = eph.MoonEphemeris(self.tJ2000)    
         
         # Initialize the filter
-        x = np.array([self.rsoPosInr, self.rsoVelInr, self.svPosInr, self.svVelInr])
+        x = np.concatenate([self.rsoPosInr, self.rsoVelInr, self.svPosInr, self.svVelInr])
         P = np.block([
                 [Pc,               np.zeros((6, 6))],
                 [np.zeros((6, 6)), Pd              ]])
@@ -74,53 +76,85 @@ class DualInertialEKF:
         self.relVelRectRic = np.zeros((3,))
         uKin.rv2ric(self.rsoPosInr, self.rsoVelInr, self.svPosInr, self.svVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = covInrToRic(P,self.dcmInr2Ric)
+        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
         # Compute measurement parameters
-        self.rng, self.rngRate, self.az, self.el = \
-            uKin.measParams(self.relPosRectRic, self.relVelRectRic)
+        self.az, self.el = meas.calcAzEl(self.rsoPosInr, self.svPosInr, self.dcmInr2Los)
+        self.rng = la.norm(self.relPosRectRic)
+        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
-        def propagate(self, dt, u):
-            self.ekf.propagate(dt, u)
-            self.sync()
-            
-        def update(self, z, measType):
-            # Determine expected measurement, residual, and measurement sensitivity matrix
-            if measType == "angles":
-                zHat = np.array([self.az,self.el])
-            elif measType == "relRange":
-                zHat = self.rng 
-            elif measType == "anglesRange":
-                zHat = np.array([self.az,self.el,self.rng])
-            elif measType == "relRangeRate":
-                zHat = np.array([self.rng,self.rngRate])
-            elif measType == "anglesRangeRate":
-                zHat = np.array([self.az,self.el,self.rng,self.rngRate])
-            elif measType == "cv3dof":
-                zHat = self.relPosRectRic
-            elif measType == "cv6dof":
-                zHat = np.array([self.relPosRectRic,self.relVelRectRic])
-            elif measType == "pnt":
-                zHat = self.svPosInr
-            
-        def sync(self):
-            # Time
-            self.tJ2000 = self.ekf.t
-            # Absolute states from ekf
-            self.rsoPosInr = self.ekf.x[0:3]
-            self.rsoVelInr = self.ekf.x[3:6]
-            self.rsoCovInr = self.ekf.P[0:6,0:6]
-            self.svPosInr = self.ekf.x[6:9]
-            self.svVelInr = self.ekf.x[9:12]
-            self.svCovInr = self.ekf.P[6:12,6:12]
-            # Inertial to RIC DCM
-            uKin.dcmInr2Ric(self.rsoPosInr, self.rsoVelInr, self.dcmInr2Ric)
-            # Relative states from absolute states
-            uKin.rv2ric(self.rsoPosInr, self.rsoVelInr, self.svPosInr, self.svVelInr, self.relPosRectRic, self.relVelRectRic)
-            self.relCovRectRic = covInrToRic(self.ekf.P,self.dcmInr2Ric)
-            uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-            # Compute measurement parameters
-            self.rng, self.rngRate, self.az, self.el = \
-                uKin.measParams(self.relPosRectRic, self.relVelRectRic)
+    def propagate(self, dt, u):
+        self.ekf.propagate(dt, u)
+        
+    def update(self, z, measType):
+        # Determine expected measurement, residual, and measurement sensitivity matrix
+        self.az, self.el = meas.calcAzEl(self.rsoPosInr, self.svPosInr, self.dcmInr2Los)
+        self.rng = la.norm(self.relPosRectRic)
+        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
+        # HL TODO: For now, hardcoding R
+        # HL TODO: It would be better if we had only one measurement with all
+        # parameters and then subselected the rows of interest depending on
+        # the input z
+        if measType == "angles":
+            zHat = np.array([self.az,self.el])
+            nu = z - zHat
+            self.anglesMeasRes = nu
+            H = ms.angles_dualInertial(self)
+            R = (30e-6)**2*np.eye(2) # 30 urad^2
+        elif measType == "relRange":
+            zHat = self.rng 
+            nu = z - zHat
+            self.relRangeMeasRes = nu
+            H = ms.range_dualInertial(self)
+        elif measType == "anglesRange":
+            zHat = np.array([self.az,self.el,self.rng])
+            nu = z - zHat
+            self.anglesRangeMeasRes = nu
+            H = ms.anglesRange_dualInertial(self)
+        elif measType == "relRangeRate":
+            zHat = np.array([self.rng,self.rngRate])
+            nu = z - zHat
+            self.relRangeRateMeasRes = nu
+        elif measType == "anglesRangeRate":
+            zHat = np.array([self.az,self.el,self.rng,self.rngRate])
+            nu = z - zHat
+            self.anglesRangeRateMeasRes = nu
+        elif measType == "cv3dof":
+            zHat = self.relPosRectRic
+            nu = z - zHat
+            self.cv3dofMeasRes = nu
+        elif measType == "cv6dof":
+            zHat = np.array([self.relPosRectRic,self.relVelRectRic])
+            nu = z - zHat
+            self.cv6dofMeasRes = nu
+        elif measType == "pnt":
+            zHat = self.svPosInr
+            nu = z - zHat
+            self.pntMeasRes = nu
+        self.ekf.update(nu, H, R)
+        
+    def sync(self):
+        # Time
+        self.tJ2000 = self.ekf.t
+        # Absolute states from ekf
+        self.rsoPosInr = self.ekf.x[0:3]
+        self.rsoVelInr = self.ekf.x[3:6]
+        self.rsoCovInr = self.ekf.P[0:6,0:6]
+        self.svPosInr = self.ekf.x[6:9]
+        self.svVelInr = self.ekf.x[9:12]
+        self.svCovInr = self.ekf.P[6:12,6:12]
+        # Inertial to RIC DCM
+        uKin.dcmInr2Ric(self.rsoPosInr, self.rsoVelInr, self.dcmInr2Ric)
+        # Relative states from absolute states
+        uKin.rv2ric(self.rsoPosInr, self.rsoVelInr, self.svPosInr, self.svVelInr, self.relPosRectRic, self.relVelRectRic)
+        self.relCovRectRic = covInrToRic(self.ekf.P,self.dcmInr2Ric)
+        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
+        # Compute measurement parameters
+        self.az, self.el = meas.calcAzEl(self.rsoPosInr, self.svPosInr, self.dcmInr2Los)
+        self.rng = la.norm(self.relPosRectRic)
+        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
         
 
@@ -233,29 +267,26 @@ def stateUpdateInertial(dt, x, u, param = None):
     r = x[0:3]
     v = x[3:6]
     if param == None:
-        param.pert["solarGrav"] = False
-        param.pert["lunarGrav"] = False
-        param.pert["drag"] = False
-        param.pert["jnum"] = 0
-        param.moon.r = np.zeros((3,))
-        param.sun.r = np.zeros((3,))
-        param.Cd = 0.0
-        param.normA = 0.0
+        pert = {
+            "jnum": 0,
+            "solarGrav": False,
+            "lunarGrav": False,
+            "SRP": False,
+            "drag": False,
+            "Cd": 0.0,
+            "normalizedArea": 0.0
+            }
         
-    uDyn.Orbit_rk4(param.pert["solarGrav"], param.pert["lunarGrav"], param.pert["drag"], param.pert["jnum"], \
-                   param.moon.r, param.sun.r, param.Cd, param.normA, \
+    uDyn.Orbit_rk4(pert["solarGrav"], pert["lunarGrav"], pert["drag"], pert["jnum"], \
+                   np.zeros((3,)), np.zeros((3,)), pert["Cd"], pert["normalizedArea"], \
                    u, dt, r, v)
-    return np.array([r, v])
+    return np.concatenate([r, v])
 
 def stateUpdateDualInertial(dt, x, u, param = None):
     xc = x[0:6]
-    xd = x[6:12]
-    if param == None:
-        param.chief = None
-        param.deputy = None
-        
-    return np.array([stateUpdateInertial(dt, xc, np.zeros((3,)), param.chief), 
-                     stateUpdateInertial(dt, xd, u, param.deputy)])
+    xd = x[6:12]   
+    return np.concatenate([stateUpdateInertial(dt, xc, np.zeros((3,)), param), 
+                           stateUpdateInertial(dt, xd, u, param)])
 
 def stmInertial(dt, x):
     # State parameters

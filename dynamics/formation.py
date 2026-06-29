@@ -45,6 +45,7 @@ class Formation():
         # Declare DCM
         self.dcmInr2Ric = np.zeros((3,3))
         self.dcmRic2Los = np.zeros((3,3))
+        self.dcmInr2Los = np.zeros((3,3))
         
         # Define default perturbations
         if (pert == None):
@@ -181,16 +182,15 @@ class Formation():
         # Define RIC frame 
         uKin.dcmInr2Ric(self.chief.r, self.chief.v, self.dcmInr2Ric)
         
-        # Define the LOS frame
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        
         # Compute environment angles
         self.losEarthAng, self.losMoonAng, self.losSunAng = \
             uKin.envAngles(self.chief.r, self.deputy.r, self.deputy.moon.r, self.deputy.sun.r)
-        
+            
         # Compute measurement parameters
-        self.rng, self.rngRate, self.az, self.el = \
-            uKin.measParams(self.relPosRectRic, self.relVelRectRic)
+        self.az = 0.0 
+        self.el = 0.0
+        self.rng = np.linalg.norm(self.relPosRectRic)
+        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
 
     def propagate(self, dt):
@@ -237,12 +237,11 @@ class Formation():
         if (self.settings["environments"] == True):
             self.losEarthAng, self.losMoonAng, self.losSunAng = \
                 uKin.envAngles(self.chief.r, self.deputy.r, self.deputy.moon.r, self.deputy.sun.r)
-            
-        # Compute Measurement Parameters
+          
+        # Compute measurement parameters
         if (self.settings["measurements"] == True):
-            self.rng, self.rngRate, self.az, self.el = \
-                uKin.measParams(self.relPosRectRic, self.relVelRectRic)
-            uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+            self.rng = np.linalg.norm(self.relPosRectRic)
+            self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
 
 def ric2rv(r, v, relPosRectRic, relVelRectRic):

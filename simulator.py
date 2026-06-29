@@ -12,6 +12,8 @@ import time
 from dynamics import formation as frm
 from dynamics import orbit as orb
 from planning import passiveSafety as ps
+from kinematics import kinematicsUtils as uKin
+from navigation import measurements as meas
 import logger
 
 
@@ -158,6 +160,10 @@ class Simulator():
             if self.settings["fsw"]["status"] == True and (self.t % self.settings["fsw"]["dt"] == 0):
                 self.fsw.propagate(self.fsw.dt)
                 
+            # Compute tip and tilt angles
+            if (self.settings["formation"]["measurements"] == True):
+                self.calculateTruthMeas()
+                
             # Log
             if self.settings["log"]["status"] == True and (self.t % self.settings["log"]["dt"] == 0):
                 self.log.i += 1
@@ -216,6 +222,7 @@ class Simulator():
         if (self.settings["formation"]["measurements"] == True):
             self.log.measParams[self.log.i] = np.array((self.frm.rng, self.frm.rngRate, self.frm.az, self.frm.el))
             self.log.qRicToLos[self.log.i]  = R.from_matrix(self.frm.dcmRic2Los).as_quat()
+            self.log.qInrToLos[self.log.i]  = R.from_matrix(self.frm.dcmInr2Los).as_quat()
         
         if self.settings["fsw"]["status"] == True:
             # Log FSW
@@ -252,7 +259,20 @@ class Simulator():
             self.frm.deputy.dvTot   += np.linalg.norm(dvEciPert)
         else:
             self.frm.chief.v        += dvEciPert
-            self.frm.chief.dvTot    += np.linalg.norm(dvEciPert)        
+            self.frm.chief.dvTot    += np.linalg.norm(dvEciPert)  
+            
+    def calculateTruthMeas(self):
+        if self.settings["fsw"]["status"] == True:
+            # Get true LOS frame rotation matrices
+            self.frm.dcmInr2Los = self.fsw.nav.dcmInr2Los
+            self.frm.dcmRic2Los = np.matmul(self.frm.dcmInr2Los,np.transpose(self.frm.dcmInr2Ric))
+            # Calculate azimuth and elevation angles
+            self.frm.az, self.frm.el = meas.calcAzEl(self.frm.chief.r, self.frm.deputy.r, self.frm.dcmInr2Los)
+        else:
+            uKin.dcmRic2Los(self.frm.relPosRectRic, self.frm.dcmRic2Los)
+            self.dcmInr2Los = np.matmul(self.frm.dcmRic2Los,self.frm.dcmInr2Ric)
+            self.frm.az = 0.0
+            self.frm.el = 0.0
             
     
 def pertVec(v, angDeg, magPerc):

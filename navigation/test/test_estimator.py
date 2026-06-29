@@ -13,7 +13,9 @@ import numpy as np
 from numpy import random as rand
 from numpy import linalg as la
 import estimator as est
-
+from dynamics import orbit as orb
+from dynamics import formation as frm
+from kinematics import kinematicsUtils as uKin
 
 class TestEstimator(unittest.TestCase):
     """Tests for the EKF Class"""
@@ -94,6 +96,53 @@ class TestEstimator(unittest.TestCase):
         self.assertLess(np.abs(errplus[2]), np.abs(errminus[2]))
         self.assertLess(Pplus[0,0], Pminus[0,0])
         self.assertLess(Pplus[2,2], Pminus[2,2])
+        
+    def test_diekf(self):
+        """
+        Test Dual Inertial EKF
+        Based on: 
+        Woffinden, David Charles, "Angles-Only Navigation for Autonomous 
+        Orbital Rendezvous" (2008). All Graduate Theses and Dissertations. 12.
+        https://digitalcommons.usu.edu/etd/12
+
+        """
+        ### Initial conditions
+        tJ2000 = 0
+        rc = np.zeros((3,))
+        vc = np.zeros((3,))
+        oec = np.array([42000.,0.,0.,0.,0.,0.])
+        meanMotion = np.sqrt(orb.MU_EARTH/oec[0]**3)
+        uKin.oe2rv(orb.MU_EARTH, oec, rc, vc)
+        P0 = np.block([
+            [0.030**2*np.eye(3),np.zeros((3,3))],
+            [np.zeros((3,3)),3.6e-6**2*np.eye(3)]])
+        clroe = np.array([0.,0.,0.01,10.,0.,0.]) # Drifting co-elliptic
+        relPosRic = np.zeros((3,))
+        relVelRic = np.zeros((3,))
+        uKin.clroe2ric(clroe, meanMotion, 0, relPosRic, relVelRic)
+        rd, vd = frm.ric2rv(rc, vc, relPosRic, relVelRic)
+        procVar = 0.06e-6
+        dvVar = 3e-6
+        
+        ### Initialize DIEKF class
+        nav = est.DualInertialEKF(tJ2000, rc, vc, P0, rd, vd, P0, procVar, dvVar)
+        
+        ### Propagate through 2 hours
+        tf = 2*3600
+        dt = 10
+        while nav.tJ2000 < tf:
+            nav.propagate(dt, np.zeros((3,)))
+            nav.sync()
+            
+        uKin.rv2oe(orb.MU_EARTH, nav.rsoPosInr, nav.rsoVelInr, oec)
+        uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
+        
+        self.assertEqual(nav.tJ2000, tf)
+        self.assertEqual(self.ekf.x[0], 60)
+        self.assertEqual(self.ekf.x[1], 1)
+        self.assertEqual(self.ekf.x[2], 50)
+        self.assertEqual(self.ekf.x[3], 0)
+        self.assertGreater(np.all(np.diag(self.ekf.P)), np.all(np.diag(self.P0)))
         
         
 if __name__ == '__main__':

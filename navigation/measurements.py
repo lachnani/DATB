@@ -11,7 +11,7 @@ from numpy import random as rand
 """
 Measurements derived from truth states and given covariances. Measurement types
 include:
-    - angles: Azimuth and Elevation angles (as measured in the RIC frame)
+    - angles: Azimuth and Elevation angles (as measured in the LOS frame)
     - relRange: Range
     - anglesRange: Azimuth, Elevation, and Range
     - relRangeRate: Range and Range-Rate
@@ -20,57 +20,64 @@ include:
     - cv6dof: Relative Position and Velocity (in RIC)
     - pnt: Inertial deputy PNT
     
-For each function, the inputs are the formation struct frm, and the measurement 
-covariance R.
+For each function, the inputs are the simulation struct sim, and the 
+measurement covariance R.
 
 """
 
-def get(frm, measType, R):
+def get(sim, measType, R):
     if measType == "angles":
-        return angles(frm, R)
+        return angles(sim, R)
     elif measType == "relRange":
-        return relRange(frm, R)
+        return relRange(sim, R)
     elif measType == "anglesRange":
-        return anglesRange(frm, R)
+        return anglesRange(sim, R)
     elif measType == "relRangeRate":
-        return relRangeRate(frm, R)
+        return relRangeRate(sim, R)
     elif measType == "anglesRangeRate":
-        return anglesRangeRate(frm, R)
+        return anglesRangeRate(sim, R)
     elif measType == "cv3dof":
-        return cv3dof(frm, R)
+        return cv3dof(sim, R)
     elif measType == "cv6dof":
-        return cv6dof(frm, R) 
+        return cv6dof(sim, R) 
     elif measType == "pnt":
-        return pnt(frm, R)
+        return pnt(sim, R)
     return
 
-def angles(frm, R):
-    return np.array([frm.az,frm.el]) + \
+def angles(sim, R):
+    return np.array([sim.az,sim.el]) + \
         rand.multivariate_normal(np.zeros(2,),R) 
         
-def relRange(frm, var):
-    return frm.rng + rand.normal(0, np.sqrt(var))
+def relRange(sim, var):
+    return sim.frm.rng + rand.normal(0, np.sqrt(var))
 
-def anglesRange(frm, R):
-    return np.array([frm.az,frm.el,frm.rng]) + \
+def anglesRange(sim, R):
+    return np.array([sim.az,sim.el,sim.frm.rng]) + \
         rand.multivariate_normal(np.zeros(3,),R) 
         
-def relRangeRate(frm, R):
-    return np.array([frm.rng,frm.rngRate]) + \
+def relRangeRate(sim, R):
+    return np.array([sim.frm.rng,sim.frm.rngRate]) + \
         rand.multivariate_normal(np.zeros(2,),R) 
         
-def anglesRangeRate(frm, R):
-    return np.array([frm.az,frm.el,frm.rng,frm.rngRate]) + \
+def anglesRangeRate(sim, R):
+    return np.array([sim.az,sim.el,sim.frm.rng,sim.frm.rngRate]) + \
         rand.multivariate_normal(np.zeros(4,),R) 
         
-def cv3dof(frm, R):
-    return frm.relPosRectRic + rand.multivariate_normal(np.zeros(3,),R) 
+def cv3dof(sim, R):
+    return sim.frm.relPosRectRic + rand.multivariate_normal(np.zeros(3,),R) 
 
-def cv6dof(frm, R):
-    return np.array([frm.relPosRectRic,frm.relVelRectRic]) + \
+def cv6dof(sim, R):
+    return np.array([sim.frm.relPosRectRic,sim.frm.relVelRectRic]) + \
         rand.multivariate_normal(np.zeros(2,),R)  
         
-def pnt(frm, R):
-    return frm.deputy.r + rand.multivariate_normal(np.zeros(3,),R) 
+def pnt(sim, R):
+    return sim.frm.deputy.r + rand.multivariate_normal(np.zeros(3,),R) 
               
+def calcAzEl(rc, rd, dcmInr2Los):
+    losInr = rc - rd
+    losUnitInr = losInr / np.linalg.norm(losInr)
+    losUnitLos = np.matmul(dcmInr2Los, losUnitInr)
+    az = np.arctan2(losUnitLos[1],losUnitLos[0])
+    el = np.arcsin(losUnitLos[2])
+    return az, el
     
