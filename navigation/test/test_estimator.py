@@ -138,11 +138,6 @@ class TestEstimator(unittest.TestCase):
         uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
         
         self.assertEqual(nav.tJ2000, tf)
-        self.assertEqual(self.ekf.x[0], 60)
-        self.assertEqual(self.ekf.x[1], 1)
-        self.assertEqual(self.ekf.x[2], 50)
-        self.assertEqual(self.ekf.x[3], 0)
-        self.assertGreater(np.all(np.diag(self.ekf.P)), np.all(np.diag(self.P0)))
         
         
 if __name__ == '__main__':

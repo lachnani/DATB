@@ -12,7 +12,6 @@ from kinematics import kinematicsUtils as uKin
 from dynamics import orbit as orb
 from dynamics import ephemerides as eph
 import measurements as meas
-import measurementSensitivity as ms
 
 class DualInertialEKF:
     """
@@ -87,52 +86,27 @@ class DualInertialEKF:
     def propagate(self, dt, u):
         self.ekf.propagate(dt, u)
         
-    def update(self, z, measType):
-        # Determine expected measurement, residual, and measurement sensitivity matrix
+    def update(self, meas, measType):
+        # Determine expected measurement
         self.az, self.el = meas.calcAzEl(self.rsoPosInr, self.svPosInr, self.dcmInr2Los)
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
+        self.measExpected = np.array([self.az, self.el, self.rng, self.rngRate])
+        # Residual
+        self.meas = meas
+        self.measType = measType
+        self.measResidual = self.meas - self.measExpected
+        # Sensitivity matrix
+        self.measSensititivityMat = meas.sensitivityDualInertial(self)
+        # Index based on measurement type
+        self.measIndx = meas.measType[self.measType]
         # HL TODO: For now, hardcoding R
-        # HL TODO: It would be better if we had only one measurement with all
-        # parameters and then subselected the rows of interest depending on
-        # the input z
-        if measType == "angles":
-            zHat = np.array([self.az,self.el])
-            nu = z - zHat
-            self.anglesMeasRes = nu
-            H = ms.angles_dualInertial(self)
-            R = (30e-6)**2*np.eye(2) # 30 urad^2
-        elif measType == "relRange":
-            zHat = self.rng 
-            nu = z - zHat
-            self.relRangeMeasRes = nu
-            H = ms.range_dualInertial(self)
-        elif measType == "anglesRange":
-            zHat = np.array([self.az,self.el,self.rng])
-            nu = z - zHat
-            self.anglesRangeMeasRes = nu
-            H = ms.anglesRange_dualInertial(self)
-        elif measType == "relRangeRate":
-            zHat = np.array([self.rng,self.rngRate])
-            nu = z - zHat
-            self.relRangeRateMeasRes = nu
-        elif measType == "anglesRangeRate":
-            zHat = np.array([self.az,self.el,self.rng,self.rngRate])
-            nu = z - zHat
-            self.anglesRangeRateMeasRes = nu
-        elif measType == "cv3dof":
-            zHat = self.relPosRectRic
-            nu = z - zHat
-            self.cv3dofMeasRes = nu
-        elif measType == "cv6dof":
-            zHat = np.array([self.relPosRectRic,self.relVelRectRic])
-            nu = z - zHat
-            self.cv6dofMeasRes = nu
-        elif measType == "pnt":
-            zHat = self.svPosInr
-            nu = z - zHat
-            self.pntMeasRes = nu
-        self.ekf.update(nu, H, R)
+        R = (30e-6)**2*np.eye(2) # 30 urad^2
+        # Call base EKF
+        self.ekf.update(
+            self.measResidual[self.measIndx], 
+            self.measSensititivityMat[self.measIndx,:], 
+            R)
         
     def sync(self):
         # Time
