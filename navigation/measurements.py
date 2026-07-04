@@ -30,9 +30,38 @@ Variables are based on the following:
 
 """
         
-def get(sim, R):
-    return np.array([sim.frm.az,sim.frm.el,sim.frm.rng,sim.frm.rngRate]) + \
+def get(frm, R):
+    return np.array([frm.az,frm.el,frm.rng,frm.rngRate]) + \
         rand.multivariate_normal(np.zeros(4,),R) 
+        
+def sensitivityRelative(ekf):
+    ### Azimuth and Elevation
+    # Partials of the LOS unit vector wrt az and el in LOS frame ([1] Eq 6.86)
+    P_az_los = np.array([-np.cos(ekf.el)*np.sin(ekf.az),np.cos(ekf.el)*np.cos(ekf.az),0.0])
+    P_el_los = np.array([-np.sin(ekf.el)*np.cos(ekf.az),-np.sin(ekf.el)*np.sin(ekf.az),0.0])
+    # Partials of the LOS unit vector wrt az and el in RIC frame 
+    P_az_ric = np.matmul(np.transpose(ekf.dcmRic2Los),P_az_los)
+    P_el_ric = np.matmul(np.transpose(ekf.dcmRic2Los),P_el_los)
+    # Partials with respect to position ([1] Eq 6.104)
+    H_az_r = np.transpose(P_az_ric)/(ekf.rng*np.cos(ekf.el)**2)
+    H_el_r = np.transpose(P_el_ric)/ekf.rng
+    ### Range 
+    # Unit LOS vector in the RIC frame
+    losUnitRic = (ekf.relPosRectRic)/ekf.rng
+    # Partial with respect to position ([1] Eq 6.104)
+    H_rng_r = np.transpose(losUnitRic)
+    ### Range-Rate
+    # Partial with respect to position 
+    H_rngRate_r = np.transpose(ekf.relVelRectRic - ekf.rngRate*losUnitRic)/ekf.rng
+    # Partial with respect to velocity
+    H_rngRate_v = np.transpose(losUnitRic)
+    # Construct full H matrix
+    H = np.block([
+        [H_az_r, np.zeros((1,3))],
+        [H_el_r, np.zeros((1,3))],
+        [H_rng_r, np.zeros((1,3))],
+        [H_rngRate_r, H_rngRate_v]])
+    return H
         
 def sensitivityDualInertial(ekf):
     ### Azimuth and Elevation
