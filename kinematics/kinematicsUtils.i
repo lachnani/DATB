@@ -35,6 +35,7 @@ void    oe2roe(const double IN_ARRAY1[6], const double IN_ARRAY1[6], double INPL
 void    measParams(const double IN_ARRAY1[3], const double IN_ARRAY1[3], double *OUTPUT, double *OUTPUT, double *OUTPUT, double *OUTPUT);
 void    envAngles(const double IN_ARRAY1[3], const double IN_ARRAY1[3], const double IN_ARRAY1[3], const double IN_ARRAY1[3], 
         double *OUTPUT, double *OUTPUT, double *OUTPUT);
+double  visibilityAngle(const double IN_ARRAY1[3], const double IN_ARRAY1[3], const double IN_ARRAY1[3]);
 
 void    oe2rv(double mu, const double IN_ARRAY1[6], double INPLACE_ARRAY1[3], double INPLACE_ARRAY1[3]);
 void    rv2oe(double mu, const double IN_ARRAY1[3], const double IN_ARRAY1[3], double INPLACE_ARRAY1[6]);

@@ -19,6 +19,7 @@ void    oe2roe(const double oeChief[6], const double oeDeputy[6], double roe[6])
 void    measParams(const double relPosRic[3], const double relVelRic[3], double *rng, double *rngRate, double *az, double *el);
 void    envAngles(const double rChief[3], const double rDeputy[3], const double rMoon[3], const double rSun[3], 
         double *losEarthAng, double *losMoonAng, double *losSunAng);
+double  visibilityAngle(const double rChief[3], const double rDeputy[3], const double rSun[3]);
 
 //Orbit 
 void    oe2rv(double mu, const double oe[6], double r[3], double v[3]);

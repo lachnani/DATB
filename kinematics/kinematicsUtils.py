@@ -92,6 +92,9 @@ def measParams(arg1, arg2):
 def envAngles(arg1, arg2, arg3, arg4):
     return _kinematicsUtils.envAngles(arg1, arg2, arg3, arg4)
 
+def visibilityAngle(arg1, arg2, arg3):
+    return _kinematicsUtils.visibilityAngle(arg1, arg2, arg3)
+
 def oe2rv(mu, IN_ARRAY1, arg3, arg4):
     return _kinematicsUtils.oe2rv(mu, IN_ARRAY1, arg3, arg4)
 

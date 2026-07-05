@@ -76,12 +76,12 @@ def sensitivityDualInertial(ekf):
     H_el_r = np.transpose(P_el_inr)/ekf.rng
     ### Range 
     # Unit LOS vector in the inertial frame
-    losUnitInr = (ekf.rsoPosInr - ekf.svPosInr)/ekf.rng
+    losUnitInr = (ekf.chiefPosInr - ekf.deputyPosInr)/ekf.rng
     # Partial with respect to position ([1] Eq 6.104)
     H_rng_r = np.transpose(losUnitInr)
     ### Range-Rate
     # Partial with respect to position 
-    H_rngRate_r = np.transpose(ekf.rsoVelInr - ekf.svVelInr - ekf.rngRate*losUnitInr)/ekf.rng
+    H_rngRate_r = np.transpose(ekf.chiefVelInr - ekf.deputyVelInr - ekf.rngRate*losUnitInr)/ekf.rng
     # Partial with respect to velocity
     H_rngRate_v = np.transpose(losUnitInr)
     # Construct full H matrix

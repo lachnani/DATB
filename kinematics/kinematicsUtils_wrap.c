@@ -4959,6 +4959,99 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_visibilityAngle(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  double *arg1 = (double *) (double *)0 ;
+  double *arg2 = (double *) (double *)0 ;
+  double *arg3 = (double *) (double *)0 ;
+  PyArrayObject *array1 = NULL ;
+  int is_new_object1 = 0 ;
+  PyArrayObject *array2 = NULL ;
+  int is_new_object2 = 0 ;
+  PyArrayObject *array3 = NULL ;
+  int is_new_object3 = 0 ;
+  PyObject *swig_obj[3] ;
+  double result;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "visibilityAngle", 3, 3, swig_obj)) SWIG_fail;
+  {
+    npy_intp size[1] = {
+      3 
+    };
+    array1 = obj_to_array_contiguous_allow_conversion(swig_obj[0],
+      NPY_DOUBLE,
+      &is_new_object1);
+    if (!array1 || !require_dimensions(array1, 1) ||
+      !require_size(array1, size, 1)) SWIG_fail;
+    arg1 = (double *) array_data(array1);
+  }
+  {
+    npy_intp size[1] = {
+      3 
+    };
+    array2 = obj_to_array_contiguous_allow_conversion(swig_obj[1],
+      NPY_DOUBLE,
+      &is_new_object2);
+    if (!array2 || !require_dimensions(array2, 1) ||
+      !require_size(array2, size, 1)) SWIG_fail;
+    arg2 = (double *) array_data(array2);
+  }
+  {
+    npy_intp size[1] = {
+      3 
+    };
+    array3 = obj_to_array_contiguous_allow_conversion(swig_obj[2],
+      NPY_DOUBLE,
+      &is_new_object3);
+    if (!array3 || !require_dimensions(array3, 1) ||
+      !require_size(array3, size, 1)) SWIG_fail;
+    arg3 = (double *) array_data(array3);
+  }
+  result = (double)visibilityAngle((double const (*))arg1,(double const (*))arg2,(double const (*))arg3);
+  resultobj = SWIG_From_double((double)(result));
+  {
+    if (is_new_object1 && array1)
+    {
+      Py_DECREF(array1); 
+    }
+  }
+  {
+    if (is_new_object2 && array2)
+    {
+      Py_DECREF(array2); 
+    }
+  }
+  {
+    if (is_new_object3 && array3)
+    {
+      Py_DECREF(array3); 
+    }
+  }
+  return resultobj;
+fail:
+  {
+    if (is_new_object1 && array1)
+    {
+      Py_DECREF(array1); 
+    }
+  }
+  {
+    if (is_new_object2 && array2)
+    {
+      Py_DECREF(array2); 
+    }
+  }
+  {
+    if (is_new_object3 && array3)
+    {
+      Py_DECREF(array3); 
+    }
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_oe2rv(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   double arg1 ;
@@ -5456,6 +5549,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "oe2roe", _wrap_oe2roe, METH_VARARGS, NULL},
 	 { "measParams", _wrap_measParams, METH_VARARGS, NULL},
 	 { "envAngles", _wrap_envAngles, METH_VARARGS, NULL},
+	 { "visibilityAngle", _wrap_visibilityAngle, METH_VARARGS, NULL},
 	 { "oe2rv", _wrap_oe2rv, METH_VARARGS, NULL},
 	 { "rv2oe", _wrap_rv2oe, METH_VARARGS, NULL},
 	 { "oe2ee", _wrap_oe2ee, METH_VARARGS, NULL},

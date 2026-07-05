@@ -148,16 +148,19 @@ class RelativeEKF:
             self.chiefCovInr = self.ekfInr.P
             # Deputy states as derived from chief and relative states
             uKin.ric2rv(self.chiefPosInr, self.chiefVelInr, self.relPosRectRic, self.relVelRectRic, self.deputyPosInr, self.deputyVelInr)
-            # HL TODO: Deputy Cov
         elif self.anchor == "DEPUTY":
             self.deputyPosInr = self.ekfInr.x[0:3]
             self.deputyVelInr = self.ekfInr.x[3:6]
             self.deputyCovInr = self.ekfInr.P
             # Chief states as derived from deputy and relative states
             uKin.ric2rv(self.deputyPosInr, self.deputyVelInr, -1*self.relPosRectRic, -1*self.relVelRectRic, self.chiefPosInr, self.chiefVelInr)
-            # HL TODO: Chief Cov
         # Inertial to RIC DCM
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
+        # Covariance of the remaining state
+        if self.anchor == "CHIEF":
+            self.deputyCovInr = covRicToInr(self.chiefCovInr, self.relCovRectRic, self.dcmInr2Ric)
+        elif self.anchor == "DEPUTY":
+            self.chiefCovInr = covRicToInr(self.deputyCovInr, self.relCovRectRic, self.dcmInr2Ric)
         # LOS DCMs
         uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
         self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
@@ -465,6 +468,30 @@ def covInrToRic(Pi,RN):
                                           np.matmul(np.transpose(Hv),
                                                     np.transpose(RN)))))
     return np.block([
-                    [np.zeros((3,3)),PrRic],
-                    [PvRic,np.zeros((3,3))]])
+                    [PrRic,np.zeros((3,3))],
+                    [np.zeros((3,3)),PvRic]])
 
+def covRicToInr(Pi,Pric,RN):
+    """
+    Converts relative RIC covariance to dual inertial convariance.
+
+    Parameters
+    ----------
+    Pi : 6x6 double
+        Inertial covariance for either chief or deputy in Inertial frame.
+    Pric : 6x6
+        Relative covariance in the RIC frame.
+    RN : 3x3 double
+        Inertial to RIC DCM.
+
+    Returns
+    -------
+    Pi2: 6x6 double
+        Inertial covariance for either chief or deputy in Inertial frame.
+
+    """
+    # Second inertial covariance is relative cov minus first inertial cov
+    Pi2 = np.matmul(np.transpose(RN),np.matmul(Pric,RN)) - Pi
+    # HL TODO: Force positive definite
+    # Pi2[Pi2 < 0] = 0
+    return Pi2

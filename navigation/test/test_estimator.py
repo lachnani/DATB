@@ -142,7 +142,7 @@ class TestEstimator(unittest.TestCase):
             nav.propagate(dt, np.zeros((3,)))
             nav.sync()
             
-        uKin.rv2oe(orb.MU_EARTH, nav.rsoPosInr, nav.rsoVelInr, oec)
+        uKin.rv2oe(orb.MU_EARTH, nav.chiefPosInr, nav.chiefVelInr, oec)
         uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
         P1 = nav.ekf.P
         

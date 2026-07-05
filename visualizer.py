@@ -798,7 +798,7 @@ def Environment_Plot(log, path, tag):
     
     fig_environment_plt = plt.figure()
     
-    ax1 = plt.subplot(2,1,1)
+    ax1 = plt.subplot(3,1,1)
     earth = ax1.plot(log.time.loc['simTime',:], np.rad2deg(log.losAngles.loc['Earth',:]), label='Earth')[0]
     sun = ax1.plot(log.time.loc['simTime',:], np.rad2deg(log.losAngles.loc['Sun',:]), label='Sun')[0]
     moon = ax1.plot(log.time.loc['simTime',:], np.rad2deg(log.losAngles.loc['Moon',:]), label='Moon')[0]
@@ -808,12 +808,19 @@ def Environment_Plot(log, path, tag):
     plt.title('Line of Sight Angles')
     plt.grid()
     
-    ax2 = plt.subplot(2,1,2)
-    rso = ax2.plot(log.time.loc['simTime',:], log.eclipseRso.loc['Eclipse',:], color='b', label='RSO')[0]
-    veh = ax2.plot(log.time.loc['simTime',:], log.eclipseVeh.loc['Eclipse',:], color='r', label='Veh')[0]
+    ax2 = plt.subplot(3,1,2)
+    vis = ax2.plot(log.time.loc['simTime',:], np.rad2deg(log.visibility.loc['Angle',:]))[0]
     ax2.set_xlabel("Time [s]")
-    ax2.set_ylabel("Eclipse Flag")
-    ax2.legend()
+    ax2.set_ylabel("Visibility Angle [deg]")
+    plt.title('Chief Visibility')
+    plt.grid()
+    
+    ax3 = plt.subplot(3,1,3)
+    rso = ax3.plot(log.time.loc['simTime',:], log.eclipseRso.loc['Eclipse',:], color='b', label='RSO')[0]
+    veh = ax3.plot(log.time.loc['simTime',:], log.eclipseVeh.loc['Eclipse',:], color='r', label='Veh')[0]
+    ax3.set_xlabel("Time [s]")
+    ax3.set_ylabel("Eclipse Flag")
+    ax3.legend()
     plt.title('Eclipse State')
     plt.grid()
        

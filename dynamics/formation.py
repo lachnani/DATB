@@ -185,6 +185,7 @@ class Formation():
         # Compute environment angles
         self.losEarthAng, self.losMoonAng, self.losSunAng = \
             uKin.envAngles(self.chief.r, self.deputy.r, self.deputy.moon.r, self.deputy.sun.r)
+        self.visibilityAng = uKin.visibilityAngle(self.chief.r, self.deputy.r, self.deputy.sun.r)
             
         # Compute measurement parameters
         self.az = 0.0 
@@ -237,6 +238,7 @@ class Formation():
         if (self.settings["environments"] == True):
             self.losEarthAng, self.losMoonAng, self.losSunAng = \
                 uKin.envAngles(self.chief.r, self.deputy.r, self.deputy.moon.r, self.deputy.sun.r)
+            self.visibilityAng = uKin.visibilityAngle(self.chief.r, self.deputy.r, self.deputy.sun.r)
           
         # Compute measurement parameters
         if (self.settings["measurements"] == True):

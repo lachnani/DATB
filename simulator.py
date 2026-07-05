@@ -218,7 +218,8 @@ class Simulator():
             self.log.rectClroe[self.log.i]      = self.frm.rectClroe
             self.log.curvClroe[self.log.i]      = self.frm.curvClroe
         if (self.settings["formation"]["environments"] == True):
-            self.log.losAngles[self.log.i] = np.array((self.frm.losEarthAng, self.frm.losSunAng, self.frm.losMoonAng))
+            self.log.losAngles[self.log.i]  = np.array((self.frm.losEarthAng, self.frm.losSunAng, self.frm.losMoonAng))
+            self.log.visibility[self.log.i] = self.frm.visibilityAng
         if (self.settings["formation"]["measurements"] == True):
             self.log.measParams[self.log.i] = np.array((self.frm.rng, self.frm.rngRate, self.frm.az, self.frm.el))
             self.log.qRicToLos[self.log.i]  = R.from_matrix(self.frm.dcmRic2Los).as_quat()

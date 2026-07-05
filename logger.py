@@ -77,7 +77,8 @@ class Log():
             self.rectClroe      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
             self.curvClroe      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
         if (settings["formation"]["environments"] == True):
-            self.losAngles = pd.DataFrame(np.zeros((size,3)), columns=['Earth', 'Sun', 'Moon']).T
+            self.losAngles  = pd.DataFrame(np.zeros((size,3)), columns=['Earth', 'Sun', 'Moon']).T
+            self.visibility = pd.DataFrame(np.zeros((size,1)), columns=['Angle']).T
         if (settings["formation"]["measurements"] == True):
             self.measParams = pd.DataFrame(np.zeros((size,4)), columns=['Rng', 'Rng-Rate', 'Az', 'El']).T
             self.qRicToLos  = pd.DataFrame(np.zeros((size,4)), columns=['qs', 'qx', 'qy', 'qz']).T

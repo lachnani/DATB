@@ -164,6 +164,8 @@ void dcmRic2Los(const double relPosRectRic[3], double LR[3][3]) {
     Assumes the LOS frame is defined with the x-axis along the line of sight vector,
 	the y-axis in the chief orbital plane, and the z-axis completing the right-handed system.
 
+	HL TODO: Fix this function.
+
 	Parameters
 	----------
     relPosRectRic : Array
@@ -575,6 +577,33 @@ void envAngles(const double rChief[3], const double rDeputy[3], const double rMo
 	*losEarthAng = v3_angle(losEci, earthVecEci);
 	*losMoonAng = v3_angle(losEci, moonVecEci);
 	*losSunAng = v3_angle(losEci, sunVecEci);
+}
+
+double visibilityAngle(const double rChief[3], const double rDeputy[3], const double rSun[3]) {
+    /*
+    Deputy visibility angle to chief
+    
+    Parameters
+    ----------
+    rChief : Array
+        Chief position in ECI frame
+    rDeputy : Array
+        Deputy position in ECI frame
+    rSun : Array
+        Sun position in ECI frame
+
+    Returns
+    -------
+    visAng : double
+        Visiblity angle between deputy-chief vector and chief-Sun vector in radians
+    */
+    double losEci[3];
+    double sunVecEci[3];
+
+    v3_sub(rChief, rDeputy, losEci);
+    v3_sub(rSun, rChief, sunVecEci);
+
+    return v3_angle(losEci, sunVecEci);
 }
 
 /*
