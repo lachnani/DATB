@@ -579,7 +579,12 @@ void envAngles(const double rChief[3], const double rDeputy[3], const double rMo
 
 double visibilityAngle(const double rChief[3], const double rDeputy[3], const double rSun[3]) {
     /*
-    Deputy visibility angle to chief
+	Deputy visibility angle to chief. 0 is perfect visibility, pi is no visibility.
+
+	Reference: 
+    Barbee, B.W., Carpenter, J.R., Heatwole, S. et al. "A Guidance and Navigation Strategy for 
+    Rendezvous and Proximity Operations with a Noncooperative Spacecraft in Geosynchronous Orbit",
+    J of Astronaut Sci 58, 389–408 (2011). https://doi.org/10.1007/BF03321176
     
     Parameters
     ----------
