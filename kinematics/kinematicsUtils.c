@@ -164,8 +164,6 @@ void dcmRic2Los(const double relPosRectRic[3], double LR[3][3]) {
     Assumes the LOS frame is defined with the x-axis along the line of sight vector,
 	the y-axis in the chief orbital plane, and the z-axis completing the right-handed system.
 
-	HL TODO: Fix this function.
-
 	Parameters
 	----------
     relPosRectRic : Array
@@ -182,7 +180,7 @@ void dcmRic2Los(const double relPosRectRic[3], double LR[3][3]) {
 	double uz[3];
     if (rho > 0) {
         for (int i = 0; i < 3; ++i)
-            ux[i] = relPosRectRic[i] / rho;
+            ux[i] = -relPosRectRic[i] / rho;
     }
     else {
         v3_zero(ux);
