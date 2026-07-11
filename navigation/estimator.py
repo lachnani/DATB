@@ -21,7 +21,7 @@ class RelativeEKF:
     def __init__(
             self,
             tJ2000, rc, vc, Pc, rd, vd, Pd, 
-            procVarInr, procVarRel, dvVar, measCov, pert = None,
+            procVar, dvVar, measCov, pert = None,
             anchor = "DEPUTY", frame = "RECTRIC", stm = "HCW"
             ):
         
@@ -38,6 +38,7 @@ class RelativeEKF:
         self.deputyPosInr = rd
         self.deputyVelInr = vd
         self.deputyCovInr = Pd
+        self.crossCovInr  = np.zeros((6,6))
         
         # Initialize DCMs
         self.dcmInr2Ric = np.zeros((3,3))
@@ -62,41 +63,42 @@ class RelativeEKF:
         elif self.anchor == "DEPUTY":
             xInr = np.concatenate([self.deputyPosInr, self.deputyVelInr])
             PInr = Pd
-        def processNoiseInr(dt):
+        def processNoise(dt):
             ncvQ = ncvProcessNoise(dt)
-            Q = procVarInr*ncvQ
+            Q = procVar*ncvQ
             return Q       
         self.ekfInr = ExtendedKalmanFilter(
             self.tJ2000, 
             xInr, 
             PInr, 
-            processNoiseInr, 
+            processNoise, 
             stateUpdateInertial, 
             stmInertial, 
             S)
         
-        # Derived relative states
+        # Relative inertial states
+        self.relPosInr = self.deputyPosInr - self.chiefPosInr
+        self.relVelInr = self.deputyVelInr - self.chiefVelInr
+        self.relCovInr = absCovToRelCov(self.chiefCovInr, self.deputyCovInr, self.crossCovInr)
+        
+        # Relative RIC states
         self.relPosRectRic = np.zeros((3,))
         self.relVelRectRic = np.zeros((3,))
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
-        self.relCovRectRic = covInrToRic(np.block([
-                [Pc,               np.zeros((6, 6))],
-                [np.zeros((6, 6)), Pd              ]]),self.dcmInr2Ric)
+        self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
         uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
         self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
         # Initialize the relative filter
-        xRel = np.concatenate([self.relPosRectRic, self.relVelRectRic])
-        def processNoiseRel(dt):
-            ncvQ = ncvProcessNoise(dt)
-            Q = procVarRel*ncvQ
-            return Q    
+        xRel = np.concatenate([self.relPosInr, self.relVelInr])
         # HL TODO: Replace inertial state update and stm with relative versions
+        # We want to use the inertial state for propagation, but the relative
+        # state for covariance... will need to think about implementation
         self.ekfRel = ExtendedKalmanFilter(
             self.tJ2000, 
             xRel, 
-            self.relCovRectRic, 
-            processNoiseRel, 
+            self.relCovInr, 
+            processNoise, 
             stateUpdateInertial, 
             stmInertial, 
             S)
@@ -111,7 +113,7 @@ class RelativeEKF:
             self.ekfInr.propagate(dt, np.zeros((3,)))
         elif self.anchor == "DEPUTY":
             self.ekfInr.propagate(dt, aCtrlInEci)
-        self.ekfRel.propagate(dt, np.matmul(self.dcmInr2Ric,aCtrlInEci))
+        self.ekfRel.propagate(dt, aCtrlInEci)
         
     def update(self, meas, measType):
         # Determine expected measurement
@@ -136,10 +138,10 @@ class RelativeEKF:
     def sync(self):
         # Time
         self.tJ2000 = self.ekf.t
-        # Relative states from relative EKF
-        self.relPosRectRic = self.ekfRel.x[0:3]
-        self.relVelRectRic = self.ekfRel.x[3:6]
-        self.relCovRectRic = self.ekfRel.P
+        # Relative inertial states from relative EKF
+        self.relPosInr = self.ekfRel.x[0:3]
+        self.relVelInr = self.ekfRel.x[3:6]
+        self.relCovInr = self.ekfRel.P
         # Absolute states dependent on anchor choice
         if self.anchor == "CHIEF":
             # Chief states from inertial EKF
@@ -147,21 +149,23 @@ class RelativeEKF:
             self.chiefVelInr = self.ekfInr.x[3:6]
             self.chiefCovInr = self.ekfInr.P
             # Deputy states as derived from chief and relative states
-            uKin.ric2rv(self.chiefPosInr, self.chiefVelInr, self.relPosRectRic, self.relVelRectRic, self.deputyPosInr, self.deputyVelInr)
+            self.deputyPosInr = self.chiefPosInr + self.relPosInr
+            self.deputyVelInr = self.chiefVelInr + self.relVelInr
+            self.deputyCovInr = self.chiefCovInr + self.relCovInr # Assuming no cross-correlation
         elif self.anchor == "DEPUTY":
             self.deputyPosInr = self.ekfInr.x[0:3]
             self.deputyVelInr = self.ekfInr.x[3:6]
             self.deputyCovInr = self.ekfInr.P
             # Chief states as derived from deputy and relative states
-            uKin.ric2rv(self.deputyPosInr, self.deputyVelInr, -1*self.relPosRectRic, -1*self.relVelRectRic, self.chiefPosInr, self.chiefVelInr)
+            self.chiefPosInr = self.deputyPosInr - self.relPosInr
+            self.chiefVelInr = self.deputyVelInr - self.relVelInr
+            self.chiefCovInr = self.deputyCovInr + self.relCovInr # Assuming no cross-correlation
         # Inertial to RIC DCM
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
-        # Covariance of the remaining state
-        if self.anchor == "CHIEF":
-            self.deputyCovInr = covRicToInr(self.chiefCovInr, self.relCovRectRic, self.dcmInr2Ric)
-        elif self.anchor == "DEPUTY":
-            self.chiefCovInr = covRicToInr(self.deputyCovInr, self.relCovRectRic, self.dcmInr2Ric)
-        # LOS DCMs
+        self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
+        # Relative RIC states
+        uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
+        self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
         uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
         self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         # Compute measurement parameters
@@ -191,12 +195,14 @@ class DualInertialEKF:
         self.deputyPosInr = rd
         self.deputyVelInr = vd
         self.deputyCovInr = Pd
+        self.crossCovInr  = np.zeros((6,6))
         
         # Initialize DCMs
         self.dcmInr2Ric = np.zeros((3,3))
         self.dcmRic2Los = np.zeros((3,3))
         self.dcmInr2Los = np.zeros((3,3))
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
+        self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
         
         # Initialize sun and moon ephemeris
         self.sun = eph.SunEphemeris(self.tJ2000)
@@ -228,11 +234,16 @@ class DualInertialEKF:
             stmDualInertial, 
             S)
         
-        # Derived relative states
+        # Relative inertial states
+        self.relPosInr = self.deputyPosInr - self.chiefPosInr
+        self.relVelInr = self.deputyVelInr - self.chiefVelInr
+        self.relCovInr = absCovToRelCov(self.chiefCovInr, self.deputyCovInr, self.crossCovInr)
+        
+        # Relative RIC states
         self.relPosRectRic = np.zeros((3,))
         self.relVelRectRic = np.zeros((3,))
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
-        self.relCovRectRic = covInrToRic(P,self.dcmInr2Ric)
+        self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
         uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
         self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
@@ -274,11 +285,17 @@ class DualInertialEKF:
         self.deputyPosInr = self.ekf.x[6:9]
         self.deputyVelInr = self.ekf.x[9:12]
         self.deputyCovInr = self.ekf.P[6:12,6:12]
+        self.crossCovInr  = self.ekf.P[0:6,6:12]
         # Inertial to RIC DCM
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
-        # Relative states from absolute states
+        self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
+        # Relative inertial states
+        self.relPosInr = self.deputyPosInr - self.chiefPosInr
+        self.relVelInr = self.deputyVelInr - self.chiefVelInr
+        self.relCovInr = absCovToRelCov(self.chiefCovInr, self.deputyCovInr, self.crossCovInr)
+        # Relative RIC states
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
-        self.relCovRectRic = covInrToRic(self.ekf.P,self.dcmInr2Ric)
+        self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
         uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
         self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         # Compute measurement parameters
@@ -437,61 +454,67 @@ def stmDualInertial(dt, x):
             [stmInertial(dt,xc), np.zeros((6, 6))  ],
             [np.zeros((6, 6))  , stmInertial(dt,xd)]])
 
-def covInrToRic(Pi,RN):
+def absCovToRelCov(Pc,Pd,Px):
     """
-    Converts dual inertial convariance to relative RIC covariance.
-    Per Eq. 9.11, 9.12 of Woffinden.
+    Converts absolute covariances to relative covariances. Does not rotate 
+    frames.
+    
+    HL TODO: Confirm this math is correct!
 
     Parameters
     ----------
-    Pi : 12x12 double
-        Dual inertial covariance.
-    RN : 3x3 double
-        Inertial to RIC DCM.
+    Pc : 6x6 double
+        Chief inertial covariance.
+    Pd : 6x6 double
+        Deputy inertial covariance.
+    Px : 6x6 double
+        Chief/deputy cross covariance.
 
     Returns
     -------
-    Pric: 6x6 double
-        Relative Covariance in RIC.
+    Prel : 6x6 double
+        Chief to deputy inertial relative covariance.
 
     """
-    Hr = np.block([-np.eye(3),np.zeros((3,3)),np.eye(3),np.zeros((3,3))])
-    Hv = np.block([np.zeros((3,3)),-np.eye(3),np.zeros((3,3)),np.eye(3)])
-    PrRic = np.matmul(RN,
-                      np.matmul(Hr,
-                                np.matmul(Pi,
-                                          np.matmul(np.transpose(Hr),
-                                                    np.transpose(RN)))))
-    PvRic = np.matmul(RN,
-                      np.matmul(Hv,
-                                np.matmul(Pi,
-                                          np.matmul(np.transpose(Hv),
-                                                    np.transpose(RN)))))
-    return np.block([
-                    [PrRic,np.zeros((3,3))],
-                    [np.zeros((3,3)),PvRic]])
+    # Initialize
+    Prel = np.zeros((6,6))
+    
+    # Construct block covariance
+    Prel[0:3,0:3] = Pc[0:3,0:3] + Pd[0:3,0:3] - np.transpose(Px[0:3,0:3]) - Px[0:3,0:3]
+    Prel[3:6,3:6] = Pc[3:6,3:6] + Pd[3:6,3:6] - np.transpose(Px[3:6,3:6]) - Px[3:6,3:6]
+    Prel[0:3,3:6] = Pc[0:3,3:6] + Pd[0:3,3:6] - np.transpose(Px[3:6,0:3]) - Px[0:3,3:6]
+    Prel[3:6,0:3] = np.transpose(Prel[0:3,3:6])
+    
+    return Prel
 
-def covRicToInr(Pi,Pric,RN):
+def rotateCov(Pa,BA,omegaBwrtAinA):
     """
-    Converts relative RIC covariance to dual inertial convariance.
+    Rotates 6-DOF position velocity covariance from frame A to B.
+    Ref: Drotar, "Transformation of Covariance Matrices Between Inertial and 
+    Earth-Fixed Coordinates"
 
     Parameters
     ----------
-    Pi : 6x6 double
-        Inertial covariance for either chief or deputy in Inertial frame.
-    Pric : 6x6
-        Relative covariance in the RIC frame.
-    RN : 3x3 double
-        Inertial to RIC DCM.
+    Pa : 6x6 double
+        Covariance in frame A.
+    BA : 3x3 double
+        Rotation matrix from A to B.
+    omegaBwrtAinA : 3x1 double
+        angular velocity of frame B with respect to A, expressed in A.
 
     Returns
     -------
-    Pi2: 6x6 double
-        Inertial covariance for either chief or deputy in Inertial frame.
+    Pa : 6x6 double
+        Covariance in frame B.
 
     """
-    # Second inertial covariance is relative cov minus first inertial cov
-    Pi2 = np.matmul(np.transpose(RN),np.matmul(Pric,RN)) - Pi
-    # HL TODO: Force positive definite
-    # Pi2[Pi2 < 0] = 0
-    return Pi2
+    
+    # Skew-symmentric operator from omaga
+    wx = np.cross(np.eye(3),omegaBwrtAinA)
+    
+    # Construct 6x6 Jacobian matrix
+    J = np.block([[BA,np.zeros((3,3))],
+                  [-np.matmul(BA,wx),BA]])
+    
+    # Rotate covariance
+    return np.matmul(J, np.matmul(Pa, np.transpose(J)))
