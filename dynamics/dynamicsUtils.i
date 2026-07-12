@@ -35,6 +35,7 @@ void    Orbit_rk4(
 int		eclipse(const double IN_ARRAY1[3], const double IN_ARRAY1[3]);
 void	grav(const double IN_ARRAY1[3], const int body, const double IN_ARRAY1[3], double INPLACE_ARRAY1[3]);
 void    jPerturb(const double IN_ARRAY1[3], int num, const int body, double INPLACE_ARRAY1[3]);
+void    gravPartial(const double IN_ARRAY1[3], double INPLACE_ARRAY2[3][3]);
 
 void moonEph(double tJ2000, double INPLACE_ARRAY1[3], double INPLACE_ARRAY1[3]);
 void sunEph(double tJ2000, double INPLACE_ARRAY1[3], double INPLACE_ARRAY1[3]);

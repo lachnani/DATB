@@ -271,7 +271,7 @@ class Simulator():
             self.frm.az, self.frm.el = meas.calcAzEl(self.frm.chief.r, self.frm.deputy.r, self.frm.dcmInr2Los)
         else:
             uKin.dcmRic2Los(self.frm.relPosRectRic, self.frm.dcmRic2Los)
-            self.dcmInr2Los = np.matmul(self.frm.dcmRic2Los,self.frm.dcmInr2Ric)
+            self.frm.dcmInr2Los = np.matmul(self.frm.dcmRic2Los,self.frm.dcmInr2Ric)
             self.frm.az = 0.0
             self.frm.el = 0.0
             

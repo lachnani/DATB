@@ -13,6 +13,7 @@ measType = {
     "none":             np.array([0,0,0,0], dtype='bool'),
     "angles":           np.array([1,1,0,0], dtype='bool'),
     "range":            np.array([0,0,1,0], dtype='bool'),
+    "rangeRate":        np.array([0,0,0,1], dtype='bool'),
     "anglesRange":      np.array([1,1,1,0], dtype='bool'),
     "rangeRR":          np.array([0,0,1,1], dtype='bool'),
     "anglesRangeRR":    np.array([1,1,1,1], dtype='bool')
@@ -40,11 +41,11 @@ def sensitivityRelative(ekf):
     P_az_los = np.array([-np.cos(ekf.el)*np.sin(ekf.az),np.cos(ekf.el)*np.cos(ekf.az),0.0])
     P_el_los = np.array([-np.sin(ekf.el)*np.cos(ekf.az),-np.sin(ekf.el)*np.sin(ekf.az),0.0])
     # Partials of the LOS unit vector wrt az and el in Inr frame 
-    P_az_ric = np.matmul(np.transpose(ekf.dcmInr2Los),P_az_los)
-    P_el_ric = np.matmul(np.transpose(ekf.dcmInr2Los),P_el_los)
+    P_az_inr = np.matmul(np.transpose(ekf.dcmInr2Los),P_az_los)
+    P_el_inr = np.matmul(np.transpose(ekf.dcmInr2Los),P_el_los)
     # Partials with respect to position ([1] Eq 6.104)
-    H_az_r = np.transpose(P_az_ric)/(ekf.rng*np.cos(ekf.el)**2)
-    H_el_r = np.transpose(P_el_ric)/ekf.rng
+    H_az_r = np.transpose(P_az_inr)/(ekf.rng*np.cos(ekf.el)**2)
+    H_el_r = np.transpose(P_el_inr)/ekf.rng
     ### Range 
     # Unit LOS vector in the Inr frame
     losUnitInr = -ekf.relPosInr/ekf.rng
@@ -57,10 +58,10 @@ def sensitivityRelative(ekf):
     H_rngRate_v = np.transpose(losUnitInr)
     # Construct full H matrix
     H = np.block([
-        [H_az_r, np.zeros((1,3))],
-        [H_el_r, np.zeros((1,3))],
-        [H_rng_r, np.zeros((1,3))],
-        [H_rngRate_r, H_rngRate_v]])
+        [np.zeros((1,6)), -H_az_r, np.zeros((1,3))],
+        [np.zeros((1,6)), -H_el_r, np.zeros((1,3))],
+        [np.zeros((1,6)), -H_rng_r, np.zeros((1,3))],
+        [np.zeros((1,6)), -H_rngRate_r, -H_rngRate_v]])
     return H
         
 def sensitivityDualInertial(ekf):

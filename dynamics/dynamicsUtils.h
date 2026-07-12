@@ -50,6 +50,7 @@ int		eclipse(const double rSc[3], const double sun_rUnit[3]);
 void	grav(const double r[3], const int body, const double rBody[3], double agrav[3]);
 void    jPerturb(const double r[3], int num, const int body, double ajtot[3]);
 void    dragPerturb(const double Cd, const double normA, const double r[3], const double v[3], double ad[3]);
+void    gravPartial(const double r[3], double G[3][3]);
 
 //Ephemerides
 void    moonEph(double tJ2000, double rUnit[3], double r[3]);

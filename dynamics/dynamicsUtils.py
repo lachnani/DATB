@@ -71,6 +71,9 @@ def grav(arg1, body, arg3, INPLACE_ARRAY1):
 def jPerturb(IN_ARRAY1, num, body, INPLACE_ARRAY1):
     return _dynamicsUtils.jPerturb(IN_ARRAY1, num, body, INPLACE_ARRAY1)
 
+def gravPartial(IN_ARRAY1, INPLACE_ARRAY2):
+    return _dynamicsUtils.gravPartial(IN_ARRAY1, INPLACE_ARRAY2)
+
 def moonEph(tJ2000, arg2, arg3):
     return _dynamicsUtils.moonEph(tJ2000, arg2, arg3)
 

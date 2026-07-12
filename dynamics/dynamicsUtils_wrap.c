@@ -4274,6 +4274,57 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_gravPartial(PyObject *self, PyObject *args) {
+  PyObject *resultobj = 0;
+  double *arg1 = (double *) (double *)0 ;
+  double (*arg2)[3] = (double (*)[3]) (double (*)[3])0 ;
+  PyArrayObject *array1 = NULL ;
+  int is_new_object1 = 0 ;
+  PyArrayObject *array2 = NULL ;
+  PyObject *swig_obj[2] ;
+  
+  (void)self;
+  if (!SWIG_Python_UnpackTuple(args, "gravPartial", 2, 2, swig_obj)) SWIG_fail;
+  {
+    npy_intp size[1] = {
+      3 
+    };
+    array1 = obj_to_array_contiguous_allow_conversion(swig_obj[0],
+      NPY_DOUBLE,
+      &is_new_object1);
+    if (!array1 || !require_dimensions(array1, 1) ||
+      !require_size(array1, size, 1)) SWIG_fail;
+    arg1 = (double *) array_data(array1);
+  }
+  {
+    npy_intp size[2] = {
+      3, 3 
+    };
+    array2 = obj_to_array_no_conversion(swig_obj[1], NPY_DOUBLE);
+    if (!array2 || !require_dimensions(array2,2) || !require_size(array2, size, 2) ||
+      !require_contiguous(array2) || !require_native(array2)) SWIG_fail;
+    arg2 = (double (*)[3]) array_data(array2);
+  }
+  gravPartial((double const (*))arg1,(double (*)[3])arg2);
+  resultobj = SWIG_Py_Void();
+  {
+    if (is_new_object1 && array1)
+    {
+      Py_DECREF(array1); 
+    }
+  }
+  return resultobj;
+fail:
+  {
+    if (is_new_object1 && array1)
+    {
+      Py_DECREF(array1); 
+    }
+  }
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_moonEph(PyObject *self, PyObject *args) {
   PyObject *resultobj = 0;
   double arg1 ;
@@ -4367,6 +4418,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "eclipse", _wrap_eclipse, METH_VARARGS, NULL},
 	 { "grav", _wrap_grav, METH_VARARGS, NULL},
 	 { "jPerturb", _wrap_jPerturb, METH_VARARGS, NULL},
+	 { "gravPartial", _wrap_gravPartial, METH_VARARGS, NULL},
 	 { "moonEph", _wrap_moonEph, METH_VARARGS, NULL},
 	 { "sunEph", _wrap_sunEph, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }

@@ -625,6 +625,55 @@ void dragPerturb(const double Cd, const double normA, const double r[3], const d
     v3_scale(v, adMag / vMag, ad);
 }
 
+void gravPartial(const double r[3], double G[3][3])
+{
+    /*
+    Computes the gravitational acceleration partial with respect to position
+    
+    Reference: Markley, "Approximate Cartesian State Transition Matrix"
+    
+    Parameters
+    ----------
+    r : Array
+        Inertial position vector of the spacecraft in km  [x;y;z]
+
+    Returns
+    -------
+    G : double
+		Gravitational gradient matrix (3x3) in km/sec^2 per km. 
+    */
+
+	double rMag; // Magnitude of the position vector
+	double rHat[3]; // Unit vector of the position vector
+    double nHat[3] = { 0,0,1 }; // Earth's symmetry axis
+	double c; // Cosine of the angle between rHat and nHat
+	double I[3][3] = { {1,0,0},{0,1,0},{0,0,1} }; // Identity matrix
+    double rrT;
+    double rnT;
+	double nrT;
+    double nnT;
+
+    rMag = v3_norm(r);
+    v3_normalize(r, rHat);
+	c = v3_dot(rHat, nHat);
+	double c2 = c * c;
+    double mu = MU_EARTH; // Gravitational parameter of Earth in km^3/s^2
+	// Compute the gravitational gradient matrix G (Eq. 22 in Markley, 1999)
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+			rrT = rHat[i] * rHat[j];
+			rnT = rHat[i] * nHat[j];
+			nrT = nHat[i] * rHat[j];
+			nnT = nHat[i] * nHat[j];
+            G[i][j] = -mu / pow(rMag, 3) * (
+                (I[i][j] - 3 * rrT) +
+                (1.5 * J2_EARTH * pow(REQ_EARTH / rMag,2) *
+                (5*(1 - 7*c2)*rrT - (1-5*c2)*I[i][j] + 10*c*(rnT+nrT) - 2*nnT)));
+        }
+	}
+    
+}
+
 /*
 * Ephemeris Functions
 */

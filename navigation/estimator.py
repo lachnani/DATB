@@ -9,26 +9,25 @@ import numpy as np
 from numpy import linalg as la
 from dynamics import dynamicsUtils as uDyn
 from kinematics import kinematicsUtils as uKin
-from dynamics import orbit as orb
 from dynamics import ephemerides as eph
 import measurements
 
 class RelativeEKF:
     """
-    Relative EKF is a two parrallel EKFs with an absolute state and a relative state
+    Relative EKF is based on:
+    Hablani, "Autonomous Inertial Relative Navigation with 
+    Sight-Line-Stabilized Sensors for Spacecraft Rendezvous," 2009
     """
     
     def __init__(
             self,
             tJ2000, rc, vc, Pc, rd, vd, Pd, 
             procVar, dvVar, measCov, pert = None,
-            anchor = "DEPUTY", frame = "RECTRIC", stm = "HCW"
+            anchor = "DEPUTY"
             ):
         
         # Save settings
         self.anchor = anchor
-        self.frame = frame
-        self.stm = stm
         
         # Initialize the inertial nav states nav states
         self.tJ2000 = tJ2000
@@ -45,36 +44,11 @@ class RelativeEKF:
         self.dcmRic2Los = np.zeros((3,3))
         self.dcmInr2Los = np.zeros((3,3))
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
+        self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
         
         # Initialize sun and moon ephemeris
         self.sun = eph.SunEphemeris(self.tJ2000)
-        self.moon = eph.MoonEphemeris(self.tJ2000)  
-        
-        # Common filter paramters
-        S = np.block([
-            [np.zeros((3,3)),np.zeros((3,3))],
-            [np.zeros((3,3)),dvVar*np.eye(3)]])
-        self.R = measCov
-        
-        # Initialize the inertial filter
-        if self.anchor == "CHIEF":
-            xInr = np.concatenate([self.chiefPosInr, self.chiefVelInr])
-            PInr = Pc
-        elif self.anchor == "DEPUTY":
-            xInr = np.concatenate([self.deputyPosInr, self.deputyVelInr])
-            PInr = Pd
-        def processNoise(dt):
-            ncvQ = ncvProcessNoise(dt)
-            Q = procVar*ncvQ
-            return Q       
-        self.ekfInr = ExtendedKalmanFilter(
-            self.tJ2000, 
-            xInr, 
-            PInr, 
-            processNoise, 
-            stateUpdateInertial, 
-            stmInertial, 
-            S)
+        self.moon = eph.MoonEphemeris(self.tJ2000)    
         
         # Relative inertial states
         self.relPosInr = self.deputyPosInr - self.chiefPosInr
@@ -89,31 +63,54 @@ class RelativeEKF:
         uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
         self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
-        # Initialize the relative filter
-        xRel = np.concatenate([self.relPosInr, self.relVelInr])
-        # HL TODO: Replace inertial state update and stm with relative versions
-        # We want to use the inertial state for propagation, but the relative
-        # state for covariance... will need to think about implementation
-        self.ekfRel = ExtendedKalmanFilter(
-            self.tJ2000, 
-            xRel, 
-            self.relCovInr, 
-            processNoise, 
-            stateUpdateInertial, 
-            stmInertial, 
-            S)
-        
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
-    def propagate(self, dt, aCtrlInEci):
+        # Initialize the filter
         if self.anchor == "CHIEF":
-            self.ekfInr.propagate(dt, np.zeros((3,)))
+            x = np.concatenate([self.chiefPosInr, self.chiefVelInr, self.relPosInr, self.relVelInr])
+            P = np.block([
+                    [self.chiefCovInr, np.zeros((6, 6))],
+                    [np.zeros((6, 6)), self.relCovInr]])
+            S = np.block([
+                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),dvVar*np.eye(3)]])
+            stateUpdate = stateUpdateChiefAnchor
         elif self.anchor == "DEPUTY":
-            self.ekfInr.propagate(dt, aCtrlInEci)
-        self.ekfRel.propagate(dt, aCtrlInEci)
+            x = np.concatenate([self.deputyPosInr, self.deputyVelInr, self.relPosInr, self.relVelInr])
+            P = np.block([
+                    [self.deputyCovInr, np.zeros((6, 6))],
+                    [np.zeros((6, 6)), self.relCovInr]])
+            S = np.block([
+                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+                [np.zeros((3,3)),dvVar*np.eye(3),np.zeros((3,3)),np.zeros((3,3))],
+                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
+                [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),dvVar*np.eye(3)]])
+            stateUpdate = stateUpdateDeputyAnchor
+        # HL TODO: Is the relative process noise the same as the absolute?
+        def processNoise(dt):
+            ncvQ = ncvProcessNoise(dt)
+            Q = procVar*np.block([
+                    [ncvQ,             np.zeros((6, 6))],
+                    [np.zeros((6, 6)), ncvQ            ]])
+            return Q
+        self.R = measCov
+        self.ekf = ExtendedKalmanFilter(
+            self.tJ2000, 
+            x, 
+            P, 
+            processNoise, 
+            stateUpdate, 
+            stmRelative, 
+            S)
+        
+        
+    def propagate(self, dt, aCtrlInEci):
+        self.ekf.propagate(dt, aCtrlInEci)
         
     def update(self, meas, measType):
         # Determine expected measurement
@@ -130,7 +127,7 @@ class RelativeEKF:
         # Index based on measurement type
         self.measIndx = measurements.measType[self.measType]
         # Call relative EKF
-        self.ekfRel.update(
+        self.ekf.update(
             self.measResidual[self.measIndx], 
             self.measSensititivityMat[self.measIndx,:], 
             self.R[self.measIndx,self.measIndx])
@@ -138,24 +135,29 @@ class RelativeEKF:
     def sync(self):
         # Time
         self.tJ2000 = self.ekf.t
+        # Ephemeris
+        self.sun.update(self.tJ2000)
+        self.moon.update(self.tJ2000)
         # Relative inertial states from relative EKF
-        self.relPosInr = self.ekfRel.x[0:3]
-        self.relVelInr = self.ekfRel.x[3:6]
-        self.relCovInr = self.ekfRel.P
+        self.relPosInr = self.ekf.x[6:9]
+        self.relVelInr = self.ekf.x[9:12]
+        self.relCovInr = self.ekf.P[6:12,6:12]
+        # Re-assert decoupling
+        self.crossCovInr  = np.zeros((6,6))
         # Absolute states dependent on anchor choice
         if self.anchor == "CHIEF":
             # Chief states from inertial EKF
-            self.chiefPosInr = self.ekfInr.x[0:3]
-            self.chiefVelInr = self.ekfInr.x[3:6]
-            self.chiefCovInr = self.ekfInr.P
+            self.chiefPosInr = self.ekf.x[0:3]
+            self.chiefVelInr = self.ekf.x[3:6]
+            self.chiefCovInr = self.ekf.P[0:6,0:6]
             # Deputy states as derived from chief and relative states
             self.deputyPosInr = self.chiefPosInr + self.relPosInr
             self.deputyVelInr = self.chiefVelInr + self.relVelInr
             self.deputyCovInr = self.chiefCovInr + self.relCovInr # Assuming no cross-correlation
         elif self.anchor == "DEPUTY":
-            self.deputyPosInr = self.ekfInr.x[0:3]
-            self.deputyVelInr = self.ekfInr.x[3:6]
-            self.deputyCovInr = self.ekfInr.P
+            self.deputyPosInr = self.ekf.x[0:3]
+            self.deputyVelInr = self.ekf.x[3:6]
+            self.deputyCovInr = self.ekf.P[0:6,0:6]
             # Chief states as derived from deputy and relative states
             self.chiefPosInr = self.deputyPosInr - self.relPosInr
             self.chiefVelInr = self.deputyVelInr - self.relVelInr
@@ -208,6 +210,24 @@ class DualInertialEKF:
         self.sun = eph.SunEphemeris(self.tJ2000)
         self.moon = eph.MoonEphemeris(self.tJ2000)    
         
+        # Relative inertial states
+        self.relPosInr = self.deputyPosInr - self.chiefPosInr
+        self.relVelInr = self.deputyVelInr - self.chiefVelInr
+        self.relCovInr = absCovToRelCov(self.chiefCovInr, self.deputyCovInr, self.crossCovInr)
+        
+        # Relative RIC states
+        self.relPosRectRic = np.zeros((3,))
+        self.relVelRectRic = np.zeros((3,))
+        uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
+        self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
+        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
+        
+        # Compute measurement parameters
+        self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
+        self.rng = la.norm(self.relPosRectRic)
+        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
+        
         # Initialize the filter
         x = np.concatenate([self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr])
         P = np.block([
@@ -233,24 +253,6 @@ class DualInertialEKF:
             stateUpdateDualInertial, 
             stmDualInertial, 
             S)
-        
-        # Relative inertial states
-        self.relPosInr = self.deputyPosInr - self.chiefPosInr
-        self.relVelInr = self.deputyVelInr - self.chiefVelInr
-        self.relCovInr = absCovToRelCov(self.chiefCovInr, self.deputyCovInr, self.crossCovInr)
-        
-        # Relative RIC states
-        self.relPosRectRic = np.zeros((3,))
-        self.relVelRectRic = np.zeros((3,))
-        uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
-        self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
-        
-        # Compute measurement parameters
-        self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
-        self.rng = la.norm(self.relPosRectRic)
-        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
     def propagate(self, dt, aCtrlInEci):
         self.ekf.propagate(dt, aCtrlInEci)
@@ -278,6 +280,9 @@ class DualInertialEKF:
     def sync(self):
         # Time
         self.tJ2000 = self.ekf.t
+        # Ephemeris
+        self.sun.update(self.tJ2000)
+        self.moon.update(self.tJ2000)
         # Absolute states from ekf
         self.chiefPosInr = self.ekf.x[0:3]
         self.chiefVelInr = self.ekf.x[3:6]
@@ -414,7 +419,7 @@ def stateUpdateInertial(dt, x, u, param = None):
     v = x[3:6]
     if param == None:
         pert = {
-            "jnum": 0,
+            "jnum": 2,
             "solarGrav": False,
             "lunarGrav": False,
             "SRP": False,
@@ -434,16 +439,54 @@ def stateUpdateDualInertial(dt, x, u, param = None):
     return np.concatenate([stateUpdateInertial(dt, xc, np.zeros((3,)), param), 
                            stateUpdateInertial(dt, xd, u, param)])
 
+def stateUpdateChiefAnchor(dt, x, u, param = None):
+    # Extract chief and deputy state
+    xc0 = x[0:6]
+    xd0 = x[6:12] + xc0
+    # Propagate 
+    xc = stateUpdateInertial(dt, xc0, np.zeros((3,)), param)
+    xd = stateUpdateInertial(dt, xd0, u, param)
+    # Reform relative state
+    return np.concatenate([xc,xd-xc])
+
+def stateUpdateDeputyAnchor(dt, x, u, param = None):
+    # Extract chief and deputy state
+    xd0 = x[0:6]
+    xc0 = xd0 - x[6:12]
+    # Propagate 
+    xc = stateUpdateInertial(dt, xc0, np.zeros((3,)), param)
+    xd = stateUpdateInertial(dt, xd0, u, param)
+    # Reform relative state
+    return np.concatenate([xd,xd-xc])
+
 def stmInertial(dt, x):
-    # State parameters
-    r = x[0:3]
-    rMag = la.norm(r)
-    rHat = r/rMag
+    """
+    Inertial State Transition Matrix. Assumes Earth gravity plus J2. Uses first
+    order Taylor series expansion, so it is only valid for small time steps.
+    
+    Refs: 
+        1. Markley, "Approximate Cartesian State Transition Matrix"
+        2. Hablani, "Autonomous Inertial Relative Navigation with 
+        Sight-Line-Stabilized Sensors for Spacecraft Rendezvous"
+
+    Parameters
+    ----------
+    dt : double
+        propagation delta-time.
+    x : 6x1 double
+        Inertial position/velocity state.
+
+    Returns
+    -------
+    F : 
+        state transition matrix.
+
+    """
     # State transition matrix
-    F1 = np.eye(3)
-    F2 = -(orb.MU_EARTH/(rMag**3))*(np.eye(3)-3*np.matmul(rHat,np.transpose(rHat)))
+    F2 = np.zeros((3,3))
+    uDyn.gravPartial(x[0:3],F2)
     F = np.block([
-            [np.zeros((3,3)),F1],
+            [np.zeros((3,3)),np.eye(3)],
             [F2,np.zeros((3,3))]])
     return np.eye(6) + F*dt
 
@@ -453,6 +496,13 @@ def stmDualInertial(dt, x):
     return np.block([
             [stmInertial(dt,xc), np.zeros((6, 6))  ],
             [np.zeros((6, 6))  , stmInertial(dt,xd)]])
+
+def stmRelative(dt, x):
+    # Linearize the inertial motion about the anchor
+    stmI = stmInertial(dt,x[0:6])
+    return np.block([
+            [stmI,               np.zeros((6, 6))  ],
+            [np.zeros((6, 6))  , stmI              ]])
 
 def absCovToRelCov(Pc,Pd,Px):
     """
@@ -518,3 +568,42 @@ def rotateCov(Pa,BA,omegaBwrtAinA):
     
     # Rotate covariance
     return np.matmul(J, np.matmul(Pa, np.transpose(J)))
+
+def initCovFromRic(varRic,dcmInr2Ric,omegaRicWrtInrInInr):
+    """
+    Initializes inertial covariance from RIC uncertainties. Assumes a radial-
+    in-track correlation coefficient derived from HCW dynamics.
+    
+    Ref: Woffinden, David Charles, "Angles-Only Navigation for Autonomous 
+    Orbital Rendezvous" (2008). All Graduate Theses and Dissertations. 12.
+    https://digitalcommons.usu.edu/etd/12 
+
+    Parameters
+    ----------
+    varRic : 6x1 double 
+        RIC frame position and velocity variances.
+    dcmInr2Ric : 3x3 double
+        Inertial to RIC DCM.
+    omegaRicWrtInrInInr : 3x1 double
+        Angular velocity of RIC frame w.r.t Inertial frame.
+
+    Returns
+    -------
+    PInr : 6x6 double
+        Initial covariance in the inertial frame.
+
+    """
+    # Correlation coefficient
+    f = -np.sqrt(3)/2
+    
+    # Construct RIC STM (Eq 6.25)
+    PRic = varRic*np.eye(6)
+    PRic[0,4] = f*np.sqrt(varRic[0])*np.sqrt(varRic[4])
+    PRic[4,0] = PRic[0,4]
+    PRic[1,3] = f*np.sqrt(varRic[1])*np.sqrt(varRic[3])
+    PRic[3,1] = PRic[1,3]
+    
+    # Rotate to Inertial frame
+    dcmRic2Inr = np.transpose(dcmInr2Ric)
+    omegaInrWrtRicInRic = -np.matmul(dcmInr2Ric,omegaRicWrtInrInInr)
+    return rotateCov(PRic, dcmRic2Inr, omegaInrWrtRicInRic)

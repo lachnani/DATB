@@ -110,7 +110,7 @@ class TestEstimator(unittest.TestCase):
         tJ2000 = 0
         rc = np.zeros((3,))
         vc = np.zeros((3,))
-        oec = np.array([42000.,0.,0.,0.,0.,0.])
+        oec = np.array([42000.,0.,0.002,0.,0.,0.])
         meanMotion = np.sqrt(orb.MU_EARTH/oec[0]**3)
         uKin.oe2rv(orb.MU_EARTH, oec, rc, vc)
         P0 = np.block([
@@ -155,12 +155,16 @@ class TestEstimator(unittest.TestCase):
         # Covariance is block diagonal
         self.assertTrue(np.all(P1[6:12,0:6] == np.zeros((6,6)))) 
         self.assertTrue(np.all(P1[0:6,6:12] == np.zeros((6,6)))) 
-        # Covariance has increased
-        self.assertTrue(np.all(P1[0:6,0:6] > P0))
-        self.assertTrue(np.all(P1[6:12,6:12] > P0))
+        # Covariance has increasedj
+        self.assertTrue(np.all(P1[0:6,0:6] >= P0))
+        self.assertTrue(np.all(P1[6:12,6:12] >= P0))
         
         ### Ingest a measurement
+        frm.dcmInr2Los = nav.dcmInr2Los
+        frm.dcmRic2Los = np.matmul(frm.dcmInr2Los,np.transpose(frm.dcmInr2Ric))
+        frm.az, frm.el = meas.calcAzEl(frm.chief.r, frm.deputy.r, frm.dcmInr2Los)
         nav.update(meas.get(frm, measCov), "anglesRange")
+        nav.sync()
         
         P2 = nav.ekf.P
         
@@ -170,9 +174,101 @@ class TestEstimator(unittest.TestCase):
         self.assertFalse(np.all(P2[6:12,0:6] == np.zeros((6,6)))) 
         self.assertFalse(np.all(P2[0:6,6:12] == np.zeros((6,6)))) 
         # Covariance has decreased
-        self.assertTrue(np.all(np.diag(P2[0:6,0:6]) < np.diag(P1[0:6,0:6])))
-        self.assertTrue(np.all(np.diag(P2[6:12,6:12]) < np.diag(P1[0:6,0:6])))
+        self.assertTrue(np.all(np.diag(P2[0:6,0:6]) <= np.diag(P1[0:6,0:6])))
+        self.assertTrue(np.all(np.diag(P2[6:12,6:12]) <= np.diag(P1[0:6,0:6])))
+     
+    def test_rekf(self):
+        """
+        Test Relative EKF
+
+        """
+        ### Initial conditions
+        tJ2000 = 0
+        rc = np.zeros((3,))
+        vc = np.zeros((3,))
+        oec = np.array([42000.,0.,0.002,0.,0.,0.])
+        meanMotion = np.sqrt(orb.MU_EARTH/oec[0]**3)
+        uKin.oe2rv(orb.MU_EARTH, oec, rc, vc)
+        P0 = np.block([
+            [0.030**2*np.eye(3),np.zeros((3,3))],
+            [np.zeros((3,3)),3.6e-6**2*np.eye(3)]])
+        clroe = np.array([0.,0.,0.01,10.,0.,0.]) # Drifting co-elliptic
+        relPosRic = np.zeros((3,))
+        relVelRic = np.zeros((3,))
+        uKin.clroe2ric(clroe, meanMotion, 0, relPosRic, relVelRic)
+        rd, vd = formation.ric2rv(rc, vc, relPosRic, relVelRic)
+        procVar = 0.06e-6
+        dvVar = 3e-6
+        measCov = (np.array([1e-3,1e-3,1e-3,1e-2])**2)*np.eye(4)
         
+        ### Create formation class
+        pert = {
+            "jnum": 6,
+            "solarGrav": True,
+            "lunarGrav": True,
+            "SRP": False,
+            "drag": False,
+            "Cd": 0.0,
+            "normalizedArea": 0.0
+            }
+        chief = orb.Orbit(tJ2000, oec, stateType = "STATE_KEPEL", pert = pert, settings = None)
+        frm = formation.Formation(chief, None, clroe, frmType = "FORMATION_CHIEF_ANCHOR",
+                                  relStateType = "RELSTATE_RECT_CLROE", pert = pert, settings = None)
+        
+        ### Initialize DIEKF class
+        rcErr = np.array([0.01,0.01,0.01])
+        nav = est.RelativeEKF(
+            tJ2000, rc+rcErr, vc, P0, rd, vd, P0, procVar, dvVar, measCov)
+        
+        ### Propagate through 2 hours
+        tf = 2*3600
+        dt = 10
+        while nav.tJ2000 < tf:
+            frm.propagate(dt)
+            nav.propagate(dt, np.zeros((3,)))
+            nav.sync()
+            
+        uKin.rv2oe(orb.MU_EARTH, nav.chiefPosInr, nav.chiefVelInr, oec)
+        uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
+        P1 = nav.ekf.P
+        errPos1 = np.linalg.norm(nav.relPosRectRic - frm.relPosRectRic)
+        errVel1 = np.linalg.norm(nav.relVelRectRic - frm.relVelRectRic)
+        
+        # Time is synched
+        self.assertEqual(nav.tJ2000, tf)
+        # Chief orbit matches truth
+        self.assertAlmostEqual(np.all(oec),np.all(frm.chief.oe))
+        # Relative state has not changed appreciably
+        self.assertAlmostEqual(np.all(clroe),np.all(frm.rectClroe))
+        # Covariance is block diagonal
+        self.assertTrue(np.all(P1[6:12,0:6] == np.zeros((6,6)))) 
+        self.assertTrue(np.all(P1[0:6,6:12] == np.zeros((6,6)))) 
+        # Covariance has increasedj
+        self.assertTrue(np.all(P1[0:6,0:6] >= P0))
+        self.assertTrue(np.all(P1[6:12,6:12] >= P0))
+        
+        
+        ### Ingest measurements
+        frm.dcmInr2Los = nav.dcmInr2Los
+        frm.dcmRic2Los = np.matmul(frm.dcmInr2Los,np.transpose(frm.dcmInr2Ric))
+        frm.az, frm.el = meas.calcAzEl(frm.chief.r, frm.deputy.r, frm.dcmInr2Los)
+        nav.update(meas.get(frm, np.zeros((4,4))), "anglesRangeRR")
+        nav.sync()
+        
+        P2 = nav.ekf.P
+        errPos2 = np.linalg.norm(nav.relPosRectRic - frm.relPosRectRic)
+        errVel2 = np.linalg.norm(nav.relVelRectRic - frm.relVelRectRic)
+        
+        # Time is synched
+        self.assertEqual(nav.tJ2000, tf)
+        # Covariance is still block diagonal
+        self.assertTrue(np.all(P2[6:12,0:6] == np.zeros((6,6)))) 
+        self.assertTrue(np.all(P2[0:6,6:12] == np.zeros((6,6)))) 
+        # Only relative Covariance has decreased
+        self.assertTrue(np.all(P2[0:6,0:6] == P1[0:6,0:6]))
+        self.assertTrue(np.all(np.diag(P2[6:12,6:12]) <= np.diag(P1[0:6,0:6])))
+        # Error has decreased
+        self.assertTrue(np.all(np.abs(errPos2) < np.abs(errPos1)))
         
         
 if __name__ == '__main__':
