@@ -508,8 +508,7 @@ def absCovToRelCov(Pc,Pd,Px):
     """
     Converts absolute covariances to relative covariances. Does not rotate 
     frames.
-    
-    HL TODO: Confirm this math is correct!
+    Ref: Carpenter and D'Souza, "Navigation Filter Best Practices"
 
     Parameters
     ----------
@@ -526,16 +525,32 @@ def absCovToRelCov(Pc,Pd,Px):
         Chief to deputy inertial relative covariance.
 
     """
-    # Initialize
-    Prel = np.zeros((6,6))
     
-    # Construct block covariance
-    Prel[0:3,0:3] = Pc[0:3,0:3] + Pd[0:3,0:3] - np.transpose(Px[0:3,0:3]) - Px[0:3,0:3]
-    Prel[3:6,3:6] = Pc[3:6,3:6] + Pd[3:6,3:6] - np.transpose(Px[3:6,3:6]) - Px[3:6,3:6]
-    Prel[0:3,3:6] = Pc[0:3,3:6] + Pd[0:3,3:6] - np.transpose(Px[3:6,0:3]) - Px[0:3,3:6]
-    Prel[3:6,0:3] = np.transpose(Prel[0:3,3:6])
+    return Pc + Pd - Px - np.transpose(Px)
+
+def relCovToAbsCov(Pabs,Prel,Px):
+    """
+    Converts relative covariances to absolute covariances. Does not rotate 
+    frames.
+    Ref: Carpenter and D'Souza, "Navigation Filter Best Practices"
+
+    Parameters
+    ----------
+    Pabs : 6x6 double
+        Absolute inertial covariance.
+    Prel : 6x6 double
+        Chief to deputy inertial relative covariance.
+    Px : 6x6 double
+        Absolute/relative cross covariance.
+
+    Returns
+    -------
+    Pabs2 : 6x6 double
+        Absolute inertial covariance of the remaining state.
+
+    """
     
-    return Prel
+    return Pabs + Prel + Px + np.transpose(Px)
 
 def rotateCov(Pa,BA,omegaBwrtAinA):
     """
