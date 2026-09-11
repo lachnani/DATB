@@ -48,6 +48,9 @@
 #endif
 
 // Helper vector math functions
+static double sign(double x) {
+    return (x > 0) - (x < 0);
+}
 static double clamp(double x, double min, double max) {
     if (x < min) return min;
     if (x > max) return max;
@@ -1206,7 +1209,11 @@ double f2E(double f, double e)
 double M2E(double M, double e)
 {
     /*
-    Mean to Eccentric Anomaly (Solves Kepler's equation using Newton's method)
+    Mean to Eccentric Anomaly (Solves Kepler's equation using Laguerre's method)
+
+    Reference:
+    Conway, B.A. "An improved algorithm due to laguerre for the solution of Kepler's equation",
+    Celestial Mechanics 39, 199–211 (1986). https://doi.org/10.1007/BF01230852
 
     Parameters
     ----------
@@ -1225,12 +1232,26 @@ double M2E(double M, double e)
     double dE;
     double EPrev = M;
     double E;
+    double fx;
+	double fpx;
+    double fppx;
     int    count = 0;
     int    maxIteration = 200;
 
     if((e >= 0) && (e < 1)) {
+        /* Pre-allocate the values of n for speed */
+        double n = 5;
+        double nm2 = (n - 1) * (n - 1);
+        double nnm = n * (n - 1);
+        /* Main loop */
         for (int j = 0; j < maxIteration; ++j) {
-            E = M + e * sin(EPrev);
+            /* Compute derivatives */
+			fx = EPrev - e * sin(EPrev) - M;
+			fpx = 1 - e * cos(EPrev);
+			fppx = e * sin(EPrev);
+            /* Iterate */
+			E = EPrev - n * fx / (fpx + sign(fpx)*sqrt(nm2 * fpx * fpx - nnm * fx * fppx));
+            /* Evaluate */
             dE = E - EPrev;
             EPrev = E;
             count += 1;
