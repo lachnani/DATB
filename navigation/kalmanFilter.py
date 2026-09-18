@@ -70,13 +70,11 @@ class ExtendedKalmanFilter:
 
         """
         self.t = self.t + dt
-        Phi = self.Phi(dt, self.x)
         self.x = self.f(dt, self.x, u, self.param)
         if la.norm(u) > 0.0:
-            self.P = np.matmul(Phi,np.matmul(self.P,np.transpose(Phi))) + self.Q(dt) + self.Qu(u)
+            self.P = propagateCov(self.P, self.Phi(dt, self.x), self.Q(dt) + self.Qu(u))
         else:
-            self.P = np.matmul(Phi,np.matmul(self.P,np.transpose(Phi))) + self.Q(dt)
-        self.P = symmetrize(self.P)
+            self.P = propagateCov(self.P, self.Phi(dt, self.x), self.Q(dt))
             
     def update(self, y, H, R):
         """
@@ -85,19 +83,71 @@ class ExtendedKalmanFilter:
 
         Parameters
         ----------
-        y : mx1 float
+        y : mx1 double
             measurement residual (z - zHat)
-        H : mxn float
+        H : mxn double
             measurement sensitivity matrix
-        R : mxm float
+        R : mxm double
             measurement covariance
 
         """
-        S = residualCov(self.P, H, R)
-        K = kalmanGain(self.P, H, S)
-        self.x = self.x + np.matmul(K, y)
-        self.P = np.matmul(np.eye(self.n) - np.matmul(K,H),self.P)
-        self.P = symmetrize(self.P)
+        self.x, self.P = measurementUpdate(self.x, self.P, self.n, y, H, R)
+        
+def propagateCov(P, Phi, Q):
+    """
+    Propagates covariance matrix and adds process noise using first order model
+
+    Parameters
+    ----------
+    P : nxn double
+        state covariance
+    Phi : nxn double
+        state transition matrix
+    Q : nxn double
+        process noise matrix
+
+    Returns
+    -------
+    PProp : nxn double
+        propagated state covariance
+
+    """
+    return symmetrize(np.matmul(Phi,np.matmul(P,np.transpose(Phi))) + Q)
+
+def measurementUpdate(x, P, n, y, H, R):
+    """
+    Update state and covariance with measurements z. Follows Figure 
+    10.3.3-1 of [1].
+
+    Parameters
+    ----------
+    x : nx1 double
+        state vector
+    P : nxn double
+        state covariance
+    n : int
+        state dimension
+    y : mx1 double
+        measurement residual (z - zHat)
+    H : mxn double
+        measurement sensitivity matrix
+    R : mxm double
+        measurement covariance
+
+    Returns
+    -------
+    xUpd : nx1 double
+        updated state vector
+    PUpd : nxn double
+        updated state covariance
+
+    """
+    S = residualCov(P, H, R)
+    K = kalmanGain(P, H, S)
+    xUpd = x + np.matmul(K, y)
+    PUpd = np.matmul(np.eye(n) - np.matmul(K,H),P)
+    PUpd = symmetrize(PUpd)
+    return xUpd, PUpd
         
 def residualCov(P, H, R):
     return np.matmul(H,np.matmul(P,np.transpose(H))) + R
