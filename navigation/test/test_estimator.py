@@ -16,6 +16,7 @@ from dynamics import orbit as orb
 from dynamics import formation
 from kinematics import kinematicsUtils as uKin
 import measurements as meas
+import kalmanFilter as kf
 
 class TestEstimator(unittest.TestCase):
     """Tests for the EKF Class"""
@@ -54,7 +55,7 @@ class TestEstimator(unittest.TestCase):
         self.H = H 
         self.R = np.diag(np.array([0.5**2,0.005**2]))
         self.S = np.zeros((2,2))
-        self.ekf = est.ExtendedKalmanFilter(
+        self.ekf = kf.ExtendedKalmanFilter(
             self.t, self.x0, self.P0, self.Q, self.f, self.F, self.S)
             
         
@@ -121,7 +122,7 @@ class TestEstimator(unittest.TestCase):
         relVelRic = np.zeros((3,))
         uKin.clroe2ric(clroe, meanMotion, 0, relPosRic, relVelRic)
         rd, vd = formation.ric2rv(rc, vc, relPosRic, relVelRic)
-        procVar = 0.06e-6
+        procVar = 0.06e-6*np.eye(3)
         dvVar = 3e-6
         measCov = (np.array([1e-3,1e-3,1e-3,1e-2])**2)*np.eye(4)
         
@@ -131,8 +132,8 @@ class TestEstimator(unittest.TestCase):
                                   relStateType = "RELSTATE_RECT_CLROE", pert = None, settings = None)
         
         ### Initialize DIEKF class
-        nav = est.DualInertialEKF(
-            tJ2000, rc, vc, P0, rd, vd, P0, procVar, dvVar, measCov)
+        nav = est.DualInertialFilter(
+            tJ2000, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
@@ -144,7 +145,7 @@ class TestEstimator(unittest.TestCase):
             
         uKin.rv2oe(orb.MU_EARTH, nav.chiefPosInr, nav.chiefVelInr, oec)
         uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
-        P1 = nav.ekf.P
+        P1 = nav.fltr.P
         
         # Time is synched
         self.assertEqual(nav.tJ2000, tf)
@@ -166,7 +167,7 @@ class TestEstimator(unittest.TestCase):
         nav.update(meas.get(frm, measCov), "anglesRange")
         nav.sync()
         
-        P2 = nav.ekf.P
+        P2 = nav.fltr.P
         
         # Time is synched
         self.assertEqual(nav.tJ2000, tf)
@@ -230,7 +231,7 @@ class TestEstimator(unittest.TestCase):
             
         uKin.rv2oe(orb.MU_EARTH, nav.chiefPosInr, nav.chiefVelInr, oec)
         uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
-        P1 = nav.ekf.P
+        P1 = nav.fltr.P
         errPos1 = np.linalg.norm(nav.relPosRectRic - frm.relPosRectRic)
         errVel1 = np.linalg.norm(nav.relVelRectRic - frm.relVelRectRic)
         
@@ -255,7 +256,7 @@ class TestEstimator(unittest.TestCase):
         nav.update(meas.get(frm, np.zeros((4,4))), "anglesRangeRR")
         nav.sync()
         
-        P2 = nav.ekf.P
+        P2 = nav.fltr.P
         errPos2 = np.linalg.norm(nav.relPosRectRic - frm.relPosRectRic)
         errVel2 = np.linalg.norm(nav.relVelRectRic - frm.relVelRectRic)
         

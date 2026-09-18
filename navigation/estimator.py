@@ -11,6 +11,7 @@ from dynamics import dynamicsUtils as uDyn
 from kinematics import kinematicsUtils as uKin
 from dynamics import ephemerides as eph
 import measurements
+import kalmanFilter as kf
 
 class RelativeEKF:
     """
@@ -99,7 +100,7 @@ class RelativeEKF:
                     [np.zeros((6, 6)), ncvQ            ]])
             return Q
         self.R = measCov
-        self.ekf = ExtendedKalmanFilter(
+        self.fltr = kf.ExtendedKalmanFilter(
             self.tJ2000, 
             x, 
             P, 
@@ -110,7 +111,7 @@ class RelativeEKF:
         
         
     def propagate(self, dt, aCtrlInEci):
-        self.ekf.propagate(dt, aCtrlInEci)
+        self.fltr.propagate(dt, aCtrlInEci)
         
     def update(self, meas, measType):
         # Determine expected measurement
@@ -127,37 +128,37 @@ class RelativeEKF:
         # Index based on measurement type
         self.measIndx = measurements.measType[self.measType]
         # Call relative EKF
-        self.ekf.update(
+        self.fltr.update(
             self.measResidual[self.measIndx], 
             self.measSensititivityMat[self.measIndx,:], 
             self.R[self.measIndx,self.measIndx])
         
     def sync(self):
         # Time
-        self.tJ2000 = self.ekf.t
+        self.tJ2000 = self.fltr.t
         # Ephemeris
         self.sun.update(self.tJ2000)
         self.moon.update(self.tJ2000)
         # Relative inertial states from relative EKF
-        self.relPosInr = self.ekf.x[6:9]
-        self.relVelInr = self.ekf.x[9:12]
-        self.relCovInr = self.ekf.P[6:12,6:12]
+        self.relPosInr = self.fltr.x[6:9]
+        self.relVelInr = self.fltr.x[9:12]
+        self.relCovInr = self.fltr.P[6:12,6:12]
         # Re-assert decoupling
         self.crossCovInr  = np.zeros((6,6))
         # Absolute states dependent on anchor choice
         if self.anchor == "CHIEF":
             # Chief states from inertial EKF
-            self.chiefPosInr = self.ekf.x[0:3]
-            self.chiefVelInr = self.ekf.x[3:6]
-            self.chiefCovInr = self.ekf.P[0:6,0:6]
+            self.chiefPosInr = self.fltr.x[0:3]
+            self.chiefVelInr = self.fltr.x[3:6]
+            self.chiefCovInr = self.fltr.P[0:6,0:6]
             # Deputy states as derived from chief and relative states
             self.deputyPosInr = self.chiefPosInr + self.relPosInr
             self.deputyVelInr = self.chiefVelInr + self.relVelInr
             self.deputyCovInr = self.chiefCovInr + self.relCovInr # Assuming no cross-correlation
         elif self.anchor == "DEPUTY":
-            self.deputyPosInr = self.ekf.x[0:3]
-            self.deputyVelInr = self.ekf.x[3:6]
-            self.deputyCovInr = self.ekf.P[0:6,0:6]
+            self.deputyPosInr = self.fltr.x[0:3]
+            self.deputyVelInr = self.fltr.x[3:6]
+            self.deputyCovInr = self.fltr.P[0:6,0:6]
             # Chief states as derived from deputy and relative states
             self.chiefPosInr = self.deputyPosInr - self.relPosInr
             self.chiefVelInr = self.deputyVelInr - self.relVelInr
@@ -176,9 +177,9 @@ class RelativeEKF:
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
 
-class DualInertialEKF:
+class DualInertialFilter:
     """
-    Dual Inertial EKF is based on:
+    Dual Inertial Filter is based on:
     Woffinden, David Charles, "Angles-Only Navigation for Autonomous 
     Orbital Rendezvous" (2008). All Graduate Theses and Dissertations. 12.
     https://digitalcommons.usu.edu/etd/12
@@ -186,7 +187,8 @@ class DualInertialEKF:
     
     def __init__(
             self,
-            tJ2000, rc, vc, Pc, rd, vd, Pd, procVar, dvVar, measCov, pert = None
+            tJ2000, rc, vc, Pc, rd, vd, Pd, 
+            Qc, Qd, dvVar, measCov, pert = None
             ):
         
         # Initialize the inertial nav states nav states
@@ -229,33 +231,40 @@ class DualInertialEKF:
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
         # Initialize the filter
-        x = np.concatenate([self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr])
+        x = np.concatenate([self.deputyPosInr, self.deputyVelInr, self.chiefPosInr, self.chiefVelInr])
         P = np.block([
-                [Pc,               np.zeros((6, 6))],
-                [np.zeros((6, 6)), Pd              ]])
-        S = np.block([
-            [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
-            [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
-            [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3))],
-            [np.zeros((3,3)),np.zeros((3,3)),np.zeros((3,3)),dvVar*np.eye(3)]])
-        def processNoise(dt):
-            ncvQ = ncvProcessNoise(dt)
-            Q = procVar*np.block([
-                    [ncvQ,             np.zeros((6, 6))],
-                    [np.zeros((6, 6)), ncvQ            ]])
-            return Q
+                [Pd,               np.zeros((6, 6))],
+                [np.zeros((6, 6)), Pc              ]])
+        def diStateUpdate(dt, x, u, param = None):
+            return np.concatenate([stateUpdateInertial(dt, x[0:6], u, param), 
+                                   stateUpdateInertial(dt, x[6:12], np.zeros((3,)), param)])
+        def diDvProcessNoise(dv):
+            return np.block([
+                    [dvProcessNoise(dv,dvVar[0],dvVar[1],dvVar[2]), np.zeros((6, 6))],
+                    [np.zeros((6, 6))                             , np.zeros((6, 6))]])
+        def diSTM(dt, x):
+            return np.block([
+                    [stmInertial(dt,x[0:6]), np.zeros((6, 6))       ],
+                    [np.zeros((6, 6))      , stmInertial(dt,x[6:12])]])
+        # HL TODO: Resolve the way we pass in the DCMs for dynamic proc noise...
+        def diProcessNoise(dt):
+            QdI = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2Ric),Qd))
+            QcI = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2Ric),Qc))
+            return np.block([
+                    [QdI,              np.zeros((6, 6))],
+                    [np.zeros((6, 6)), QcI             ]])
         self.R = measCov
-        self.ekf = ExtendedKalmanFilter(
+        self.fltr = kf.ExtendedKalmanFilter(
             self.tJ2000, 
             x, 
             P, 
-            processNoise, 
-            stateUpdateDualInertial, 
-            stmDualInertial, 
-            S)
+            diProcessNoise, 
+            diStateUpdate, 
+            diSTM, 
+            diDvProcessNoise)
         
     def propagate(self, dt, aCtrlInEci):
-        self.ekf.propagate(dt, aCtrlInEci)
+        self.fltr.propagate(dt, aCtrlInEci)
         
     def update(self, meas, measType):
         # Determine expected measurement
@@ -272,25 +281,25 @@ class DualInertialEKF:
         # Index based on measurement type
         self.measIndx = measurements.measType[self.measType]
         # Call base EKF
-        self.ekf.update(
+        self.fltr.update(
             self.measResidual[self.measIndx], 
             self.measSensititivityMat[self.measIndx,:], 
             self.R[self.measIndx,self.measIndx])
         
     def sync(self):
         # Time
-        self.tJ2000 = self.ekf.t
+        self.tJ2000 = self.fltr.t
         # Ephemeris
         self.sun.update(self.tJ2000)
         self.moon.update(self.tJ2000)
         # Absolute states from ekf
-        self.chiefPosInr = self.ekf.x[0:3]
-        self.chiefVelInr = self.ekf.x[3:6]
-        self.chiefCovInr = self.ekf.P[0:6,0:6]
-        self.deputyPosInr = self.ekf.x[6:9]
-        self.deputyVelInr = self.ekf.x[9:12]
-        self.deputyCovInr = self.ekf.P[6:12,6:12]
-        self.crossCovInr  = self.ekf.P[0:6,6:12]
+        self.deputyPosInr = self.fltr.x[0:3]
+        self.deputyVelInr = self.fltr.x[3:6]
+        self.deputyfCovInr = self.fltr.P[0:6,0:6]
+        self.chiefPosInr = self.fltr.x[6:9]
+        self.chiefVelInr = self.fltr.x[9:12]
+        self.chiefCovInr = self.fltr.P[6:12,6:12]
+        self.crossCovInr  = self.fltr.P[0:6,6:12]
         # Inertial to RIC DCM
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
         self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
@@ -306,113 +315,13 @@ class DualInertialEKF:
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         self.rng = la.norm(self.relPosRectRic)
-        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
-        
-
-class ExtendedKalmanFilter:
-    """ Base EKF class
+        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng    
     
-    Attributes
-    ----------
-    t : float
-        time 
-    x: nx1 float
-        state
-    P: nxn float
-        covariance
-    Q: function
-        process noise funtion Q(dt)
-    f: function
-        state update function f(dt, x, u, param)
-    F: function
-        state transition matrix function F(dt, x)
-    S: nxn float
-        state correction covariance matrix
-        
-    Variables are based on the following:
-        1. Yaakov Bar-Shalom, X.-Rong Li, Thiagalingam Kirubarajan, "Estimation 
-        with Applications to Tracking and Navigation: Theory, Algorithms and 
-        Software" (2002). 
-        https://onlinelibrary.wiley.com/doi/book/10.1002/0471221279
-        2. Woffinden, David Charles, "Angles-Only Navigation for Autonomous 
-        Orbital Rendezvous" (2008). All Graduate Theses and Dissertations. 12.
-        https://digitalcommons.usu.edu/etd/12
     
-    """
-    def __init__(
-            self, 
-            t, x, P, Q, f, F, S, param = None
-            ):
-        
-        # Initialize the filter state
-        self.t = t
-        self.x = x
-        self.P = P
-        self.Q = Q
-        self.f = f
-        self.F = F
-        self.S = S
-        self.param = param
-        self.n = np.size(x,0)
-        
-    def propagate(self, dt, u):
-        """
-        Propagate state and covariance using dyamic equations. Follows Figure 
-        10.3.3-1 of [1]. If the control force is non-zero, additional velocity 
-        covariance is added per [2].
-
-        Parameters
-        ----------
-        dt : float
-            propagation delta-time
-        u : 3x1 float
-            control acceleration
-
-        """
-        self.t = self.t + dt
-        F = self.F(dt, self.x)
-        self.x = self.f(dt, self.x, u, self.param)
-        if la.norm(u) > 0.0:
-            self.P = np.matmul(F,np.matmul(self.P,np.transpose(F))) + self.Q(dt) + self.S
-        else:
-            self.P = np.matmul(F,np.matmul(self.P,np.transpose(F))) + self.Q(dt)
-            
-    def update(self, nu, H, R):
-        """
-        Update state and covariance with measurements z. Follows Figure 
-        10.3.3-1 of [1].
-
-        Parameters
-        ----------
-        nu : mx1 float
-            measurement residual (z - zHat)
-        H : mxn float
-            measurement sensitivity matrix
-        R : mxm float
-            measurement covariance
-
-        """
-        S = residualCov(self.P, H, R)
-        W = kalmanGain(self.P, H, S)
-        self.x = self.x + np.matmul(W, nu)
-        self.P = np.matmul(np.eye(self.n) - np.matmul(W,H),self.P)
-        
-def residualCov(P, H, R):
-    return np.matmul(H,np.matmul(P,np.transpose(H))) + R
-        
-def kalmanGain(P, H, S):
-    return np.matmul(P,np.matmul(np.transpose(H),la.inv(S)))
-
-def normEstErrSqr(dx, P):
-    return np.matmul(np.transpose(dx),np.matmul(np.inv(P),dx))
-
-def normInvnSqr(nu, S):
-    return np.matmul(np.transpose(nu),np.matmul(np.inv(S),nu))
-
-def ncvProcessNoise(dt):
+def ncvProcessNoise(dt, Q = np.eye(3)):
     return np.block([
-                    [np.eye(3)*(dt**3)/3,np.eye(3)*(dt**2)/2],
-                    [np.eye(3)*(dt**2)/2,np.eye(3)*dt]])
+                    [Q*(dt**3)/3, Q*(dt**2)/2],
+                    [Q*(dt**2)/2, Q*dt       ]])
 
 def stateUpdateInertial(dt, x, u, param = None):
     r = x[0:3]
@@ -432,12 +341,6 @@ def stateUpdateInertial(dt, x, u, param = None):
                    np.zeros((3,)), np.zeros((3,)), pert["Cd"], pert["normalizedArea"], \
                    u, dt, r, v)
     return np.concatenate([r, v])
-
-def stateUpdateDualInertial(dt, x, u, param = None):
-    xc = x[0:6]
-    xd = x[6:12]   
-    return np.concatenate([stateUpdateInertial(dt, xc, np.zeros((3,)), param), 
-                           stateUpdateInertial(dt, xd, u, param)])
 
 def stateUpdateChiefAnchor(dt, x, u, param = None):
     # Extract chief and deputy state
@@ -489,13 +392,6 @@ def stmInertial(dt, x):
             [np.zeros((3,3)),np.eye(3)],
             [F2,np.zeros((3,3))]])
     return np.eye(6) + F*dt
-
-def stmDualInertial(dt, x):
-    xc = x[0:6]
-    xd = x[6:12]
-    return np.block([
-            [stmInertial(dt,xc), np.zeros((6, 6))  ],
-            [np.zeros((6, 6))  , stmInertial(dt,xd)]])
 
 def stmRelative(dt, x):
     # Linearize the inertial motion about the anchor
@@ -550,7 +446,7 @@ def relCovToAbsCov(Pabs,Prel,Px):
 
     """
     
-    return Pabs + Prel + Px + np.transpose(Px)
+    return Pabs + Prel - Px - np.transpose(Px)
 
 def rotateCov(Pa,BA,omegaBwrtAinA):
     """
@@ -622,3 +518,36 @@ def initCovFromRic(varRic,dcmInr2Ric,omegaRicWrtInrInInr):
     dcmRic2Inr = np.transpose(dcmInr2Ric)
     omegaInrWrtRicInRic = -np.matmul(dcmInr2Ric,omegaRicWrtInrInInr)
     return rotateCov(PRic, dcmRic2Inr, omegaInrWrtRicInRic)
+
+def dvProcessNoise(dv,varSf,varQ,varP):
+    """
+    Process noise due to delta-v maneuvers.
+    
+    Ref: Vaughn, Andrew Thomas, "A Monte-Carlo Performance Analysis of Kalman 
+    Filter and Targeting Algorithms for Autonomous Orbital Rendezvous" (2004).
+    https://dspace.mit.edu/entities/publication/a094c648-1ad3-451b-b4ae-839dfda52095
+
+    Parameters
+    ----------
+    dv : 3x1 double
+        Delta-V vector.
+    varSf : double
+        Scale factor variance.
+    varQ : double
+        Quantization variance.
+    varP : double
+        Pointing variance.
+
+    Returns
+    -------
+    Qv : 6x6 double
+        Delta-V process noise.
+
+    """
+    dvdvT = np.matmul(dv,np.transpose(dv))
+    QSf = varSf*dvdvT
+    QQ = varQ*np.eye(3)
+    QP = varP*(np.matrix.trace(dvdvT)*np.eye(3) - dvdvT)
+    return np.block([
+            [np.zeros((3, 3)), np.zeros((3, 3))],
+            [np.zeros((3, 3)), QSf + QQ + QP   ]])

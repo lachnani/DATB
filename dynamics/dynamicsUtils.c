@@ -665,8 +665,8 @@ void gravPartial(const double r[3], double G[3][3])
 			rnT = rHat[i] * nHat[j];
 			nrT = nHat[i] * rHat[j];
 			nnT = nHat[i] * nHat[j];
-            G[i][j] = -mu / pow(rMag, 3) * (
-                (I[i][j] - 3 * rrT) +
+            G[i][j] = mu / pow(rMag, 3) * (
+                (3 * rrT - I[i][j]) +
                 (1.5 * J2_EARTH * pow(REQ_EARTH / rMag,2) *
                 (5*(1 - 7*c2)*rrT - (1-5*c2)*I[i][j] + 10*c*(rnT+nrT) - 2*nnT)));
         }
