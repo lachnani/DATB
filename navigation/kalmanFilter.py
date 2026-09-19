@@ -72,7 +72,7 @@ class ExtendedKalmanFilter:
         self.t = self.t + dt
         self.x = self.f(dt, self.x, u, self.param)
         if la.norm(u) > 0.0:
-            self.P = propagateCov(self.P, self.Phi(dt, self.x), self.Q(dt) + self.Qu(u))
+            self.P = propagateCov(self.P, self.Phi(dt, self.x), self.Q(dt) + self.Qu(dt,u))
         else:
             self.P = propagateCov(self.P, self.Phi(dt, self.x), self.Q(dt))
             

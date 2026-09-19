@@ -145,7 +145,7 @@ class TestEstimator(unittest.TestCase):
             
         uKin.rv2oe(orb.MU_EARTH, nav.chiefPosInr, nav.chiefVelInr, oec)
         uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
-        P1 = nav.fltr.P
+        P1 = nav.P
         
         # Time is synched
         self.assertEqual(nav.tJ2000, tf)
@@ -167,7 +167,7 @@ class TestEstimator(unittest.TestCase):
         nav.update(meas.get(frm, measCov), "anglesRange")
         nav.sync()
         
-        P2 = nav.fltr.P
+        P2 = nav.P
         
         # Time is synched
         self.assertEqual(nav.tJ2000, tf)
