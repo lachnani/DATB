@@ -98,13 +98,10 @@ class TestEstimator(unittest.TestCase):
         self.assertLess(Pplus[0,0], Pminus[0,0])
         self.assertLess(Pplus[2,2], Pminus[2,2])
         
-    def test_diekf(self):
+    def test_decoupled_filters(self):
         """
-        Test Dual Inertial EKF
-        Based on: 
-        Woffinden, David Charles, "Angles-Only Navigation for Autonomous 
-        Orbital Rendezvous" (2008). All Graduate Theses and Dissertations. 12.
-        https://digitalcommons.usu.edu/etd/12
+        Test decoupled Dual Inertial Filter (DIF) and Inertial Relative Filter 
+        (IRF)
 
         """
         ### Initial conditions
@@ -131,57 +128,92 @@ class TestEstimator(unittest.TestCase):
         frm = formation.Formation(chief, None, clroe, frmType = "FORMATION_CHIEF_ANCHOR",
                                   relStateType = "RELSTATE_RECT_CLROE", pert = None, settings = None)
         
-        ### Initialize DIEKF class
-        nav = est.DualInertialFilter(
+        ### Initialize DIF class
+        dif = est.DualInertialFilter(
+            tJ2000, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
+        
+        ### Initialize IRF class
+        irf = est.InertialRelativeFilter(
             tJ2000, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
         dt = 10
-        while nav.tJ2000 < tf:
+        while dif.tJ2000 < tf:
             frm.propagate(dt)
-            nav.propagate(dt, np.zeros((3,)))
-            nav.sync()
+            dif.propagate(dt, np.zeros((3,)))
+            irf.propagate(dt, np.zeros((3,)))
             
-        uKin.rv2oe(orb.MU_EARTH, nav.chiefPosInr, nav.chiefVelInr, oec)
-        uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
-        P1 = nav.P
+        ### Verfify DIF performance
+        dif_oec = oec.copy()
+        dif_clroe = clroe.copy()
+        uKin.rv2oe(orb.MU_EARTH, dif.chiefPosInr, dif.chiefVelInr, dif_oec)
+        uKin.ric2clroe(dif.relPosRectRic, dif.relVelRectRic, meanMotion, 0, dif_clroe)
+        dif_P1 = dif.P.copy()
         
         # Time is synched
-        self.assertEqual(nav.tJ2000, tf)
+        self.assertEqual(dif.tJ2000, tf)
         # Chief orbit matches truth
-        self.assertAlmostEqual(np.all(oec),np.all(frm.chief.oe))
+        self.assertAlmostEqual(np.all(dif_oec),np.all(frm.chief.oe))
         # Relative state has not changed appreciably
-        self.assertAlmostEqual(np.all(clroe),np.all(frm.rectClroe))
-        # Covariance is block diagonal
-        self.assertTrue(np.all(P1[6:12,0:6] == np.zeros((6,6)))) 
-        self.assertTrue(np.all(P1[0:6,6:12] == np.zeros((6,6)))) 
-        # Covariance has increasedj
-        self.assertTrue(np.all(P1[0:6,0:6] >= P0))
-        self.assertTrue(np.all(P1[6:12,6:12] >= P0))
+        self.assertAlmostEqual(np.all(dif_clroe),np.all(frm.rectClroe))
+        # Cross corelation covariance is zero
+        self.assertTrue(np.all(dif.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        # Covariance has increased in magnitude
+        self.assertTrue(np.all(dif.deputyCovInr >= P0))
+        self.assertTrue(np.all(dif.chiefCovInr >= P0))
+        
+        ### Verfify IRF performance
+        irf_oec = oec.copy()
+        irf_clroe = clroe.copy()
+        uKin.rv2oe(orb.MU_EARTH, irf.chiefPosInr, irf.chiefVelInr, irf_oec)
+        uKin.ric2clroe(irf.relPosRectRic, irf.relVelRectRic, meanMotion, 0, irf_clroe)
+        irf_P1 = irf.P.copy()
+        
+        # Time is synched
+        self.assertEqual(irf.tJ2000, tf)
+        # Chief orbit matches truth
+        self.assertAlmostEqual(np.all(irf_oec),np.all(frm.chief.oe))
+        # Relative state has not changed appreciably
+        self.assertAlmostEqual(np.all(irf_clroe),np.all(frm.rectClroe))
+        # Cross corelation covariance is zero
+        self.assertTrue(np.all(irf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        # Covariance has increased in magnitude
+        self.assertTrue(np.all(irf.deputyCovInr >= P0))
+        self.assertTrue(np.all(irf.chiefCovInr >= P0))
         
         ### Ingest a measurement
-        frm.dcmInr2Los = nav.dcmInr2Los
+        frm.dcmInr2Los = dif.dcmInr2Los
         frm.dcmRic2Los = np.matmul(frm.dcmInr2Los,np.transpose(frm.dcmInr2Ric))
         frm.az, frm.el = meas.calcAzEl(frm.chief.r, frm.deputy.r, frm.dcmInr2Los)
-        nav.update(meas.get(frm, measCov), "anglesRange")
-        nav.sync()
+        dif.update(meas.get(frm, measCov), "anglesRange")
+        irf.update(meas.get(frm, measCov), "anglesRange")
         
-        P2 = nav.P
-        
+        ### Verfify DIF performance
         # Time is synched
-        self.assertEqual(nav.tJ2000, tf)
-        # Covariance is no longer block diagonal
-        self.assertFalse(np.all(P2[6:12,0:6] == np.zeros((6,6)))) 
-        self.assertFalse(np.all(P2[0:6,6:12] == np.zeros((6,6)))) 
+        self.assertEqual(dif.tJ2000, tf)
+        # Cross covariance is no longer zero
+        self.assertFalse(np.all(dif.deputyChiefCrossCovInr == np.zeros((6,6)))) 
         # Covariance has decreased
-        self.assertTrue(np.all(np.diag(P2[0:6,0:6]) <= np.diag(P1[0:6,0:6])))
-        self.assertTrue(np.all(np.diag(P2[6:12,6:12]) <= np.diag(P1[0:6,0:6])))
+        self.assertTrue(np.all(np.diag(dif.P[0:6,0:6]) <= np.diag(dif_P1[0:6,0:6])))
+        self.assertTrue(np.all(np.diag(dif.P[6:12,6:12]) <= np.diag(dif_P1[6:12,6:12])))
+        
+        ### Verfify IRF performance
+        # Time is synched
+        self.assertEqual(irf.tJ2000, tf)
+        # Cross covariance is no longer zero
+        self.assertFalse(np.all(irf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        # Covariance has decreased
+        self.assertTrue(np.all(np.diag(irf.P[0:6,0:6]) <= np.diag(irf_P1[0:6,0:6])))
+        self.assertTrue(np.all(np.diag(irf.P[6:12,6:12]) <= np.diag(irf_P1[6:12,6:12])))
      
     def test_rekf(self):
         """
-        Test Relative EKF
-
+        Test relative EKF
+        Note: This test is OBE, but portions can be copied
+        
+        """
+        
         """
         ### Initial conditions
         tJ2000 = 0
@@ -270,6 +302,8 @@ class TestEstimator(unittest.TestCase):
         self.assertTrue(np.all(np.diag(P2[6:12,6:12]) <= np.diag(P1[0:6,0:6])))
         # Error has decreased
         self.assertTrue(np.all(np.abs(errPos2) < np.abs(errPos1)))
+        
+        """
         
         
 if __name__ == '__main__':
