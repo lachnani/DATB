@@ -101,7 +101,7 @@ class TestEstimator(unittest.TestCase):
     def test_decoupled_filters(self):
         """
         Test decoupled Dual Inertial Filter (DIF) and Inertial Relative Filter 
-        (IRF)
+        (IRF).
 
         """
         ### Initial conditions
@@ -150,7 +150,6 @@ class TestEstimator(unittest.TestCase):
         uKin.rv2oe(orb.MU_EARTH, dif.chiefPosInr, dif.chiefVelInr, dif_oec)
         uKin.ric2clroe(dif.relPosRectRic, dif.relVelRectRic, meanMotion, 0, dif_clroe)
         dif_P1 = dif.P.copy()
-        
         # Time is synched
         self.assertEqual(dif.tJ2000, tf)
         # Chief orbit matches truth
@@ -169,7 +168,6 @@ class TestEstimator(unittest.TestCase):
         uKin.rv2oe(orb.MU_EARTH, irf.chiefPosInr, irf.chiefVelInr, irf_oec)
         uKin.ric2clroe(irf.relPosRectRic, irf.relVelRectRic, meanMotion, 0, irf_clroe)
         irf_P1 = irf.P.copy()
-        
         # Time is synched
         self.assertEqual(irf.tJ2000, tf)
         # Chief orbit matches truth
@@ -181,6 +179,22 @@ class TestEstimator(unittest.TestCase):
         # Covariance has increased in magnitude
         self.assertTrue(np.all(irf.deputyCovInr >= P0))
         self.assertTrue(np.all(irf.chiefCovInr >= P0))
+        
+        ### Verify filters are identical
+        # Deputy state and cov
+        self.assertAlmostEqual(np.all(dif.deputyPosInr),np.all(irf.deputyPosInr))
+        self.assertAlmostEqual(np.all(dif.deputyVelInr),np.all(irf.deputyVelInr))
+        self.assertAlmostEqual(np.all(dif.deputyCovInr),np.all(irf.deputyCovInr))
+        # Chief state and cov
+        self.assertAlmostEqual(np.all(dif.chiefPosInr),np.all(irf.chiefPosInr))
+        self.assertAlmostEqual(np.all(dif.chiefVelInr),np.all(irf.chiefVelInr))
+        self.assertAlmostEqual(np.all(dif.chiefCovInr),np.all(irf.chiefCovInr))
+        # Relative state and cov
+        self.assertAlmostEqual(np.all(dif.relPosRectRic),np.all(irf.relPosRectRic))
+        self.assertAlmostEqual(np.all(dif.relVelRectRic),np.all(irf.relVelRectRic))
+        self.assertAlmostEqual(np.all(dif.relCovRectRic),np.all(irf.relCovRectRic))
+        # Cross covariance
+        self.assertAlmostEqual(np.all(dif.deputyChiefCrossCovInr),np.all(irf.deputyChiefCrossCovInr))
         
         ### Ingest a measurement
         frm.dcmInr2Los = dif.dcmInr2Los
@@ -206,6 +220,22 @@ class TestEstimator(unittest.TestCase):
         # Covariance has decreased
         self.assertTrue(np.all(np.diag(irf.P[0:6,0:6]) <= np.diag(irf_P1[0:6,0:6])))
         self.assertTrue(np.all(np.diag(irf.P[6:12,6:12]) <= np.diag(irf_P1[6:12,6:12])))
+        
+        ### Verify filters are identical
+        # Deputy state and cov
+        self.assertAlmostEqual(np.all(dif.deputyPosInr),np.all(irf.deputyPosInr))
+        self.assertAlmostEqual(np.all(dif.deputyVelInr),np.all(irf.deputyVelInr))
+        self.assertAlmostEqual(np.all(dif.deputyCovInr),np.all(irf.deputyCovInr))
+        # Chief state and cov
+        self.assertAlmostEqual(np.all(dif.chiefPosInr),np.all(irf.chiefPosInr))
+        self.assertAlmostEqual(np.all(dif.chiefVelInr),np.all(irf.chiefVelInr))
+        self.assertAlmostEqual(np.all(dif.chiefCovInr),np.all(irf.chiefCovInr))
+        # Relative state and cov
+        self.assertAlmostEqual(np.all(dif.relPosRectRic),np.all(irf.relPosRectRic))
+        self.assertAlmostEqual(np.all(dif.relVelRectRic),np.all(irf.relVelRectRic))
+        self.assertAlmostEqual(np.all(dif.relCovRectRic),np.all(irf.relCovRectRic))
+        # Cross covariance
+        self.assertAlmostEqual(np.all(dif.deputyChiefCrossCovInr),np.all(irf.deputyChiefCrossCovInr))
      
     def test_rekf(self):
         """

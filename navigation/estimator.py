@@ -207,7 +207,7 @@ class DualInertialFilter:
         # Deputy and Chief inertial states
         self.deputyPosInr = self.x[0:3]
         self.deputyVelInr = self.x[3:6]
-        self.deputyfCovInr = self.P[0:6,0:6]
+        self.deputyCovInr = self.P[0:6,0:6]
         self.chiefPosInr = self.x[6:9]
         self.chiefVelInr = self.x[9:12]
         self.chiefCovInr = self.P[6:12,6:12]
