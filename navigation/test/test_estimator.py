@@ -98,9 +98,9 @@ class TestEstimator(unittest.TestCase):
         self.assertLess(Pplus[0,0], Pminus[0,0])
         self.assertLess(Pplus[2,2], Pminus[2,2])
         
-    def test_decoupled_filters(self):
+    def test_coupled_filters(self):
         """
-        Test decoupled Dual Inertial Filter (DIF) and Inertial Relative Filter 
+        Test coupled Dual Inertial Filter (DIF) and Inertial Relative Filter 
         (IRF).
 
         """
@@ -236,6 +236,81 @@ class TestEstimator(unittest.TestCase):
         self.assertAlmostEqual(np.all(dif.relCovRectRic),np.all(irf.relCovRectRic))
         # Cross covariance
         self.assertAlmostEqual(np.all(dif.deputyChiefCrossCovInr),np.all(irf.deputyChiefCrossCovInr))
+        
+    def test_decoupled_filter(self):
+        """
+        Test Decoupled Inertial Relative Filter (D-IRF).
+
+        """
+        ### Initial conditions
+        tJ2000 = 0
+        rc = np.zeros((3,))
+        vc = np.zeros((3,))
+        oec = np.array([42000.,0.,0.002,0.,0.,0.])
+        meanMotion = np.sqrt(orb.MU_EARTH/oec[0]**3)
+        uKin.oe2rv(orb.MU_EARTH, oec, rc, vc)
+        P0 = np.block([
+            [0.030**2*np.eye(3),np.zeros((3,3))],
+            [np.zeros((3,3)),3.6e-6**2*np.eye(3)]])
+        clroe = np.array([0.,0.,0.01,10.,0.,0.]) # Drifting co-elliptic
+        relPosRic = np.zeros((3,))
+        relVelRic = np.zeros((3,))
+        uKin.clroe2ric(clroe, meanMotion, 0, relPosRic, relVelRic)
+        rd, vd = formation.ric2rv(rc, vc, relPosRic, relVelRic)
+        procVar = 0.06e-6*np.eye(3)
+        dvVar = 3e-6
+        measCov = (np.array([1e-3,1e-3,1e-3,1e-2])**2)*np.eye(4)
+        
+        ### Create formation class
+        chief = orb.Orbit(tJ2000, oec, stateType = "STATE_KEPEL", pert = None, settings = None)
+        frm = formation.Formation(chief, None, clroe, frmType = "FORMATION_CHIEF_ANCHOR",
+                                  relStateType = "RELSTATE_RECT_CLROE", pert = None, settings = None)
+        
+        ### Initialize D-IRF class
+        dirf = est.DecoupledInertialRelativeFilter(
+            tJ2000, rc, vc, P0, rd, vd, P0, procVar, 0.5*procVar, dvVar, measCov)
+        
+        ### Propagate through 2 hours
+        tf = 2*3600
+        dt = 10
+        while dirf.tJ2000 < tf:
+            frm.propagate(dt)
+            dirf.propagate(dt, np.zeros((3,)))
+            
+        ### Verfify D-IRF performance
+        dirf_oec = oec.copy()
+        dirf_clroe = clroe.copy()
+        uKin.rv2oe(orb.MU_EARTH, dirf.chiefPosInr, dirf.chiefVelInr, dirf_oec)
+        uKin.ric2clroe(dirf.relPosRectRic, dirf.relVelRectRic, meanMotion, 0, dirf_clroe)
+        dirf_P1 = dirf.P.copy()
+        # Time is synched
+        self.assertEqual(dirf.tJ2000, tf)
+        # Chief orbit matches truth
+        self.assertAlmostEqual(np.all(dirf_oec),np.all(frm.chief.oe))
+        # Relative state has not changed appreciably
+        self.assertAlmostEqual(np.all(dirf_clroe),np.all(frm.rectClroe))
+        # Cross corelation covariance is not zero
+        self.assertFalse(np.all(dirf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        # Covariance has increased in magnitude
+        self.assertTrue(np.all(dirf.deputyCovInr >= P0))
+        self.assertTrue(np.all(dirf.chiefCovInr >= P0))
+        # Off-diagonal terms are zero
+        self.assertTrue(np.all(dirf.P[0:6,6:12] == np.zeros((6,6)))) 
+        
+        ### Ingest a measurement
+        frm.dcmInr2Los = dirf.dcmInr2Los
+        frm.dcmRic2Los = np.matmul(frm.dcmInr2Los,np.transpose(frm.dcmInr2Ric))
+        frm.az, frm.el = meas.calcAzEl(frm.chief.r, frm.deputy.r, frm.dcmInr2Los)
+        dirf.update(meas.get(frm, measCov), "anglesRange")
+        
+        ### Verfify D-IRF performance
+        # Time is synched
+        self.assertEqual(dirf.tJ2000, tf)
+        # Cross covariance is no longer zero
+        self.assertFalse(np.all(dirf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        # Only relative covariance has decreased
+        self.assertTrue(np.all(np.diag(dirf.P[0:6,0:6]) == np.diag(dirf_P1[0:6,0:6])))
+        self.assertTrue(np.all(np.diag(dirf.P[6:12,6:12]) <= np.diag(dirf_P1[6:12,6:12])))
      
     def test_rekf(self):
         """
