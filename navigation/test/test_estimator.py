@@ -237,9 +237,9 @@ class TestEstimator(unittest.TestCase):
         # Cross covariance
         self.assertAlmostEqual(np.all(dif.deputyChiefCrossCovInr),np.all(irf.deputyChiefCrossCovInr))
         
-    def test_decoupled_filter(self):
+    def test_relative_decoupled_filter(self):
         """
-        Test Decoupled Inertial Relative Filter (D-IRF).
+        Test Relative Decoupled Inertial Relative Filter (RD-IRF).
 
         """
         ### Initial conditions
@@ -266,59 +266,56 @@ class TestEstimator(unittest.TestCase):
         frm = formation.Formation(chief, None, clroe, frmType = "FORMATION_CHIEF_ANCHOR",
                                   relStateType = "RELSTATE_RECT_CLROE", pert = None, settings = None)
         
-        ### Initialize D-IRF class
-        dirf = est.DecoupledInertialRelativeFilter(
+        ### Initialize RD-IRF class
+        rdirf = est.RelativeDecoupledInertialRelativeFilter(
             tJ2000, rc, vc, P0, rd, vd, P0, procVar, 0.5*procVar, dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
         dt = 10
-        while dirf.tJ2000 < tf:
+        while rdirf.tJ2000 < tf:
             frm.propagate(dt)
-            dirf.propagate(dt, np.zeros((3,)))
+            rdirf.propagate(dt, np.zeros((3,)))
             
         ### Verfify D-IRF performance
-        dirf_oec = oec.copy()
-        dirf_clroe = clroe.copy()
-        uKin.rv2oe(orb.MU_EARTH, dirf.chiefPosInr, dirf.chiefVelInr, dirf_oec)
-        uKin.ric2clroe(dirf.relPosRectRic, dirf.relVelRectRic, meanMotion, 0, dirf_clroe)
-        dirf_P1 = dirf.P.copy()
+        rdirf_oec = oec.copy()
+        rdirf_clroe = clroe.copy()
+        uKin.rv2oe(orb.MU_EARTH, rdirf.chiefPosInr, rdirf.chiefVelInr, rdirf_oec)
+        uKin.ric2clroe(rdirf.relPosRectRic, rdirf.relVelRectRic, meanMotion, 0, rdirf_clroe)
+        rdirf_P1 = rdirf.P.copy()
         # Time is synched
-        self.assertEqual(dirf.tJ2000, tf)
+        self.assertEqual(rdirf.tJ2000, tf)
         # Chief orbit matches truth
-        self.assertAlmostEqual(np.all(dirf_oec),np.all(frm.chief.oe))
+        self.assertAlmostEqual(np.all(rdirf_oec),np.all(frm.chief.oe))
         # Relative state has not changed appreciably
-        self.assertAlmostEqual(np.all(dirf_clroe),np.all(frm.rectClroe))
+        self.assertAlmostEqual(np.all(rdirf_clroe),np.all(frm.rectClroe))
         # Cross corelation covariance is not zero
-        self.assertFalse(np.all(dirf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        self.assertFalse(np.all(rdirf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
         # Covariance has increased in magnitude
-        self.assertTrue(np.all(dirf.deputyCovInr >= P0))
-        self.assertTrue(np.all(dirf.chiefCovInr >= P0))
+        self.assertTrue(np.all(rdirf.deputyCovInr >= P0))
+        self.assertTrue(np.all(rdirf.chiefCovInr >= P0))
         # Off-diagonal terms are zero
-        self.assertTrue(np.all(dirf.P[0:6,6:12] == np.zeros((6,6)))) 
+        self.assertTrue(np.all(rdirf.P[0:6,6:12] == np.zeros((6,6)))) 
         
         ### Ingest a measurement
-        frm.dcmInr2Los = dirf.dcmInr2Los
+        frm.dcmInr2Los = rdirf.dcmInr2Los
         frm.dcmRic2Los = np.matmul(frm.dcmInr2Los,np.transpose(frm.dcmInr2Ric))
         frm.az, frm.el = meas.calcAzEl(frm.chief.r, frm.deputy.r, frm.dcmInr2Los)
-        dirf.update(meas.get(frm, measCov), "anglesRange")
+        rdirf.update(meas.get(frm, measCov), "anglesRange")
         
         ### Verfify D-IRF performance
         # Time is synched
-        self.assertEqual(dirf.tJ2000, tf)
+        self.assertEqual(rdirf.tJ2000, tf)
         # Cross covariance is no longer zero
-        self.assertFalse(np.all(dirf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        self.assertFalse(np.all(rdirf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
         # Only relative covariance has decreased
-        self.assertTrue(np.all(np.diag(dirf.P[0:6,0:6]) == np.diag(dirf_P1[0:6,0:6])))
-        self.assertTrue(np.all(np.diag(dirf.P[6:12,6:12]) <= np.diag(dirf_P1[6:12,6:12])))
-     
-    def test_rekf(self):
-        """
-        Test relative EKF
-        Note: This test is OBE, but portions can be copied
+        self.assertTrue(np.all(np.diag(rdirf.P[0:6,0:6]) == np.diag(rdirf_P1[0:6,0:6])))
+        self.assertTrue(np.all(np.diag(rdirf.P[6:12,6:12]) <= np.diag(rdirf_P1[6:12,6:12])))
         
+    def test_chief_decoupled_filter(self):
         """
-        
+        Test Chief Decoupled Dual Inertial Filter (CD-DIF).
+
         """
         ### Initial conditions
         tJ2000 = 0
@@ -335,80 +332,61 @@ class TestEstimator(unittest.TestCase):
         relVelRic = np.zeros((3,))
         uKin.clroe2ric(clroe, meanMotion, 0, relPosRic, relVelRic)
         rd, vd = formation.ric2rv(rc, vc, relPosRic, relVelRic)
-        procVar = 0.06e-6
+        procVar = 0.06e-6*np.eye(3)
         dvVar = 3e-6
         measCov = (np.array([1e-3,1e-3,1e-3,1e-2])**2)*np.eye(4)
         
         ### Create formation class
-        pert = {
-            "jnum": 6,
-            "solarGrav": True,
-            "lunarGrav": True,
-            "SRP": False,
-            "drag": False,
-            "Cd": 0.0,
-            "normalizedArea": 0.0
-            }
-        chief = orb.Orbit(tJ2000, oec, stateType = "STATE_KEPEL", pert = pert, settings = None)
+        chief = orb.Orbit(tJ2000, oec, stateType = "STATE_KEPEL", pert = None, settings = None)
         frm = formation.Formation(chief, None, clroe, frmType = "FORMATION_CHIEF_ANCHOR",
-                                  relStateType = "RELSTATE_RECT_CLROE", pert = pert, settings = None)
+                                  relStateType = "RELSTATE_RECT_CLROE", pert = None, settings = None)
         
-        ### Initialize DIEKF class
-        rcErr = np.array([0.01,0.01,0.01])
-        nav = est.RelativeEKF(
-            tJ2000, rc+rcErr, vc, P0, rd, vd, P0, procVar, dvVar, measCov)
+        ### Initialize CD-DIF class
+        cddif = est.ChiefDecoupledDualInertialFilter(
+            tJ2000, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
         dt = 10
-        while nav.tJ2000 < tf:
+        while cddif.tJ2000 < tf:
             frm.propagate(dt)
-            nav.propagate(dt, np.zeros((3,)))
-            nav.sync()
+            cddif.propagate(dt, np.zeros((3,)))
             
-        uKin.rv2oe(orb.MU_EARTH, nav.chiefPosInr, nav.chiefVelInr, oec)
-        uKin.ric2clroe(nav.relPosRectRic, nav.relVelRectRic, meanMotion, 0, clroe)
-        P1 = nav.fltr.P
-        errPos1 = np.linalg.norm(nav.relPosRectRic - frm.relPosRectRic)
-        errVel1 = np.linalg.norm(nav.relVelRectRic - frm.relVelRectRic)
-        
+        ### Verfify D-IRF performance
+        cddif_oec = oec.copy()
+        cddif_clroe = clroe.copy()
+        uKin.rv2oe(orb.MU_EARTH, cddif.chiefPosInr, cddif.chiefVelInr, cddif_oec)
+        uKin.ric2clroe(cddif.relPosRectRic, cddif.relVelRectRic, meanMotion, 0, cddif_clroe)
+        cddif_P1 = cddif.P.copy()
         # Time is synched
-        self.assertEqual(nav.tJ2000, tf)
+        self.assertEqual(cddif.tJ2000, tf)
         # Chief orbit matches truth
-        self.assertAlmostEqual(np.all(oec),np.all(frm.chief.oe))
+        self.assertAlmostEqual(np.all(cddif_oec),np.all(frm.chief.oe))
         # Relative state has not changed appreciably
-        self.assertAlmostEqual(np.all(clroe),np.all(frm.rectClroe))
-        # Covariance is block diagonal
-        self.assertTrue(np.all(P1[6:12,0:6] == np.zeros((6,6)))) 
-        self.assertTrue(np.all(P1[0:6,6:12] == np.zeros((6,6)))) 
-        # Covariance has increasedj
-        self.assertTrue(np.all(P1[0:6,0:6] >= P0))
-        self.assertTrue(np.all(P1[6:12,6:12] >= P0))
+        self.assertAlmostEqual(np.all(cddif_clroe),np.all(frm.rectClroe))
+        # Cross corelation covariance is zero
+        self.assertTrue(np.all(cddif.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        # Covariance has increased in magnitude
+        self.assertTrue(np.all(cddif.deputyCovInr >= P0))
+        self.assertTrue(np.all(cddif.chiefCovInr >= P0))
+        # Off-diagonal terms are zero
+        self.assertTrue(np.all(cddif.P[0:6,6:12] == np.zeros((6,6)))) 
         
-        
-        ### Ingest measurements
-        frm.dcmInr2Los = nav.dcmInr2Los
+        ### Ingest a measurement
+        frm.dcmInr2Los = cddif.dcmInr2Los
         frm.dcmRic2Los = np.matmul(frm.dcmInr2Los,np.transpose(frm.dcmInr2Ric))
         frm.az, frm.el = meas.calcAzEl(frm.chief.r, frm.deputy.r, frm.dcmInr2Los)
-        nav.update(meas.get(frm, np.zeros((4,4))), "anglesRangeRR")
-        nav.sync()
+        cddif.update(meas.get(frm, measCov), "anglesRange")
         
-        P2 = nav.fltr.P
-        errPos2 = np.linalg.norm(nav.relPosRectRic - frm.relPosRectRic)
-        errVel2 = np.linalg.norm(nav.relVelRectRic - frm.relVelRectRic)
-        
+        ### Verfify D-IRF performance
         # Time is synched
-        self.assertEqual(nav.tJ2000, tf)
-        # Covariance is still block diagonal
-        self.assertTrue(np.all(P2[6:12,0:6] == np.zeros((6,6)))) 
-        self.assertTrue(np.all(P2[0:6,6:12] == np.zeros((6,6)))) 
-        # Only relative Covariance has decreased
-        self.assertTrue(np.all(P2[0:6,0:6] == P1[0:6,0:6]))
-        self.assertTrue(np.all(np.diag(P2[6:12,6:12]) <= np.diag(P1[0:6,0:6])))
-        # Error has decreased
-        self.assertTrue(np.all(np.abs(errPos2) < np.abs(errPos1)))
-        
-        """
+        self.assertEqual(cddif.tJ2000, tf)
+        # Cross covariance is still zero
+        self.assertTrue(np.all(cddif.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        # Only chief covariance has decreased
+        self.assertTrue(np.all(np.diag(cddif.P[0:6,0:6]) == np.diag(cddif_P1[0:6,0:6])))
+        self.assertTrue(np.all(np.diag(cddif.P[6:12,6:12]) <= np.diag(cddif_P1[6:12,6:12])))
+     
         
         
 if __name__ == '__main__':

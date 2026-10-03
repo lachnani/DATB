@@ -13,10 +13,10 @@ from dynamics import ephemerides as eph
 import measurements
 import kalmanFilter as kf
 
-class DecoupledInertialRelativeFilter:
+class RelativeDecoupledInertialRelativeFilter:
     """
-    Decoupled Inertial Relative Filter class for translational spacecraft 
-    rendezvous. 
+    Relative Decoupled Inertial Relative Filter class for translational 
+    spacecraft rendezvous. 
     Primary filter states are:
         deputyPosInr
         deputyVelInr
@@ -224,6 +224,215 @@ class DecoupledInertialRelativeFilter:
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng  
+        
+class ChiefDecoupledDualInertialFilter:
+    """
+    Chief Decoupled Dual Inertial Filter class for translational spacecraft 
+    rendezvous. 
+    Primary filter states are:
+        deputyPosInr
+        deputyVelInr
+        chiefPosInr
+        deputyVelInr
+    Class also populates remaining navigation states of interest
+    
+    Ref: Hakim Lachnani and Kevin Schroeder, "Comparative Analysis of 
+    Navigation Filter Formulations for Spacecraft Rendezvous"
+    
+    Parameters
+    ----------
+    tJ2000 : double
+        time since J2000 epoch.
+    rc : 3x1 double
+        Chief inertial position.
+    vc : 3x1 double
+        Chief inertial velocity.
+    Pc : 6x6 double
+        Chief inertial covariance.
+    rd : 3x1 double
+        Deputy inertial position.
+    vd : 3x1 double
+        Deputy inertial velocity.
+    Pd : 6x6 double
+        Deputy inertial covariance.
+    Qc : 3x3 double
+        Chief process noise power spectral density in RIC.
+    Qd : 3x3 double
+        Deputy process noise power spectral density in RIC.
+    dvVar : 3x1 double
+        Delta-V process noise array (scale factor, quantization, pointing).
+    measCov : 4x4 double
+        Measurement covariance matrix (az, el, rng, rngRate).
+    pertc: dictionary
+        Chief perturbation dictionary.
+    pertd: dictionary
+        Deputy perturbation dictionary.
+        
+    """
+    
+    def __init__(
+            self,
+            tJ2000, 
+            rc, vc, Pc, 
+            rd, vd, Pd, 
+            Qc, Qd, dvVar, measCov, 
+            pertc = None, pertd = None
+            ):
+        
+        # Filter constants
+        self.numStates = 12
+        
+        # Initialize the inertial nav states nav states
+        self.tJ2000 = tJ2000
+        self.chiefPosInr = rc
+        self.chiefVelInr = vc
+        self.chiefCovInr = Pc
+        self.deputyPosInr = rd
+        self.deputyVelInr = vd
+        self.deputyCovInr = Pd
+        self.deputyChiefCrossCovInr  = np.zeros((6,6))
+        
+        # Initialize DCMs
+        self.dcmInr2Ric = np.zeros((3,3))
+        self.dcmInr2DepRic = np.zeros((3,3))
+        self.dcmRic2Los = np.zeros((3,3))
+        self.dcmInr2Los = np.zeros((3,3))
+        uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
+        uKin.dcmInr2Ric(self.deputyPosInr, self.deputyVelInr, self.dcmInr2DepRic)
+        self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
+        
+        # Initialize sun and moon ephemeris
+        self.sun = eph.SunEphemeris(self.tJ2000)
+        self.moon = eph.MoonEphemeris(self.tJ2000)    
+        
+        # Relative inertial states
+        self.relPosInr = self.deputyPosInr - self.chiefPosInr
+        self.relVelInr = self.deputyVelInr - self.chiefVelInr
+        self.relCovInr = self.deputyCovInr + self.chiefCovInr - self.deputyChiefCrossCovInr - np.transpose(self.deputyChiefCrossCovInr)
+        
+        # Relative RIC states
+        self.relPosRectRic = np.zeros((3,))
+        self.relVelRectRic = np.zeros((3,))
+        uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
+        self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
+        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
+        
+        # Compute measurement parameters
+        self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
+        self.rng = la.norm(self.relPosRectRic)
+        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
+        self.measCov = measCov
+        
+        # Save process noise matrices
+        self.deputyProcNoiseInRic = Qd
+        self.chiefProcNoiseInRic = Qc
+        self.dvProcNoise = dvVar
+        
+        # Save perturbation libraries
+        self.chiefPerturbations = pertc
+        self.deputyPerturbations = pertd
+        
+        # Initialize the filter states
+        self.x = np.concatenate([self.deputyPosInr, self.deputyVelInr, self.chiefPosInr, self.chiefVelInr])
+        self.P = np.block([
+                          [Pd,               np.zeros((6, 6))],
+                          [np.zeros((6, 6)), Pc              ]])
+        
+
+        
+    def propagate(self, dt, aCtrlInEci):        
+        # Compute process nosie
+        deputyProcNoiseInr = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
+        chiefProcNoiseInr = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
+        stateProcNoiseInr = np.block([
+                                     [deputyProcNoiseInr, np.zeros((6, 6))],
+                                     [np.zeros((6, 6))  , chiefProcNoiseInr]])
+        if la.norm(aCtrlInEci) > 0.0:
+            # Add maneuver noise
+            maneuverProcNoise = dvProcessNoise(dt*aCtrlInEci,self.dvVar[0],self.dvVar[1],self.dvVar[2])
+            maneuverProcNoiseInr = np.block([
+                                            [maneuverProcNoise, np.zeros((6, 6))],
+                                            [np.zeros((6, 6)) , np.zeros((6, 6))]])
+            stateProcNoiseInr = stateProcNoiseInr + maneuverProcNoiseInr
+            
+        # Compute state transition matrix
+        stm = np.block([
+                       [stmInertial(dt,self.x[0:6]), np.zeros((6, 6))            ],
+                       [np.zeros((6, 6))           , stmInertial(dt,self.x[6:12])]])
+        
+        # Update timestep
+        self.tJ2000 = self.tJ2000 + dt
+        
+        # Update ephemerides
+        self.sun.update(self.tJ2000)
+        self.moon.update(self.tJ2000)
+        
+        # Propagate States
+        self.x[0:6] = stateUpdateInertial(dt, self.x[0:6], aCtrlInEci, self.deputyPerturbations)
+        self.x[6:12] = stateUpdateInertial(dt, self.x[6:12], np.zeros((3,)), self.chiefPerturbations)
+        
+        # Propagate Covariance
+        self.P = kf.propagateCov(self.P, stm, stateProcNoiseInr)
+        
+        # Sync filter to update all intermediate states
+        self.sync()
+        
+        
+    def update(self, meas, measType):
+        # Determine expected measurement
+        self.measExpected = np.array([self.az, self.el, self.rng, self.rngRate])
+        
+        # Compute residual
+        self.meas = meas
+        self.measType = measType
+        self.measResidual = self.meas - self.measExpected
+        
+        # Compute sensitivity matrix
+        H = measurements.inertialMeasurementSensitivity(self)
+        self.measSensititivityMat = np.block([np.zeros((4,6)),H])
+        
+        # Index based on measurement type
+        self.measIndx = measurements.measType[self.measType]
+        
+        # Perform state update
+        self.x, self.P = kf.measurementUpdate(self.x, 
+                                              self.P, 
+                                              self.numStates, 
+                                              self.measResidual[self.measIndx], 
+                                              self.measSensititivityMat[self.measIndx,:],
+                                              self.measCov[self.measIndx,self.measIndx])
+        
+        # Sync filter to update all intermediate states
+        self.sync()
+
+        
+    def sync(self):
+        # Deputy and Chief inertial states
+        self.deputyPosInr = self.x[0:3]
+        self.deputyVelInr = self.x[3:6]
+        self.deputyCovInr = self.P[0:6,0:6]
+        self.chiefPosInr = self.x[6:9]
+        self.chiefVelInr = self.x[9:12]
+        self.chiefCovInr = self.P[6:12,6:12]
+        self.deputyChiefCrossCovInr  = self.P[0:6,6:12]
+        # Inertial to RIC DCMs
+        uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
+        uKin.dcmInr2Ric(self.deputyPosInr, self.deputyVelInr, self.dcmInr2DepRic)
+        self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
+        # Relative inertial states
+        self.relPosInr = self.deputyPosInr - self.chiefPosInr
+        self.relVelInr = self.deputyVelInr - self.chiefVelInr
+        self.relCovInr = self.deputyCovInr + self.chiefCovInr - self.deputyChiefCrossCovInr - np.transpose(self.deputyChiefCrossCovInr)
+        # Relative RIC states
+        uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
+        self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
+        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
+        # Compute measurement parameters
+        self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
+        self.rng = la.norm(self.relPosRectRic)
+        self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng   
 
 class DualInertialFilter:
     """
