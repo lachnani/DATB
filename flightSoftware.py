@@ -11,13 +11,54 @@ from dynamics import dynamicsUtils as uDyn
 from dynamics import orbit as orb
 from kinematics import kinematicsUtils as uKin
 from navigation import estimator
+from navigation import kalmanFilter
 
-class Navigation:
-    
+class Main:
     
     def __init__(
             self,
-            tJ2000):
+            tJ2000, dt, # Common parameters
+            bufferDepth # Navigation parameters
+            ):
+        
+        # Initialize Time
+        self.tJ2000 = tJ2000
+        self.dt = dt
+        
+        # Initialize Navigation Struct
+        self.nav = Navigation(self.tJ2000, bufferDepth)
+        
+        # Initialize Guidance Struct
+        self.guid = 0 
+        
+        # Initialize Control Struct
+        self.ctrl = Control(self.tJ2000)        
+        
+    def cycle(self, 
+              measAvailable = False, meas = np.zeros((4,)), measType = "anglesRange"):
+        
+        # Propagate time
+        self.tJ2000 = self.tJ2000 + self.dt
+        
+        # Navigation
+        self.nav.propagate(self.dt, self.ctrl.aCtrlInEci)
+        if measAvailable == True:
+            self.nav.update(meas, measType)
+            # self.nav.runChecks()
+        self.nav.sync()
+        
+        # Guidance
+        
+        # Control
+        
+    
+        
+    
+class Navigation:   
+    
+    def __init__(
+            self,
+            tJ2000, bufferDepth):
         
         # Initialize Time
         self.tJ2000 = tJ2000
@@ -30,6 +71,7 @@ class Navigation:
         self.fltrConverged = False
         self.fltrDiverged = False
         self.fltrCorrupted = False
+        self.fltrConsistent = True
         
         # Initialize deputy states
         self.deputyPosInr = np.zeros((3,))
@@ -71,6 +113,9 @@ class Navigation:
         # Initialize measurement parameters
         self.rng = 0.0 
         self.rngRate = 0.0 
+        
+        # Initialize Buffer
+        self.bffr = kalmanFilter.Buffer(bufferDepth, 4, 12)
         
         
     def configureFilter(self, 
@@ -145,8 +190,31 @@ class Navigation:
         # Update Nav Filter
         self.fltr.update(meas, measType)
         
+        # Update buffer
+        self.bffr.update(self.fltr.tJ2000, self.fltr.x, self.fltr.measResidual, self.fltr.nis)
+        
         # Update output states
         self.sync()
+        
+    def checkConvergence(self):
+        
+        # TODO: Add a check
+        self.fltrConverged = False
+        
+    def checkDivergence(self):
+        
+        # TODO: Add a check
+        self.fltrDiverged = False
+        
+    def checkCorruption(self):
+        
+        # TODO: Add a check
+        self.fltrCorrupted = False
+        
+    def checkConsistency(self):
+        
+        # TODO: Add a check
+        self.fltrConsistent = True
         
     def sync(self):
         
@@ -162,20 +230,13 @@ class Navigation:
         uKin.rv2ee(self.mu, self.chiefPosInr, self.chiefVelInr, self.chiefEqEl)
         uKin.rv2oe(self.mu, self.chiefPosInr, self.chiefVelInr, self.chiefOrbEl)
         
-        # Mean Motion (TODO: Make uKin util)
-        if self.deputyOrbEl[0] > 0:
-            self.deputyMeanMotion = np.sqrt(self.mu/self.deputyOrbEl[0]**3)
-        else:
-            self.deputyMeanMotion = 0 
-            
-        if self.chiefOrbEl[0] > 0:
-            self.chiefMeanMotion = np.sqrt(self.mu/self.chiefOrbEl[0]**3)
-        else:
-            self.chiefMeanMotion = 0 
+        # Mean Motion 
+        self.deputyMeanMotion = uKin.meanMotion(self.mu, self.deputyOrbEl[0])
+        self.chiefMeanMotion = uKin.meanMotion(self.mu, self.chiefOrbEl[0]) 
             
         # Semimajor Axis variance
-        self.deputySmaVar = self.smaVariance(self.mu, self.deputyPosInr, self.deputyVelInr, self.deputyOrbEl[0], self.fltr.deputyCovInr)
-        self.chiefSmaVar = self.smaVariance(self.mu, self.chiefPosInr, self.chiefVelInr, self.chiefOrbEl[0], self.fltr.chiefCovInr)
+        self.deputySmaVar = uKin.smaVariance(self.mu, self.deputyPosInr, self.deputyVelInr, self.deputyOrbEl[0], self.fltr.deputyCovInr)
+        self.chiefSmaVar = uKin.smaVariance(self.mu, self.chiefPosInr, self.chiefVelInr, self.chiefOrbEl[0], self.fltr.chiefCovInr)
     
         # Eclipse status
         self.deputyInEclipse = uDyn.eclipse(self.deputyPosInr, self.fltr.sun.rUnit)
@@ -203,34 +264,13 @@ class Navigation:
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
+    
+class Control:
+    
+    def __init__(
+            self,
+            tJ2000):
         
-    def smaVariance(mu, r, v, a, P):
-        """
-        Computes semimajor axis variance from state estimates
+        self.tJ2000 = tJ2000
         
-        Ref: Carpenter and D'Souza, "Navigation Filter Best Practices"
-        
-        TODO: Move to kinematicsUtils.c
-
-        Parameters
-        ----------
-        mu : double
-            gravitational parameter.
-        r : 3x1 double
-            inertial position.
-        v : 3x1 double
-            inertial velocity.
-        a : double
-            semimajor axis estimate.
-        P : 6x6 double
-            inertial covariance.
-
-        Returns
-        -------
-        smaVar: double
-            semi-major axis variance.
-
-        """
-        
-        Fa = 2*a**2*np.block([np.transpose(r)/la.norm(r)**3,np.transpose(v)/mu])
-        return np.matmul(Fa, np.matmul(P, np.transpose(Fa)))
+        self.aCtrlInEci = np.zeros((3,))

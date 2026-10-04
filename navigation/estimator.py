@@ -185,12 +185,12 @@ class RelativeDecoupledInertialRelativeFilter:
         self.measIndx = measurements.measType[self.measType]
         
         # Perform state update
-        self.x, self.P = kf.measurementUpdate(self.x, 
-                                              self.P, 
-                                              self.numStates, 
-                                              self.measResidual[self.measIndx], 
-                                              self.measSensititivityMat[self.measIndx,:],
-                                              self.measCov[self.measIndx,self.measIndx])
+        self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
+                                                        self.P, 
+                                                        self.numStates, 
+                                                        self.measResidual[self.measIndx], 
+                                                        self.measSensititivityMat[self.measIndx,:],
+                                                        self.measCov[self.measIndx,self.measIndx])
         
         # Sync filter to update all intermediate states
         self.sync()
@@ -396,12 +396,12 @@ class ChiefDecoupledDualInertialFilter:
         self.measIndx = measurements.measType[self.measType]
         
         # Perform state update
-        self.x, self.P = kf.measurementUpdate(self.x, 
-                                              self.P, 
-                                              self.numStates, 
-                                              self.measResidual[self.measIndx], 
-                                              self.measSensititivityMat[self.measIndx,:],
-                                              self.measCov[self.measIndx,self.measIndx])
+        self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
+                                                        self.P, 
+                                                        self.numStates, 
+                                                        self.measResidual[self.measIndx], 
+                                                        self.measSensititivityMat[self.measIndx,:],
+                                                        self.measCov[self.measIndx,self.measIndx])
         
         # Sync filter to update all intermediate states
         self.sync()
@@ -604,12 +604,12 @@ class DualInertialFilter:
         self.measIndx = measurements.measType[self.measType]
         
         # Perform state update
-        self.x, self.P = kf.measurementUpdate(self.x, 
-                                              self.P, 
-                                              self.numStates, 
-                                              self.measResidual[self.measIndx], 
-                                              self.measSensititivityMat[self.measIndx,:],
-                                              self.measCov[self.measIndx,self.measIndx])
+        self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
+                                                        self.P, 
+                                                        self.numStates, 
+                                                        self.measResidual[self.measIndx], 
+                                                        self.measSensititivityMat[self.measIndx,:],
+                                                        self.measCov[self.measIndx,self.measIndx])
         
         # Sync filter to update all intermediate states
         self.sync()
@@ -814,12 +814,12 @@ class InertialRelativeFilter:
         self.measIndx = measurements.measType[self.measType]
         
         # Perform state update
-        self.x, self.P = kf.measurementUpdate(self.x, 
-                                              self.P, 
-                                              self.numStates, 
-                                              self.measResidual[self.measIndx], 
-                                              self.measSensititivityMat[self.measIndx,:],
-                                              self.measCov[self.measIndx,self.measIndx])
+        self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
+                                                        self.P, 
+                                                        self.numStates, 
+                                                        self.measResidual[self.measIndx], 
+                                                        self.measSensititivityMat[self.measIndx,:],
+                                                        self.measCov[self.measIndx,self.measIndx])
         
         # Sync filter to update all intermediate states
         self.sync()

@@ -91,7 +91,91 @@ class ExtendedKalmanFilter:
             measurement covariance
 
         """
-        self.x, self.P = measurementUpdate(self.x, self.P, self.n, y, H, R)
+        self.x, self.P, self.nis = measurementUpdate(self.x, self.P, self.n, y, H, R)
+        
+class Buffer:
+    """
+    Kalman Filter Buffer Class. Stores data for consistency testing.
+    
+    Attributes
+    ----------
+    n : integer
+        buffer depth 
+    n : integer
+        buffer head 
+    full : boolean
+        buffer full status
+    t : n double
+        time history
+    est: nState x n double
+        state estimate history
+    res: nMeas x n double
+        measurement residual history
+    nis: n double
+        normalized innovations squared history
+        
+    """
+    def __init__(self, nBuffer, nMeas, nState):
+        """
+        Initialize Buffer.
+
+        Parameters
+        ----------
+        nBuffer : integer
+            buffer depth.
+        nMeas : integer
+            measurement dimension.
+        nState : integer
+            state dimension.
+
+        """
+        
+        self.n = nBuffer
+        self.head = 0
+        self.full = False
+        self.t = np.zeros((nBuffer,))
+        self.est = np.zeros((nState, nBuffer))
+        self.res = np.zeros((nMeas, nBuffer))
+        self.nis = np.zeros((nBuffer,))
+        
+    def update(self, t, est, res, nis):
+        """
+        Update Buffer.
+
+        Parameters
+        ----------
+        t : double 
+            time.
+        est : nState x 1 double
+            state estimate.
+        res : nMeas x 1 double
+            measurement residual.
+        nis : double 
+            normalized innovations squared.
+
+        """
+        
+        # Roll buffer if full
+        if self.full == True:
+            self.t   = np.roll(self.t,   -1)
+            self.est = np.roll(self.est, -1)
+            self.res = np.roll(self.res, -1)
+            self.nis = np.roll(self.nis, -1)
+        
+        # Update buffer in head index
+        self.t[self.head] = t
+        self.est[:,self.head] = est
+        self.res[:,self.head] = res
+        self.nis[self.head] = nis
+        
+        # Increment head if not full
+        if self.full == False:
+            self.head = self.head + 1 
+            # Check to see if buffer is now full
+            if self.head > self.n - 1:
+                self.head = self.n - 1 
+                self.full = True
+    
         
 def propagateCov(P, Phi, Q):
     """
@@ -140,6 +224,8 @@ def measurementUpdate(x, P, n, y, H, R):
         updated state vector
     PUpd : nxn double
         updated state covariance
+    nisUpd : double
+        measurement normalized innovarions squared
 
     """
     S = residualCov(P, H, R)
@@ -147,7 +233,7 @@ def measurementUpdate(x, P, n, y, H, R):
     xUpd = x + np.matmul(K, y)
     PUpd = np.matmul(np.eye(n) - np.matmul(K,H),P)
     PUpd = symmetrize(PUpd)
-    return xUpd, PUpd
+    return xUpd, PUpd, normInvnSqr(y, S)
         
 def residualCov(P, H, R):
     return np.matmul(H,np.matmul(P,np.transpose(H))) + R
@@ -159,7 +245,7 @@ def symmetrize(P):
     return 0.5*(P + np.transpose(P))
 
 def normEstErrSqr(dx, P):
-    return np.matmul(np.transpose(dx),np.matmul(np.inv(P),dx))
+    return np.matmul(np.transpose(dx),np.matmul(la.inv(P),dx))
 
 def normInvnSqr(nu, S):
-    return np.matmul(np.transpose(nu),np.matmul(np.inv(S),nu))
+    return np.matmul(np.transpose(nu),np.matmul(la.inv(S),nu))

@@ -122,3 +122,9 @@ def f2E(f, e):
 def M2E(M, e):
     return _kinematicsUtils.M2E(M, e)
 
+def meanMotion(mu, a):
+    return _kinematicsUtils.meanMotion(mu, a)
+
+def smaVariance(mu, arg2, arg3, a, IN_ARRAY2):
+    return _kinematicsUtils.smaVariance(mu, arg2, arg3, a, IN_ARRAY2)
+

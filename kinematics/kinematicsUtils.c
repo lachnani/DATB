@@ -1265,3 +1265,70 @@ double M2E(double M, double e)
 
     return E;
 }
+
+double meanMotion(double mu, double a)
+{
+    /*
+    Mean motion of an orbit
+    Parameters
+    ----------
+    mu : double
+        Gravitational parameter in  km^3/s^2
+    a : double
+        Semi-major axis in km
+    Returns
+    -------
+    n : double
+        Mean motion in rad/s
+    */
+    if (a <= 0) {
+        return NAN; // Invalid semi-major axis
+	}
+    return sqrt(mu / (a * a * a));
+}
+
+double smaVariance(double mu, const double r[3], const double v[3], double a, const double P[6][6]) {
+    /*
+    Computes semimajor axis variance from state estimates.
+
+    Ref: Carpenter and D'Souza, "Navigation Filter Best Practices"
+
+    Parameters
+    ----------
+    mu : double
+        Gravitational parameter.
+    r : 3x1 double
+        Inertial position.
+    v : 3x1 double
+        Inertial velocity.
+    a : double
+        Semimajor axis estimate.
+    P : 6x6 double
+        Inertial covariance.
+
+    Returns
+    -------
+    smaVar : double
+        Semi-major axis variance.
+    */
+
+    // Compute the norm of the position vector
+    double rMag = v3_norm(r);
+
+    // Compute the partial derivatives of the semimajor axis
+    double Fa[6];
+    for (int i = 0; i < 3; ++i) {
+        Fa[i] = 2.0 * a * a * r[i] / (rMag * rMag * rMag); // Partial w.r.t. position
+        Fa[i + 3] = 2.0 * a * a * v[i] / mu;              // Partial w.r.t. velocity
+    }
+
+    // Compute the semimajor axis variance
+    double smaVar = 0.0;
+    for (int i = 0; i < 6; ++i) {
+        for (int j = 0; j < 6; ++j) {
+            smaVar += Fa[i] * P[i][j] * Fa[j];
+        }
+    }
+
+    return smaVar;
+}

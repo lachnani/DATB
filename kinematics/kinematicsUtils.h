@@ -32,3 +32,7 @@ double  E2f(double E, double e);
 double  E2M(double E, double e);
 double  f2E(double f, double e);
 double  M2E(double M, double e);
+
+double meanMotion(double mu, double a);
+
+double smaVariance(double mu, const double r[3], const double v[3], const double a, const double P[6][6]);
