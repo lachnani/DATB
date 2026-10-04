@@ -101,7 +101,7 @@ class Navigation:
         self.relPosRectRic = np.zeros((3,))
         self.relVelRectRic = np.zeros((3,))
         self.relPosCurvRic = np.zeros((3,))
-        self.relvelCurvRic = np.zeros((3,))
+        self.relVelCurvRic = np.zeros((3,))
         self.diffOrbEl = np.zeros((6,))
         self.diffEqEl = np.zeros((6,))
         self.relOrbEl = np.zeros((6,))
@@ -141,7 +141,7 @@ class Navigation:
         self.fltrType = filterType
         
         # Initialize filter
-        if self.filterType == "DualInertial":
+        if self.fltrType == "DualInertial":
             self.fltr = estimator.DualInertialFilter(
                 self.tJ2000, 
                 chiefPosInr, chiefVelInr, chiefCovInr, 

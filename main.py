@@ -51,7 +51,8 @@ frm = parser.parseFormation(formation)
 """ Load the FSW """
 if settings["fsw"]["status"] ==  True:
     fsw_config, fsw_file = parser.loadFile('FSW')
-    fsw = parser.parseFlightSoftware(formation['epoch'], settings['fsw'])
+    fsw = parser.parseFlightSoftwareInit(formation['epoch'], settings['fsw'])
+    fsw = parser.parseFlightSoftware(frm, fsw, fsw_config)
 else:
     fsw = None
     fsw_config = 0

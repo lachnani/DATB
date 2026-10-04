@@ -1,3 +1,46 @@
 ---
+name: "default"
+navigation: 
+  status: True
+  deputyProcNoise:
+    R: 6.0e-8
+    I: 6.0e-8
+    C: 6.0e-8
+  chiefProcNoise:
+    R: 6.0e-8
+    I: 6.0e-8
+    C: 6.0e-8
+  relProcNoise:
+    R: 2.0e-8
+    I: 2.0e-8
+    C: 2.0e-8
+  dvVar:
+    sf: 0.01
+    q: 0.0001
+    p: 0.0001
+  measCov:
+    az: 1.0e-6
+    el: 1.0e-6
+    rng: 1.0e-8
+    rngRate: 1.0e-4
+  deputyCov:
+    R: 0.9
+    I: 0.9
+    C: 0.9
+    Rv: 1.3e-9
+    Iv: 1.3e-9
+    Cv: 1.3e-9
+  chiefCov:
+    R: 0.9
+    I: 0.9
+    C: 0.9
+    Rv: 1.3e-9
+    Iv: 1.3e-9
+    Cv: 1.3e-9
+  filterType: "DualInertial"
+guidance:
+  status: False
+control: 
+  status: False
 
 

@@ -969,7 +969,7 @@ def rotateCov(Pa,BA,omegaBwrtAinA):
     # Rotate covariance
     return np.matmul(J, np.matmul(Pa, np.transpose(J)))
 
-def initCovFromRic(varRic,dcmInr2Ric,omegaRicWrtInrInInr):
+def initCovFromRic(varRic,r,v):
     """
     Initializes inertial covariance from RIC uncertainties. Assumes a radial-
     in-track correlation coefficient derived from HCW dynamics.
@@ -982,10 +982,10 @@ def initCovFromRic(varRic,dcmInr2Ric,omegaRicWrtInrInInr):
     ----------
     varRic : 6x1 double 
         RIC frame position and velocity variances.
-    dcmInr2Ric : 3x3 double
-        Inertial to RIC DCM.
-    omegaRicWrtInrInInr : 3x1 double
-        Angular velocity of RIC frame w.r.t Inertial frame.
+    r : 3x1 double
+        inertial position.
+    v : 3x1 double
+        inertial velocity.
 
     Returns
     -------
@@ -993,6 +993,12 @@ def initCovFromRic(varRic,dcmInr2Ric,omegaRicWrtInrInInr):
         Initial covariance in the inertial frame.
 
     """
+    
+    # Compute RIC frame
+    dcmInr2Ric = np.zeros((3,3))
+    uKin.dcmInr2Ric(r, v, dcmInr2Ric)
+    omegaRicWrtInrInInr = np.cross(r, v) / np.dot(r, r)
+    
     # Correlation coefficient
     f = -np.sqrt(3)/2
     

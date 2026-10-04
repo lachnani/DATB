@@ -15,6 +15,7 @@ import numpy as np
 from dynamics import formation as frm
 from dynamics import orbit as orb
 from planning import wptTbl as wt
+from navigation import estimator
 
 import flightSoftware
 
@@ -166,9 +167,9 @@ def parseWptTbl(yaml, formation = None):
             
     return wptTbl, formation
 
-def parseFlightSoftware(epoch, yaml):
+def parseFlightSoftwareInit(epoch, yaml):
     """
-    Parse FSW yaml file
+    Parse FSW initialization yaml file
 
     Parameters
     ----------
@@ -184,3 +185,54 @@ def parseFlightSoftware(epoch, yaml):
     return flightSoftware.Main(
         epoch, yaml['dt'], 
         yaml['bufferDepth'])
+
+def parseFlightSoftware(frm, fsw, yaml):
+    """
+    Parse FSW yaml file
+
+    Parameters
+    ----------
+    frm : formation class
+    fsw : main FSW class
+    yaml : dictionary from yaml
+
+    Returns
+    -------
+    flightSoftware object
+
+    """
+            
+    # Navigation
+    nav = yaml['navigation']
+    if nav['status'] == True:
+        # Configure the filter 
+        fsw.nav.configureFilter(
+            np.diag([nav['deputyProcNoise']['R'],nav['deputyProcNoise']['I'],nav['deputyProcNoise']['C']]), 
+            np.diag([nav['chiefProcNoise']['R'],nav['chiefProcNoise']['I'],nav['chiefProcNoise']['C']]), 
+            np.diag([nav['relProcNoise']['R'],nav['relProcNoise']['I'],nav['relProcNoise']['C']]),
+            np.array([nav['dvVar']['sf'],nav['dvVar']['q'],nav['dvVar']['p']]), 
+            np.diag([nav['measCov']['az'],nav['measCov']['el'],nav['measCov']['rng'],nav['measCov']['rngRate']]))
+        # Initialize the filter
+        # TODO: Currently assumes truth states
+        fsw.nav.initFilter(
+            nav['filterType'],
+            frm.deputy.r, 
+            frm.deputy.v, 
+            estimator.initCovFromRic(
+                np.array([nav['deputyCov']['R'], nav['deputyCov']['I'], nav['deputyCov']['C'],
+                          nav['deputyCov']['Rv'],nav['deputyCov']['Iv'],nav['deputyCov']['Cv']]), 
+                frm.deputy.r, 
+                frm.deputy.v), 
+            frm.chief.r, 
+            frm.chief.v, 
+            estimator.initCovFromRic(
+                np.array([nav['chiefCov']['R'], nav['chiefCov']['I'], nav['chiefCov']['C'],
+                          nav['chiefCov']['Rv'],nav['chiefCov']['Iv'],nav['chiefCov']['Cv']]), 
+                frm.chief.r, 
+                frm.chief.v))
+        
+        # Guidance
+        
+        # Control
+        
+        return fsw
