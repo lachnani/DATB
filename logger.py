@@ -84,5 +84,47 @@ class Log():
             self.qRicToLos  = pd.DataFrame(np.zeros((size,4)), columns=['qs', 'qx', 'qy', 'qz']).T
             self.qInrToLos  = pd.DataFrame(np.zeros((size,4)), columns=['qs', 'qx', 'qy', 'qz']).T
         
-        # Vehicle Flight Software
+        # Navigation Flight Software
+        if (settings["fsw"]["status"] == True):
+            # Estimated States
+            self.fswNavPosVehEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavVelVehEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavPosRsoEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavVelRsoEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavRelPosRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+            self.fswNavRelVelRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+            self.fswNavRelPosCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+            self.fswNavRelVelCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+            self.fswNavDoe            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'de', 'di', 'dRAAN', 'dargP', 'dM']).T
+            self.fswNavDee            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dl', 'dP1', 'dP2', 'dQ1', 'dQ2']).T
+            self.fswNavRoe            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dlambda', 'dex', 'dey', 'dix', 'diy']).T
+            self.fswNavRectClroe      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
+            self.fswNavCurvClroe      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
+            # Filter Statuses
+            self.fswNavFltrInit       = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
+            self.fswNavFltrConverged  = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
+            self.fswNavFltrDiverged   = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
+            self.fswNavFltrCorrupted  = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
+            self.fswNavFltrConsistent = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
+            # Filter Covariances
+            self.fswNavCovVehEciDiag  = pd.DataFrame(np.zeros((size,6)), columns=['X', 'Y', 'Z', 'Xv', 'Yv', 'Zv']).T
+            self.fswNavCovRsoEciDiag  = pd.DataFrame(np.zeros((size,6)), columns=['X', 'Y', 'Z', 'Xv', 'Yv', 'Zv']).T
+            self.fswNavCovRelRicDiag  = pd.DataFrame(np.zeros((size,6)), columns=['R', 'I', 'C', 'Rv', 'Iv', 'Cv']).T
+            # Measurement Residuals
+            self.fswNavMeasRes        = pd.DataFrame(np.zeros((size,4)), columns=['az', 'el', 'rng', 'rngRate']).T
+            # Errors
+            self.fswNavPosVehEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavVelVehEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavPosRsoEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavVelRsoEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavRelPosRectRicErr  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+            self.fswNavRelVelRectRicErr  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+            self.fswNavRelPosCurvRicErr  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+            self.fswNavRelVelCurvRicErr  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
+            self.fswNavDoeErr            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'de', 'di', 'dRAAN', 'dargP', 'dM']).T
+            self.fswNavDeeErr            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dl', 'dP1', 'dP2', 'dQ1', 'dQ2']).T
+            self.fswNavRoeErr            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dlambda', 'dex', 'dey', 'dix', 'diy']).T
+            self.fswNavRectClroeErr      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
+            self.fswNavCurvClroeErr      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
+            
         

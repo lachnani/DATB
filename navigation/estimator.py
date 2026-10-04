@@ -111,6 +111,7 @@ class RelativeDecoupledInertialRelativeFilter:
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         self.measCov = measCov
+        self.measResidual = np.zeros((4,))
         
         # Save process noise matrices
         self.deputyProcNoiseInRic = Qd
@@ -323,6 +324,7 @@ class ChiefDecoupledDualInertialFilter:
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         self.measCov = measCov
+        self.measResidual = np.zeros((4,))
         
         # Save process noise matrices
         self.deputyProcNoiseInRic = Qd
@@ -531,6 +533,7 @@ class DualInertialFilter:
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         self.measCov = measCov
+        self.measResidual = np.zeros((4,))
         
         # Save process noise matrices
         self.deputyProcNoiseInRic = Qd
@@ -739,6 +742,7 @@ class InertialRelativeFilter:
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         self.measCov = measCov
+        self.measResidual = np.zeros((4,))
         
         # Save process noise matrices
         self.deputyProcNoiseInRic = Qd

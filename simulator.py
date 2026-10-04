@@ -235,8 +235,46 @@ class Simulator():
             self.log.qInrToLos[self.log.i]  = R.from_matrix(self.frm.dcmInr2Los).as_quat()
         
         if self.settings["fsw"]["status"] == True:
-            # Log FSW
-            temp = 0
+            # Estimated States
+            self.log.fswNavPosVehEci[self.log.i]      = self.fsw.nav.deputyPosInr
+            self.log.fswNavVelVehEci[self.log.i]      = self.fsw.nav.deputyVelInr
+            self.log.fswNavPosRsoEci[self.log.i]      = self.fsw.nav.chiefPosInr
+            self.log.fswNavVelRsoEci[self.log.i]      = self.fsw.nav.chiefVelInr
+            self.log.fswNavRelPosRectRic[self.log.i]  = self.fsw.nav.relPosRectRic
+            self.log.fswNavRelVelRectRic[self.log.i]  = self.fsw.nav.relVelRectRic
+            self.log.fswNavRelPosCurvRic[self.log.i]  = self.fsw.nav.relPosCurvRic
+            self.log.fswNavRelVelCurvRic[self.log.i]  = self.fsw.nav.relVelCurvRic
+            self.log.fswNavDoe[self.log.i]            = self.fsw.nav.diffOrbEl
+            self.log.fswNavDee[self.log.i]            = self.fsw.nav.diffEqEl
+            self.log.fswNavRoe[self.log.i]            = self.fsw.nav.relOrbEl
+            self.log.fswNavRectClroe[self.log.i]      = self.fsw.nav.rectClroe
+            self.log.fswNavCurvClroe[self.log.i]      = self.fsw.nav.curvClroe
+            # Filter Statuses
+            self.log.fswNavFltrInit[self.log.i]       = self.fsw.nav.fltrInit
+            self.log.fswNavFltrConverged[self.log.i]  = self.fsw.nav.fltrConverged
+            self.log.fswNavFltrDiverged[self.log.i]   = self.fsw.nav.fltrDiverged
+            self.log.fswNavFltrCorrupted[self.log.i]  = self.fsw.nav.fltrCorrupted
+            self.log.fswNavFltrConsistent[self.log.i] = self.fsw.nav.fltrConsistent
+            # Filter Covariances
+            self.log.fswNavCovVehEciDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.deputyCovInr)
+            self.log.fswNavCovRsoEciDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.chiefCovInr)
+            self.log.fswNavCovRelRicDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.relCovRectRic)
+            # Measurement Residuals
+            self.log.fswNavMeasRes[self.log.i]        = self.fsw.nav.fltr.measResidual
+            # Errors
+            self.log.fswNavPosVehEciErr[self.log.i]      = self.log.posVehEci[self.log.i] - self.log.fswNavPosVehEci[self.log.i]
+            self.log.fswNavVelVehEciErr[self.log.i]      = self.log.velVehEci[self.log.i] - self.log.fswNavVelVehEci[self.log.i]
+            self.log.fswNavPosRsoEciErr[self.log.i]      = self.log.posRsoEci[self.log.i] - self.log.fswNavPosRsoEci[self.log.i]
+            self.log.fswNavVelRsoEciErr[self.log.i]      = self.log.velRsoEci[self.log.i] - self.log.fswNavVelRsoEci[self.log.i]
+            self.log.fswNavRelPosRectRicErr[self.log.i]  = self.log.relPosRectRic[self.log.i] - self.log.fswNavRelPosRectRic[self.log.i]
+            self.log.fswNavRelVelRectRicErr[self.log.i]  = self.log.relVelRectRic[self.log.i] - self.log.fswNavRelVelRectRic[self.log.i]
+            self.log.fswNavRelPosCurvRicErr[self.log.i]  = self.log.relPosCurvRic[self.log.i] - self.log.fswNavRelPosCurvRic[self.log.i]
+            self.log.fswNavRelVelCurvRicErr[self.log.i]  = self.log.relVelCurvRic[self.log.i] - self.log.fswNavRelVelCurvRic[self.log.i]
+            self.log.fswNavDoeErr[self.log.i]            = self.log.doe[self.log.i] - self.log.fswNavDoe[self.log.i]
+            self.log.fswNavDeeErr[self.log.i]            = self.log.dee[self.log.i] - self.log.fswNavDee[self.log.i]
+            self.log.fswNavRoeErr[self.log.i]            = self.log.roe[self.log.i] - self.log.fswNavRoe[self.log.i]
+            self.log.fswNavRectClroeErr[self.log.i]      = self.log.rectClroe[self.log.i] - self.log.fswNavRectClroe[self.log.i]
+            self.log.fswNavCurvClroeErr[self.log.i]      = self.log.curvClroe[self.log.i] - self.log.fswNavCurvClroe[self.log.i]
     
     def terminate(self):
         
