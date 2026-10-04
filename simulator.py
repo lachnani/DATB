@@ -55,8 +55,11 @@ class Simulator():
             # TODO
             self.kovLim = 0
         
+        # Initialize Formation
         self.frm = formation
         self.frm.settings = self.settings["formation"]
+        
+        # Initialize FSW
         self.fsw = flightsoftware 
         
         # Burn perturbations
@@ -88,16 +91,21 @@ class Simulator():
         
         # Confirm dynamics are on
         if self.settings["dynamics"]["status"] == False:
+            print("SIM: Dynamics are off! Terminating!")
             self.status = False
         
         # Confirm dynamics dt is the smallest
         if ((self.settings["dynamics"]["dt"] > self.settings["log"]["dt"]) or
             (self.settings["dynamics"]["dt"] > self.settings["fsw"]["dt"])):
+            print("SIM: Dynamics dt is too large! Terminating!")
             self.status = False
             
-        # Confirm all dts are a multiple of dynamics dt
-        if ((self.settings["log"]["dt"] % self.settings["dynamics"]["dt"] != 0) or
-            (self.settings["fsw"]["dt"] % self.settings["dynamics"]["dt"] != 0)):
+        # Confirm all dts are a multiple of dynamics dt 
+        # TODO: This has issues with floating point numbers in FSW
+        # We will need to use cycles to cue tasks instead
+        if ((self.settings["log"]["dt"] % self.settings["dynamics"]["dt"] != 0.0) or
+            (self.settings["fsw"]["dt"] % self.settings["dynamics"]["dt"] != 0.0)):
+            print("SIM: Incompatible task frequencies! Terminating!")
             self.status = False
             
     
@@ -115,6 +123,7 @@ class Simulator():
         if ((self.t != self.frm.t) or
             (self.t != self.frm.chief.t) or
             (self.t != self.frm.deputy.t)):
+            print("SIM: Formation times mismatched! Terminating!")
             self.status = False
             
         # End the sim if beyond the pre-defined sim duration

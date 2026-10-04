@@ -41,11 +41,12 @@ class Main:
         self.tJ2000 = self.tJ2000 + self.dt
         
         # Navigation
-        self.nav.propagate(self.dt, self.ctrl.aCtrlInEci)
-        if measAvailable == True:
-            self.nav.update(meas, measType)
-            # self.nav.runChecks()
-        self.nav.sync()
+        if self.nav.fltrInit == True:
+            self.nav.propagate(self.dt, self.ctrl.aCtrlInEci)
+            if measAvailable == True:
+                self.nav.update(meas, measType)
+                # self.nav.runChecks()
+            self.nav.sync()
         
         # Guidance
         
@@ -93,6 +94,8 @@ class Navigation:
         
         # Initialize RIC frame
         self.dcmInr2Ric = np.zeros((3,3))
+        self.dcmRic2Los = np.zeros((3,3))
+        self.dcmInr2Los = np.zeros((3,3))
         
         # Initialize Relative States
         self.relPosRectRic = np.zeros((3,))
@@ -242,9 +245,6 @@ class Navigation:
         self.deputyInEclipse = uDyn.eclipse(self.deputyPosInr, self.fltr.sun.rUnit)
         self.chiefInEclipse = uDyn.eclipse(self.chiefPosInr, self.fltr.sun.rUnit)
         
-        # RIC Frame
-        uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
-        
         # Convert relative states
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         uKin.rectRic2curvRic(self.chiefPosInr, self.chiefVelInr, self.relPosRectRic, self.relVelRectRic, self.relPosCurvRic, self.relVelCurvRic)
@@ -254,6 +254,11 @@ class Navigation:
         uKin.oe2roe(self.chiefOrbEl, self.deputyOrbEl, self.relOrbEl)
         uKin.ric2clroe(self.relPosRectRic, self.relVelRectRic, self.chiefMeanMotion, 0, self.rectClroe)
         uKin.ric2clroe(self.relPosCurvRic, self.relVelCurvRic, self.chiefMeanMotion, 0, self.curvClroe)
+        
+        # Frames
+        uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
+        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
             
         # Compute Environment Parameters
         self.losEarthAng, self.losMoonAng, self.losSunAng = \

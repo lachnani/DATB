@@ -51,7 +51,9 @@ frm = parser.parseFormation(formation)
 """ Load the FSW """
 if settings["fsw"]["status"] ==  True:
     fsw_config, fsw_file = parser.loadFile('FSW')
+    fsw = parser.parseFlightSoftware(formation['epoch'], settings['fsw'])
 else:
+    fsw = None
     fsw_config = 0
     fsw_file = 'noFSW'
     
@@ -73,7 +75,7 @@ if 'wptTbl' in scrArguments:
 
 """ Initialize the sim """
 print("-----------------------------------------------------")
-sim = simulator.Simulator(settings, frm, fsw_config)
+sim = simulator.Simulator(settings, frm, fsw)
 
 
 """ Run the sim """

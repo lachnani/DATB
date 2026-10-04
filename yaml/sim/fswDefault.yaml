@@ -2,7 +2,7 @@
 name: "fswDefault"
 dynamics:
   status: True
-  dt: 0.1
+  dt: 1.0
   kov:
     type: "PRISM"
     R: 1
@@ -17,7 +17,7 @@ visualizer:
   animations: False
 fsw: 
   status: True
-  dt: 0.2
+  dt: 2.0
   bufferDepth: 100
 formation:
   relStates: True

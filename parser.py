@@ -16,6 +16,8 @@ from dynamics import formation as frm
 from dynamics import orbit as orb
 from planning import wptTbl as wt
 
+import flightSoftware
+
 def loadFile(promptStr = ''):
     print("Choose " + promptStr + " yaml file")
     file_path = filedialog.askopenfilename(defaultextension = '.yaml',
@@ -163,3 +165,22 @@ def parseWptTbl(yaml, formation = None):
                     formation.chief.pert)
             
     return wptTbl, formation
+
+def parseFlightSoftware(epoch, yaml):
+    """
+    Parse FSW yaml file
+
+    Parameters
+    ----------
+    epoch : j2000 epoch
+    yaml : dictionary from yaml
+
+    Returns
+    -------
+    flightSoftware object
+
+    """
+            
+    return flightSoftware.Main(
+        epoch, yaml['dt'], 
+        yaml['bufferDepth'])
