@@ -19,7 +19,7 @@ relState:
     B0: 1.7320508075688772
     beta: 0.0
 frmType: "FORMATION_CHIEF_ANCHOR"
-relStateType: "RELSTATE_RECT_CLROE"
+relStateType: "RELSTATE_CURV_CLROE"
 pert:
   jnum: 6
   solarGrav: True

@@ -84,7 +84,7 @@ class TestEstimator(unittest.TestCase):
         ### Measurement update
         Pminus = self.ekf.P 
         errminus = self.ekf.x - self.x
-        z = self.z(self.x) + rand.multivariate_normal(np.zeros(2,),self.R)
+        z = self.z(self.x) + rand.multivariate_normal(np.zeros(2,),self.R/100)
         zHat = self.z(self.ekf.x)
         H = self.H(self.ekf.x)
         nu = z - zHat

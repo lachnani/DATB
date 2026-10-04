@@ -1,0 +1,29 @@
+---
+name: "fswDefault"
+dynamics:
+  status: True
+  dt: 0.1
+  kov:
+    type: "PRISM"
+    R: 1
+    I: 1
+    C: 1
+simDuration: 86400
+log: 
+  status: True
+  dt: 60.0
+visualizer: 
+  plots: True
+  animations: False
+fsw: 
+  status: True
+  dt: 0.2
+  bufferDepth: 100
+formation:
+  relStates: True
+  environments: True
+  measurements: True
+  orbit:
+    environments: True
+    elements: True
+

@@ -158,7 +158,7 @@ class Simulator():
                 
             # Propagate FSW
             if self.settings["fsw"]["status"] == True and (self.t % self.settings["fsw"]["dt"] == 0):
-                self.fsw.propagate(self.fsw.dt)
+                self.fsw.cycle()
                 
             # Compute tip and tilt angles
             if (self.settings["formation"]["measurements"] == True):
@@ -276,25 +276,22 @@ class Simulator():
             self.frm.el = 0.0
             
     
-def pertVec(v, angDeg, magPerc):
+def pertVec(v, sigmaDir, sigmaMag):
     """
-    Randomly perturbs vector. Assumes Gaussian perturbation distributions, 
-    and 3-sigma input magnitudes.
+    Randomly perturbs vector. Assumes Gaussian perturbation distributions.
     """
-    if magPerc > 0.0:
-        magPert = np.random.normal(0.0, 0.01*magPerc/3) + 1 # Magnitude perturbation as ratio
-    else:
-        magPert = 1.0;
+    if sigmaMag > 0.0:
+        v = v + sigmaMag * v * np.random.normal(0,1) # Magnitude perturbation as ratio
     
-    if angDeg > 0.0:
-        angPert = np.random.normal(0.0, angDeg/3) # Angle perturbation in degrees
+    if sigmaDir > 0.0:
+        angPert = np.random.normal(0.0, sigmaDir) # Angle perturbation in degrees
         randVec = np.random.rand(3,)
         rotVec = np.cross(v, randVec) # Forces an orthogonal rotation vector
         rotVec = rotVec / np.linalg.norm(rotVec) # Normalize
         r = R.from_rotvec(angPert * rotVec, degrees=True)   
-        return magPert*r.apply(v)
+        return r.apply(v)
     else:
-        return magPert*v
+        return v
     
     
     
