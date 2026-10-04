@@ -95,19 +95,24 @@ if settings["log"]["status"] ==  True:
     log_folder = sim_file + '_' \
                + state_file + '_' \
                + fsw_file + '_' \
-               + scr_file 
-    log_file = "log_" + log_time_str
-    log_inner_path = os.path.join("log", log_folder)
-    log_file_path = os.path.join(log_inner_path, log_file + '.' + 'pkl')
-    Path(log_inner_path).mkdir(parents=True, exist_ok=True)
+               + scr_file + '_' \
+               + log_time_str
+    log_base_path = os.path.join("log", log_folder)
+    
+    log_dynamics_path = os.path.join("log", log_folder, "dynamics")
+    Path(log_dynamics_path).mkdir(parents=True, exist_ok=True)
+    log_navigation_path = os.path.join("log", log_folder, "navigation")
+    Path(log_navigation_path).mkdir(parents=True, exist_ok=True)
+    
+    log_file_path = os.path.join(log_base_path, 'log.pkl')
     with open(log_file_path, 'wb') as outp:
         pickle.dump(sim.log, outp)
         
     """ Visualize the data """
     if settings["visualizer"]["plots"] ==  True:
         print("Saving simulation plots")
-        vis.plotAll(sim.log, log_inner_path, log_time_str, sim.settings)
+        vis.plotAll(sim.log, log_base_path, log_time_str, sim.settings)
         
     if settings["visualizer"]["animations"] ==  True:
         print("Saving simulation animations")
-        vis.animAll(sim.log, log_inner_path, log_time_str, sim.settings)
+        vis.animAll(sim.log, log_base_path, log_time_str, sim.settings)
