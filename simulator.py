@@ -259,7 +259,10 @@ class Simulator():
             self.log.fswNavCovVehEciDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.deputyCovInr)
             self.log.fswNavCovRsoEciDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.chiefCovInr)
             self.log.fswNavCovRelRicDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.relCovRectRic)
+            self.log.fswNavVehSmaVar[self.log.i]      = self.fsw.nav.deputySmaVar
+            self.log.fswNavRsoSmaVar[self.log.i]      = self.fsw.nav.chiefSmaVar
             # Measurement Residuals
+            self.log.fswNavMeasType[self.log.i]       = self.fsw.nav.fltr.measType
             self.log.fswNavMeasRes[self.log.i]        = self.fsw.nav.fltr.measResidual
             # Errors
             self.log.fswNavPosVehEciErr[self.log.i]      = self.log.posVehEci[self.log.i] - self.log.fswNavPosVehEci[self.log.i]

@@ -31,6 +31,7 @@ def plotAll(log, path, tag, settings):
     ChiefCov_Plot(log, path, tag)
     DeputyCov_Plot(log, path, tag)
     RelCov_Plot(log, path, tag)
+    SmaVariance_Plot(log, path, tag)
     
 def RectRicErr_Plot(log, path, tag):
     """
@@ -502,4 +503,31 @@ def RelCov_Plot(log, path, tag):
     fig_relCov_plt.tight_layout()
     
     fullFigPath = path + r"\relativeCovariance_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def SmaVariance_Plot(log, path, tag):
+    """
+    Semimajor axis variance
+
+    """
+    
+    fig_smaVar_plt = plt.figure()
+    
+    ax = plt.subplot(2,1,1)
+    ax.plot(log.time.loc['simTime',:], log.fswNavRsoSmaVar.loc['var',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a Variance [km^2]")
+    plt.title('Chief Semimajor Axis Variance')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    ax.plot(log.time.loc['simTime',:], log.fswNavVehSmaVar.loc['var',:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a Variance [km^2]")
+    plt.title('Deputy Semimajor Axis Variance')
+    plt.grid()
+       
+    fig_smaVar_plt.tight_layout()
+    
+    fullFigPath = path + r"\smaVariance_" + tag + r".png"
     plt.savefig(fullFigPath)

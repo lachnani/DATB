@@ -110,7 +110,10 @@ class Log():
             self.fswNavCovVehEciDiag  = pd.DataFrame(np.zeros((size,6)), columns=['X', 'Y', 'Z', 'Xv', 'Yv', 'Zv']).T
             self.fswNavCovRsoEciDiag  = pd.DataFrame(np.zeros((size,6)), columns=['X', 'Y', 'Z', 'Xv', 'Yv', 'Zv']).T
             self.fswNavCovRelRicDiag  = pd.DataFrame(np.zeros((size,6)), columns=['R', 'I', 'C', 'Rv', 'Iv', 'Cv']).T
+            self.fswNavVehSmaVar      = pd.DataFrame(np.zeros((size,1)), columns=['var']).T
+            self.fswNavRsoSmaVar      = pd.DataFrame(np.zeros((size,1)), columns=['var']).T
             # Measurement Residuals
+            self.fswNavMeasType       = pd.DataFrame(np.zeros((size,1)), columns=['type']).T
             self.fswNavMeasRes        = pd.DataFrame(np.zeros((size,4)), columns=['az', 'el', 'rng', 'rngRate']).T
             # Errors
             self.fswNavPosVehEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
