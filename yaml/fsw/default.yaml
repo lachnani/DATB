@@ -3,17 +3,17 @@ name: "default"
 navigation: 
   status: True
   deputyProcNoise:
-    R: 6.0e-8
-    I: 6.0e-8
-    C: 6.0e-8
+    R: 6.0e-10
+    I: 6.0e-10
+    C: 6.0e-10
   chiefProcNoise:
-    R: 6.0e-8
-    I: 6.0e-8
-    C: 6.0e-8
+    R: 6.0e-10
+    I: 6.0e-10
+    C: 6.0e-10
   relProcNoise:
-    R: 2.0e-8
-    I: 2.0e-8
-    C: 2.0e-8
+    R: 2.0e-10
+    I: 2.0e-10
+    C: 2.0e-10
   dvVar:
     sf: 0.01
     q: 0.0001

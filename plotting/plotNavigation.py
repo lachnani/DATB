@@ -20,18 +20,267 @@ def plotAll(log, path, tag, settings):
     Plot all available plots
 
     """
-
+    # Absolute State Plots
+    ChiefOe_Plot(log, path, tag)
+    DeputyOe_Plot(log, path, tag)
+    # Relative State Plots
+    RectRicProj_Plot(log, path, tag)
+    CurvRicProj_Plot(log, path, tag)
+    # Error Plots
     RectRicErr_Plot(log, path, tag)
     DoeErr_Plot(log, path, tag)
     DeeErr_Plot(log, path, tag)
     RectClroeErr_Plot(log, path, tag)
     CurvClroeErr_Plot(log, path, tag)
+    # Filter Status Plot
     FilterStatus_Plot(log, path, tag)
+    # Measument Residual Plot
     MeasResidual_Plot(log, path, tag)
+    # Covariance Plots
     ChiefCov_Plot(log, path, tag)
     DeputyCov_Plot(log, path, tag)
     RelCov_Plot(log, path, tag)
     SmaVariance_Plot(log, path, tag)
+    
+def ChiefOe_Plot(log, path, tag):
+    """
+    Chief Keplerian Elements
+
+    """
+    
+    fig_oe_plt = plt.figure()
+    plt.suptitle('Chief Orbit Elements')
+    
+    ax = plt.subplot(3,2,1)
+    ax.plot(log.time.loc['simTime',:], log.oeRso.loc['a',:], label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], log.fswNavOeRso.loc['a',:], label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a [km]")
+    plt.title('Semimajor-Axis')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    ax.plot(log.time.loc['simTime',:], log.oeRso.loc['e',:], label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], log.fswNavOeRso.loc['e',:], label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("e")
+    plt.title('Eccentricity')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.oeRso.loc['i',:]), label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.fswNavOeRso.loc['i',:]), label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("i [deg]")
+    plt.title('Inclination')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.oeRso.loc['RAAN',:]), label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.fswNavOeRso.loc['RAAN',:]), label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("RAAN [deg]")
+    plt.title('RAAN')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.oeRso.loc['argP',:]), label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.fswNavOeRso.loc['argP',:]), label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\omega$ [deg]")
+    plt.title('Argument of Perigee')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.oeRso.loc['M',:]), label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.fswNavOeRso.loc['M',:]), label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("M [deg]")
+    plt.title('Mean Anomaly')
+    ax.legend()
+    plt.grid()
+       
+    fig_oe_plt.tight_layout()
+    
+    fullFigPath = path + r"\chiefOe_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def DeputyOe_Plot(log, path, tag):
+    """
+    Deputy Keplerian Elements
+
+    """
+    
+    fig_oe_plt = plt.figure()
+    plt.suptitle('Deputy Orbit Elements')
+    
+    ax = plt.subplot(3,2,1)
+    ax.plot(log.time.loc['simTime',:], log.oeVeh.loc['a',:], label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], log.fswNavOeVeh.loc['a',:], label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a [km]")
+    plt.title('Semimajor-Axis')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    ax.plot(log.time.loc['simTime',:], log.oeVeh.loc['e',:], label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], log.fswNavOeVeh.loc['e',:], label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("e")
+    plt.title('Eccentricity')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.oeVeh.loc['i',:]), label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.fswNavOeVeh.loc['i',:]), label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("i [deg]")
+    plt.title('Inclination')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.oeVeh.loc['RAAN',:]), label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.fswNavOeVeh.loc['RAAN',:]), label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("RAAN [deg]")
+    plt.title('RAAN')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.oeVeh.loc['argP',:]), label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.fswNavOeVeh.loc['argP',:]), label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\omega$ [deg]")
+    plt.title('Argument of Perigee')
+    ax.legend()
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.oeVeh.loc['M',:]), label='Truth')[0]
+    ax.plot(log.time.loc['simTime',:], np.rad2deg(log.fswNavOeVeh.loc['M',:]), label='FSW')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("M [deg]")
+    plt.title('Mean Anomaly')
+    ax.legend()
+    plt.grid()
+       
+    fig_oe_plt.tight_layout()
+    
+    fullFigPath = path + r"\chiefOe_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def RectRicProj_Plot(log, path, tag):
+    """
+    2D Rectilinear RIC plots
+
+    """
+    
+    fig_rectRicProj_plt = plt.figure()
+    plt.suptitle('Relative Trajectory in RIC')
+    
+    ax1 = plt.subplot(212)
+    origin = ax1.scatter(0, 0, color='b', linewidths = 3)
+    ax1.plot(log.relPosRectRic.loc['I',:], log.relPosRectRic.loc['R',:], color='r', label='Truth')[0]
+    ax1.scatter(log.relPosRectRic.loc['I',log.i], log.relPosRectRic.loc['R',log.i], color='r')
+    ax1.plot(log.relPosRectRic.loc['I',:], log.fswNavRelPosRectRic.loc['R',:], linestyle='--', color='k', label='FSW')[0]
+    ax1.scatter(log.relPosRectRic.loc['I',log.i], log.fswNavRelPosRectRic.loc['R',log.i], color='k')
+    ax1.set_xlabel("In-Track [km]")
+    ax1.set_ylabel("Radial [km]")
+    ax1.set_aspect('equal', adjustable='datalim')
+    ax1.legend()
+    plt.grid()
+    plt.gca().invert_xaxis()
+    
+    ax2 = plt.subplot(221)
+    origin = ax2.scatter(0, 0, color='b', linewidths = 3)
+    ax2.plot(log.relPosRectRic.loc['I',:], log.relPosRectRic.loc['C',:], color='r', label='Truth')[0]
+    ax2.scatter(log.relPosRectRic.loc['I',log.i], log.relPosRectRic.loc['C',log.i], color='r')
+    ax2.plot(log.relPosRectRic.loc['I',:], log.fswNavRelPosRectRic.loc['C',:], linestyle='--', color='k', label='FSW')[0]
+    ax2.scatter(log.relPosRectRic.loc['I',log.i], log.fswNavRelPosRectRic.loc['C',log.i], color='k')
+    ax2.set_xlabel("In-Track [km]")
+    ax2.set_ylabel("Cross-Track [km]")
+    ax2.set_aspect('equal', adjustable='datalim')
+    ax2.legend()
+    plt.grid()
+    plt.gca().invert_xaxis()
+    
+    ax3 = plt.subplot(222)
+    origin = ax3.scatter(0, 0, color='b', linewidths = 3)
+    ax3.plot(log.relPosRectRic.loc['R',:], log.relPosRectRic.loc['C',:], color='r', label='Truth')[0]
+    ax3.scatter(log.relPosRectRic.loc['R',log.i], log.relPosRectRic.loc['C',log.i], color='r')
+    ax3.plot(log.relPosRectRic.loc['R',:], log.fswNavRelPosRectRic.loc['C',:], linestyle='--', color='k', label='FSW')[0]
+    ax3.scatter(log.relPosRectRic.loc['R',log.i], log.fswNavRelPosRectRic.loc['C',log.i], color='k')
+    ax3.set_xlabel("Radial [km]")
+    ax3.set_ylabel("Cross-Track [km]")
+    ax3.set_aspect('equal', adjustable='datalim')
+    ax3.legend()
+    plt.grid()
+    
+    fig_rectRicProj_plt.tight_layout()
+    
+    fullFigPath = path + r"\rectRicProj_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def CurvRicProj_Plot(log, path, tag):
+    """
+    2D Curvilinear RIC plots
+
+    """
+    
+    fig_curvRicProj_plt = plt.figure()
+    plt.suptitle('Relative Trajectory in RIC')
+    
+    ax1 = plt.subplot(212)
+    origin = ax1.scatter(0, 0, color='b', linewidths = 3)
+    ax1.plot(log.relPosCurvRic.loc['I',:], log.relPosCurvRic.loc['R',:], color='r', label='Truth')[0]
+    ax1.scatter(log.relPosCurvRic.loc['I',log.i], log.relPosCurvRic.loc['R',log.i], color='r')
+    ax1.plot(log.relPosCurvRic.loc['I',:], log.fswNavRelPosCurvRic.loc['R',:], linestyle='--', color='k', label='FSW')[0]
+    ax1.scatter(log.relPosCurvRic.loc['I',log.i], log.fswNavRelPosCurvRic.loc['R',log.i], color='k')
+    ax1.set_xlabel("Curvilinear In-Track [km]")
+    ax1.set_ylabel("Radial [km]")
+    ax1.set_aspect('equal', adjustable='datalim')
+    ax1.legend()
+    plt.grid()
+    plt.gca().invert_xaxis()
+    
+    ax2 = plt.subplot(221)
+    origin = ax2.scatter(0, 0, color='b', linewidths = 3)
+    ax2.plot(log.relPosCurvRic.loc['I',:], log.relPosCurvRic.loc['C',:], color='r', label='Truth')[0]
+    ax2.scatter(log.relPosCurvRic.loc['I',log.i], log.relPosCurvRic.loc['C',log.i], color='r')
+    ax2.plot(log.relPosCurvRic.loc['I',:], log.fswNavRelPosCurvRic.loc['C',:], linestyle='--', color='k', label='FSW')[0]
+    ax2.scatter(log.relPosCurvRic.loc['I',log.i], log.fswNavRelPosCurvRic.loc['C',log.i], color='k')
+    ax2.set_xlabel("Curvilinear In-Track [km]")
+    ax2.set_ylabel("Curvilinear Cross-Track [km]")
+    ax2.set_aspect('equal', adjustable='datalim')
+    ax2.legend()
+    plt.grid()
+    plt.gca().invert_xaxis()
+    
+    ax3 = plt.subplot(222)
+    origin = ax3.scatter(0, 0, color='b', linewidths = 3)
+    ax3.plot(log.relPosCurvRic.loc['R',:], log.relPosCurvRic.loc['C',:], color='r', label='Truth')[0]
+    ax3.scatter(log.relPosCurvRic.loc['R',log.i], log.relPosCurvRic.loc['C',log.i], color='r')
+    ax3.plot(log.relPosCurvRic.loc['R',:], log.fswNavRelPosCurvRic.loc['C',:], linestyle='--', color='k', label='FSW')[0]
+    ax3.scatter(log.relPosCurvRic.loc['R',log.i], log.fswNavRelPosCurvRic.loc['C',log.i], color='k')
+    ax3.set_xlabel("Radial [km]")
+    ax3.set_ylabel("Curvilinear Cross-Track [km]")
+    ax3.set_aspect('equal', adjustable='datalim')
+    ax3.legend()
+    plt.grid()
+    
+    fig_curvRicProj_plt.tight_layout()
+    
+    fullFigPath = path + r"\curvRicProj_" + tag + r".png"
+    plt.savefig(fullFigPath)
     
 def RectRicErr_Plot(log, path, tag):
     """

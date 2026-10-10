@@ -89,8 +89,10 @@ class Log():
             # Estimated States
             self.fswNavPosVehEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
             self.fswNavVelVehEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavOeVeh          = pd.DataFrame(np.zeros((size,6)), columns=['a', 'e', 'i', 'RAAN', 'argP', 'M']).T
             self.fswNavPosRsoEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
             self.fswNavVelRsoEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.fswNavOeRso          = pd.DataFrame(np.zeros((size,6)), columns=['a', 'e', 'i', 'RAAN', 'argP', 'M']).T
             self.fswNavRelPosRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
             self.fswNavRelVelRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
             self.fswNavRelPosCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T

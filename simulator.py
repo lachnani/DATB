@@ -165,13 +165,16 @@ class Simulator():
                             self.log.kovBreach = True
                             self.log.tKovBreach = self.t
                 
-            # Propagate FSW
-            if self.settings["fsw"]["status"] == True and (self.t % self.settings["fsw"]["dt"] == 0):
-                self.fsw.cycle()
-                
             # Compute tip and tilt angles
             if (self.settings["formation"]["measurements"] == True):
                 self.calculateTruthMeas()
+            
+            # Propagate FSW
+            if self.settings["fsw"]["status"] == True and (self.t % self.settings["fsw"]["dt"] == 0):
+                # Make measurements available
+                
+                # Cycle FSW
+                self.fsw.cycle()
                 
             # Log
             if self.settings["log"]["status"] == True and (self.t % self.settings["log"]["dt"] == 0):
@@ -238,8 +241,10 @@ class Simulator():
             # Estimated States
             self.log.fswNavPosVehEci[self.log.i]      = self.fsw.nav.deputyPosInr
             self.log.fswNavVelVehEci[self.log.i]      = self.fsw.nav.deputyVelInr
+            self.log.fswNavOeVeh[self.log.i]          = self.fsw.nav.deputyOrbEl
             self.log.fswNavPosRsoEci[self.log.i]      = self.fsw.nav.chiefPosInr
             self.log.fswNavVelRsoEci[self.log.i]      = self.fsw.nav.chiefVelInr
+            self.log.fswNavOeRso[self.log.i]          = self.fsw.nav.chiefOrbEl
             self.log.fswNavRelPosRectRic[self.log.i]  = self.fsw.nav.relPosRectRic
             self.log.fswNavRelVelRectRic[self.log.i]  = self.fsw.nav.relVelRectRic
             self.log.fswNavRelPosCurvRic[self.log.i]  = self.fsw.nav.relPosCurvRic
