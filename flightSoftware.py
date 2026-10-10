@@ -29,18 +29,19 @@ class Main:
         self.nav = Navigation(self.tJ2000, bufferDepth)
         
         # Initialize Guidance Struct
-        self.guid = 0 
+        self.guid = Guidance(self.tJ2000)
         
         # Initialize Control Struct
         self.ctrl = Control(self.tJ2000)        
         
     def cycle(self, 
-              measAvailable = False, meas = np.zeros((4,)), measType = "anglesRange"):
+              dcmInr2Los, measAvailable = False, meas = np.zeros((4,)), measType = "anglesRange"):
         
         # Propagate time
         self.tJ2000 = self.tJ2000 + self.dt
         
         # Navigation
+        self.nav.attitudeDetermination(dcmInr2Los)
         if self.nav.fltrInit == True:
             self.nav.propagate(self.dt, self.ctrl.aCtrlInEci)
             if measAvailable == True:
@@ -49,6 +50,7 @@ class Main:
             self.nav.sync()
         
         # Guidance
+        self.guid.attitudeGuidance(self.nav.relPosRectRic, self.nav.dcmInr2Ric)
         
         # Control
         
@@ -94,7 +96,6 @@ class Navigation:
         
         # Initialize RIC frame
         self.dcmInr2Ric = np.zeros((3,3))
-        self.dcmRic2Los = np.zeros((3,3))
         self.dcmInr2Los = np.zeros((3,3))
         
         # Initialize Relative States
@@ -143,6 +144,7 @@ class Navigation:
         
 
     def initFilter(self, filterType,
+                   dcmInr2Los,
                    deputyPosInr, deputyVelInr, deputyCovInr, 
                    chiefPosInr, chiefVelInr, chiefCovInr
                    ):
@@ -154,6 +156,7 @@ class Navigation:
         if self.fltrType == "DualInertial":
             self.fltr = estimator.DualInertialFilter(
                 self.tJ2000, 
+                dcmInr2Los,
                 chiefPosInr, chiefVelInr, chiefCovInr, 
                 deputyPosInr, deputyVelInr, deputyCovInr, 
                 self.fltrChiefProcNoiseRic, self.fltrDeputyProcNoiseRic, 
@@ -162,6 +165,7 @@ class Navigation:
         elif self.filterType == "InertialRelative":
             self.fltr =  estimator.InertialRelativeFilter(
                 self.tJ2000, 
+                dcmInr2Los,
                 chiefPosInr, chiefVelInr, chiefCovInr, 
                 deputyPosInr, deputyVelInr, deputyCovInr, 
                 self.fltrDeputyProcNoiseRic, self.fltrRelProcNoiseRic,
@@ -170,6 +174,7 @@ class Navigation:
         elif self.filterType == "ChiefDecoupledDualInertial":
             self.fltr = estimator.ChiefDecoupledDualInertialFilter(
                 self.tJ2000, 
+                dcmInr2Los,
                 chiefPosInr, chiefVelInr, chiefCovInr, 
                 deputyPosInr, deputyVelInr, deputyCovInr, 
                 self.fltrChiefProcNoiseRic, self.fltrDeputyProcNoiseRic, 
@@ -178,6 +183,7 @@ class Navigation:
         elif self.filterType == "RelativeDecoupledInertialRelative":
             self.fltr =  estimator.RelativeDecoupledInertialRelativeFilter(
                 self.tJ2000, 
+                dcmInr2Los,
                 chiefPosInr, chiefVelInr, chiefCovInr, 
                 deputyPosInr, deputyVelInr, deputyCovInr, 
                 self.fltrDeputyProcNoiseRic, self.fltrRelProcNoiseRic,
@@ -189,6 +195,14 @@ class Navigation:
         
         # Sync filter states
         self.fltr.sync()
+        
+    def attitudeDetermination(self, dcmInr2Los):
+        
+        # Update Inr2Los DCM
+        self.dcmInr2Los = dcmInr2Los
+        
+        # Update filter attitude estimate
+        self.fltr.attUpdate(self.dcmInr2Los)
         
         
     def propagate(self, dt, aCtrlInEci):
@@ -271,8 +285,6 @@ class Navigation:
         
         # Frames
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
             
         # Compute Environment Parameters
         self.losEarthAng, self.losMoonAng, self.losSunAng = \
@@ -283,6 +295,21 @@ class Navigation:
         self.rng = la.norm(self.relPosRectRic)
         self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
         
+
+class Guidance:
+    
+    def __init__(
+            self,
+            tJ2000):
+        
+        self.tJ2000 = tJ2000
+        
+        self.dcmRic2Los = np.zeros((3,3))
+        self.dcmInr2Los = np.zeros((3,3))   
+    
+    def attitudeGuidance(self, relPosRectRic, dcmInr2Ric):
+        uKin.dcmRic2Los(relPosRectRic, self.dcmRic2Los)
+        self.dcmInr2Los = np.matmul(self.dcmRic2Los, dcmInr2Ric)        
     
 class Control:
     

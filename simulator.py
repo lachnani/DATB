@@ -62,6 +62,13 @@ class Simulator():
         # Initialize FSW
         self.fsw = flightsoftware 
         
+        # Update attitudes
+        self.attControl()
+        
+        # Compute tip and tilt angles
+        if (self.settings["formation"]["measurements"] == True):
+            self.calculateTruthMeas()
+        
         # Burn perturbations
         self.burnPertAngDeg = 0.0 
         self.burnPertMagPerc = 0.0
@@ -150,7 +157,7 @@ class Simulator():
             
             self.cycle += 1
             
-            # Propagate dynamics
+            # Propagate translational dynamics
             if self.settings["dynamics"]["status"] == True:
                 self.frm.propagate(self.settings["dynamics"]["dt"])
                 self.t = self.t + self.settings["dynamics"]["dt"]
@@ -164,17 +171,25 @@ class Simulator():
                         if ps.checkKovBreach(self.frm.relPosRectRic, self.kovLim, self.kovType):
                             self.log.kovBreach = True
                             self.log.tKovBreach = self.t
-                
-            # Compute tip and tilt angles
-            if (self.settings["formation"]["measurements"] == True):
-                self.calculateTruthMeas()
             
             # Propagate FSW
             if self.settings["fsw"]["status"] == True and (self.t % self.settings["fsw"]["dt"] == 0):
-                # Make measurements available
+                # Generate measurement at the current epoch (which has the previous epoch's attitude)
+                # This assumes that the FSW has the correct measurement covariance
+                measAvailable = False
+                if measAvailable:
+                    self.calculateTruthMeas()
+                    sensorMeas = meas.get(self.frm, self.fsw.nav.fltrMeasCov)
+                    # Cycle FSW
+                    # TODO: Currently hardcoding measurement type
+                    self.fsw.cycle(self.frm.dcmInr2Los, measAvailable = True, meas = sensorMeas, measType = "anglesRange")
+                else:
+                    self.fsw.cycle(self.frm.dcmInr2Los)
                 
-                # Cycle FSW
-                self.fsw.cycle()
+            # Compute tip and tilt angles
+            if (self.settings["formation"]["measurements"] == True):
+                self.attControl()
+                self.calculateTruthMeas()
                 
             # Log
             if self.settings["log"]["status"] == True and (self.t % self.settings["log"]["dt"] == 0):
@@ -318,17 +333,17 @@ class Simulator():
             self.frm.chief.dvTot    += np.linalg.norm(dvEciPert)  
             
     def calculateTruthMeas(self):
+        # Calculate azimuth and elevation angles
+        self.frm.az, self.frm.el = meas.calcAzEl(self.frm.chief.r, self.frm.deputy.r, self.frm.dcmInr2Los)
+        
+    def attControl(self):
+        # Update truth LOS frames
         if self.settings["fsw"]["status"] == True:
-            # Get true LOS frame rotation matrices
-            self.frm.dcmInr2Los = self.fsw.nav.dcmInr2Los
-            self.frm.dcmRic2Los = np.matmul(self.frm.dcmInr2Los,np.transpose(self.frm.dcmInr2Ric))
-            # Calculate azimuth and elevation angles
-            self.frm.az, self.frm.el = meas.calcAzEl(self.frm.chief.r, self.frm.deputy.r, self.frm.dcmInr2Los)
+            # Assuming perfect control, use the guidance attitudes
+            self.frm.dcmRic2Los = self.fsw.guid.dcmRic2Los
+            self.frm.dcmInr2Los = self.fsw.guid.dcmInr2Los 
         else:
-            uKin.dcmRic2Los(self.frm.relPosRectRic, self.frm.dcmRic2Los)
-            self.frm.dcmInr2Los = np.matmul(self.frm.dcmRic2Los,self.frm.dcmInr2Ric)
-            self.frm.az = 0.0
-            self.frm.el = 0.0
+            self.frm.idealLosFrames()
             
     
 def pertVec(v, sigmaDir, sigmaMag):

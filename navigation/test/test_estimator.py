@@ -127,21 +127,26 @@ class TestEstimator(unittest.TestCase):
         chief = orb.Orbit(tJ2000, oec, stateType = "STATE_KEPEL", pert = None, settings = None)
         frm = formation.Formation(chief, None, clroe, frmType = "FORMATION_CHIEF_ANCHOR",
                                   relStateType = "RELSTATE_RECT_CLROE", pert = None, settings = None)
+        uKin.dcmRic2Los(frm.relPosRectRic, frm.dcmRic2Los)
+        frm.dcmInr2Los = np.matmul(frm.dcmRic2Los,frm.dcmInr2Ric)
         
         ### Initialize DIF class
         dif = est.DualInertialFilter(
-            tJ2000, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
+            tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
         
         ### Initialize IRF class
         irf = est.InertialRelativeFilter(
-            tJ2000, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
+            tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
         dt = 10
         while dif.tJ2000 < tf:
             frm.propagate(dt)
+            frm.idealLosFrames()
+            dif.attUpdate(frm.dcmInr2Los)
             dif.propagate(dt, np.zeros((3,)))
+            irf.attUpdate(frm.dcmInr2Los)
             irf.propagate(dt, np.zeros((3,)))
             
         ### Verfify DIF performance
@@ -265,16 +270,20 @@ class TestEstimator(unittest.TestCase):
         chief = orb.Orbit(tJ2000, oec, stateType = "STATE_KEPEL", pert = None, settings = None)
         frm = formation.Formation(chief, None, clroe, frmType = "FORMATION_CHIEF_ANCHOR",
                                   relStateType = "RELSTATE_RECT_CLROE", pert = None, settings = None)
+        uKin.dcmRic2Los(frm.relPosRectRic, frm.dcmRic2Los)
+        frm.dcmInr2Los = np.matmul(frm.dcmRic2Los,frm.dcmInr2Ric)
         
         ### Initialize RD-IRF class
         rdirf = est.RelativeDecoupledInertialRelativeFilter(
-            tJ2000, rc, vc, P0, rd, vd, P0, procVar, 0.5*procVar, dvVar, measCov)
+            tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, 0.5*procVar, dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
         dt = 10
         while rdirf.tJ2000 < tf:
             frm.propagate(dt)
+            frm.idealLosFrames()
+            rdirf.attUpdate(frm.dcmInr2Los)
             rdirf.propagate(dt, np.zeros((3,)))
             
         ### Verfify D-IRF performance
@@ -340,16 +349,20 @@ class TestEstimator(unittest.TestCase):
         chief = orb.Orbit(tJ2000, oec, stateType = "STATE_KEPEL", pert = None, settings = None)
         frm = formation.Formation(chief, None, clroe, frmType = "FORMATION_CHIEF_ANCHOR",
                                   relStateType = "RELSTATE_RECT_CLROE", pert = None, settings = None)
+        uKin.dcmRic2Los(frm.relPosRectRic, frm.dcmRic2Los)
+        frm.dcmInr2Los = np.matmul(frm.dcmRic2Los,frm.dcmInr2Ric)
         
         ### Initialize CD-DIF class
         cddif = est.ChiefDecoupledDualInertialFilter(
-            tJ2000, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
+            tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
         dt = 10
         while cddif.tJ2000 < tf:
             frm.propagate(dt)
+            frm.idealLosFrames()
+            cddif.attUpdate(frm.dcmInr2Los)
             cddif.propagate(dt, np.zeros((3,)))
             
         ### Verfify D-IRF performance

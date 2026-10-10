@@ -61,6 +61,7 @@ class RelativeDecoupledInertialRelativeFilter:
     def __init__(
             self,
             tJ2000, 
+            dcmInr2Los,
             rc, vc, Pc, 
             rd, vd, Pd, 
             Qd, Qrel, dvVar, measCov, 
@@ -83,8 +84,7 @@ class RelativeDecoupledInertialRelativeFilter:
         # Initialize DCMs
         self.dcmInr2Ric = np.zeros((3,3))
         self.dcmInr2DepRic = np.zeros((3,3))
-        self.dcmRic2Los = np.zeros((3,3))
-        self.dcmInr2Los = np.zeros((3,3))
+        self.dcmInr2Los = dcmInr2Los
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
         uKin.dcmInr2Ric(self.deputyPosInr, self.deputyVelInr, self.dcmInr2DepRic)
         self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
@@ -103,8 +103,6 @@ class RelativeDecoupledInertialRelativeFilter:
         self.relVelRectRic = np.zeros((3,))
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
@@ -128,7 +126,10 @@ class RelativeDecoupledInertialRelativeFilter:
         self.P = np.block([
                           [Pd,               np.zeros((6, 6))],
                           [np.zeros((6, 6)), Pd + Pc         ]])
-
+        
+    def attUpdate(self, dcmInr2Los):
+        self.dcmInr2Los = dcmInr2Los
+        self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         
     def propagate(self, dt, aCtrlInEci):        
         # Compute process nosie
@@ -220,8 +221,6 @@ class RelativeDecoupledInertialRelativeFilter:
         # Relative RIC states
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         self.rng = la.norm(self.relPosRectRic)
@@ -275,6 +274,7 @@ class ChiefDecoupledDualInertialFilter:
     def __init__(
             self,
             tJ2000, 
+            dcmInr2Los, 
             rc, vc, Pc, 
             rd, vd, Pd, 
             Qc, Qd, dvVar, measCov, 
@@ -297,8 +297,7 @@ class ChiefDecoupledDualInertialFilter:
         # Initialize DCMs
         self.dcmInr2Ric = np.zeros((3,3))
         self.dcmInr2DepRic = np.zeros((3,3))
-        self.dcmRic2Los = np.zeros((3,3))
-        self.dcmInr2Los = np.zeros((3,3))
+        self.dcmInr2Los = dcmInr2Los
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
         uKin.dcmInr2Ric(self.deputyPosInr, self.deputyVelInr, self.dcmInr2DepRic)
         self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
@@ -317,8 +316,6 @@ class ChiefDecoupledDualInertialFilter:
         self.relVelRectRic = np.zeros((3,))
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
@@ -343,7 +340,9 @@ class ChiefDecoupledDualInertialFilter:
                           [Pd,               np.zeros((6, 6))],
                           [np.zeros((6, 6)), Pc              ]])
         
-
+    def attUpdate(self, dcmInr2Los):
+        self.dcmInr2Los = dcmInr2Los
+        self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         
     def propagate(self, dt, aCtrlInEci):        
         # Compute process nosie
@@ -431,8 +430,6 @@ class ChiefDecoupledDualInertialFilter:
         # Relative RIC states
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         self.rng = la.norm(self.relPosRectRic)
@@ -484,7 +481,8 @@ class DualInertialFilter:
     
     def __init__(
             self,
-            tJ2000, 
+            tJ2000,  
+            dcmInr2Los,
             rc, vc, Pc, 
             rd, vd, Pd, 
             Qc, Qd, dvVar, measCov, 
@@ -507,8 +505,7 @@ class DualInertialFilter:
         # Initialize DCMs
         self.dcmInr2Ric = np.zeros((3,3))
         self.dcmInr2DepRic = np.zeros((3,3))
-        self.dcmRic2Los = np.zeros((3,3))
-        self.dcmInr2Los = np.zeros((3,3))
+        self.dcmInr2Los = dcmInr2Los
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
         uKin.dcmInr2Ric(self.deputyPosInr, self.deputyVelInr, self.dcmInr2DepRic)
         self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
@@ -527,8 +524,6 @@ class DualInertialFilter:
         self.relVelRectRic = np.zeros((3,))
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
@@ -553,7 +548,9 @@ class DualInertialFilter:
                           [Pd,               np.zeros((6, 6))],
                           [np.zeros((6, 6)), Pc              ]])
         
-
+    def attUpdate(self, dcmInr2Los):
+        self.dcmInr2Los = dcmInr2Los
+        self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         
     def propagate(self, dt, aCtrlInEci):        
         # Compute process nosie
@@ -641,8 +638,6 @@ class DualInertialFilter:
         # Relative RIC states
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         self.rng = la.norm(self.relPosRectRic)
@@ -694,7 +689,8 @@ class InertialRelativeFilter:
     
     def __init__(
             self,
-            tJ2000, 
+            tJ2000,  
+            dcmInr2Los,
             rc, vc, Pc, 
             rd, vd, Pd, 
             Qc, Qd, dvVar, measCov, 
@@ -717,8 +713,7 @@ class InertialRelativeFilter:
         # Initialize DCMs
         self.dcmInr2Ric = np.zeros((3,3))
         self.dcmInr2DepRic = np.zeros((3,3))
-        self.dcmRic2Los = np.zeros((3,3))
-        self.dcmInr2Los = np.zeros((3,3))
+        self.dcmInr2Los = dcmInr2Los
         uKin.dcmInr2Ric(self.chiefPosInr, self.chiefVelInr, self.dcmInr2Ric)
         uKin.dcmInr2Ric(self.deputyPosInr, self.deputyVelInr, self.dcmInr2DepRic)
         self.omegaRicWrtInrInInr = np.cross(self.chiefPosInr, self.chiefVelInr) / np.dot(self.chiefPosInr,self.chiefPosInr)
@@ -737,8 +732,6 @@ class InertialRelativeFilter:
         self.relVelRectRic = np.zeros((3,))
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
@@ -763,6 +756,9 @@ class InertialRelativeFilter:
                           [Pd, Pd     ],
                           [Pd, Pd + Pc]])
 
+    def attUpdate(self, dcmInr2Los):
+        self.dcmInr2Los = dcmInr2Los
+        self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         
     def propagate(self, dt, aCtrlInEci):        
         # Compute process nosie
@@ -855,8 +851,6 @@ class InertialRelativeFilter:
         # Relative RIC states
         uKin.rv2ric(self.chiefPosInr, self.chiefVelInr, self.deputyPosInr, self.deputyVelInr, self.relPosRectRic, self.relVelRectRic)
         self.relCovRectRic = rotateCov(self.relCovInr, self.dcmInr2Ric, self.omegaRicWrtInrInInr)
-        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
-        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         # Compute measurement parameters
         self.az, self.el = measurements.calcAzEl(self.chiefPosInr, self.deputyPosInr, self.dcmInr2Los)
         self.rng = la.norm(self.relPosRectRic)

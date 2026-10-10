@@ -12,7 +12,7 @@ from tkinter import filedialog
 import ntpath
 import numpy as np
 
-from dynamics import formation as frm
+from dynamics import formation
 from dynamics import orbit as orb
 from planning import wptTbl as wt
 from navigation import estimator
@@ -117,7 +117,7 @@ def parseFormation(yaml):
             (yaml["relStateType"] == "RELSTATE_CURVRIC")):
             relState = unpackRelPosVel(yaml["relState"]["state"])
             
-    return frm.Formation(
+    return formation.Formation(
         chief, 
         deputy, 
         relState,
@@ -157,7 +157,7 @@ def parseWptTbl(yaml, formation = None):
             if yaml["relStateNatural"] and ii == 0:
                 # Replace the formation deputy position with the natural path.
                 # Assume curvilinear for long-range accuracy
-                formation = frm.Formation(
+                formation = formation.Formation(
                     formation.chief, 
                     formation.deputy, 
                     unpackClroe(generator["L"]),
@@ -205,7 +205,6 @@ def parseFlightSoftware(frm, fsw, yaml):
     # Navigation
     nav = yaml['navigation']
     if nav['status'] == True:
-        # Configure the filter 
         # TODO: Current assumes perfect perturbation knowledge; also weird behavior when initializing perts...
         fsw.nav.configureFilter(
             np.diag([nav['deputyProcNoise']['R'],nav['deputyProcNoise']['I'],nav['deputyProcNoise']['C']]), 
@@ -217,8 +216,10 @@ def parseFlightSoftware(frm, fsw, yaml):
             frm.chief.pert)
         # Initialize the filter
         # TODO: Currently assumes truth states
+        dcmRic2Los, dcmInr2Los = formation.losFrames(frm.relPosRectRic, frm.dcmInr2Ric)
         fsw.nav.initFilter(
             nav['filterType'],
+            dcmInr2Los,
             frm.deputy.r, 
             frm.deputy.v, 
             estimator.initCovFromRic(
@@ -233,6 +234,8 @@ def parseFlightSoftware(frm, fsw, yaml):
                           nav['chiefCov']['Rv'],nav['chiefCov']['Iv'],nav['chiefCov']['Cv']]), 
                 frm.chief.r, 
                 frm.chief.v))
+        # Sync states
+        fsw.nav.sync()
         
         # Guidance
         

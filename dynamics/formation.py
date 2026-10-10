@@ -244,6 +244,11 @@ class Formation():
         if (self.settings["measurements"] == True):
             self.rng = np.linalg.norm(self.relPosRectRic)
             self.rngRate = np.dot(self.relPosRectRic, self.relVelRectRic) / self.rng
+            
+    def idealLosFrames(self):
+        # Update LOS Frames assuming ideal
+        uKin.dcmRic2Los(self.relPosRectRic, self.dcmRic2Los)
+        self.dcmInr2Los = np.matmul(self.dcmRic2Los,self.dcmInr2Ric)
         
 
 def ric2rv(r, v, relPosRectRic, relVelRectRic):
@@ -262,3 +267,9 @@ def ric2rv(r, v, relPosRectRic, relVelRectRic):
     v_d = np.zeros((3,))
     uKin.ric2rv(r, v, relPosRectRic, relVelRectRic, r_d, v_d)
     return r_d, v_d
+
+def losFrames(relPosRectRic, dcmInr2Ric):
+    dcmRic2Los = np.zeros((3,3))
+    uKin.dcmRic2Los(relPosRectRic, dcmRic2Los)
+    dcmInr2Los = np.matmul(dcmRic2Los, dcmInr2Ric)
+    return dcmRic2Los, dcmInr2Los
