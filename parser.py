@@ -186,7 +186,7 @@ def parseFlightSoftwareInit(epoch, yaml):
         epoch, yaml['dt'], 
         yaml['bufferDepth'])
 
-def parseFlightSoftware(frm, fsw, yaml):
+def parseFlightSoftware(frm, fsw, yaml, initErr = False):
     """
     Parse FSW yaml file
 
@@ -214,31 +214,42 @@ def parseFlightSoftware(frm, fsw, yaml):
             np.diag([nav['measCov']['az'],nav['measCov']['el'],nav['measCov']['rng'],nav['measCov']['rngRate']]),
             frm.deputy.pert,
             frm.chief.pert)
-        # Initialize the filter
-        # TODO: Currently assumes truth states
+        # Initial Covariance
+        deputyCovInit = estimator.initCovFromRic(
+            np.array([nav['deputyCov']['R'], nav['deputyCov']['I'], nav['deputyCov']['C'],
+                      nav['deputyCov']['Rv'],nav['deputyCov']['Iv'],nav['deputyCov']['Cv']]), 
+            frm.deputy.r, 
+            frm.deputy.v)
+        chiefCovInit = estimator.initCovFromRic(
+            np.array([nav['chiefCov']['R'], nav['chiefCov']['I'], nav['chiefCov']['C'],
+                      nav['chiefCov']['Rv'],nav['chiefCov']['Iv'],nav['chiefCov']['Cv']]), 
+            frm.chief.r, 
+            frm.chief.v)
+        # Initial State Error
+        if initErr:
+            deputyStateErr = np.random.multivariate_normal(np.zeros(6,),deputyCovInit)
+            chiefStateErr = np.random.multivariate_normal(np.zeros(6,),chiefCovInit)
+        else:
+            deputyStateErr = np.zeros(6,)
+            chiefStateErr = np.zeros(6,)
+        # Line of sight frame
         dcmRic2Los, dcmInr2Los = formation.losFrames(frm.relPosRectRic, frm.dcmInr2Ric)
+        # Initialize Filter
         fsw.nav.initFilter(
             nav['filterType'],
             dcmInr2Los,
-            frm.deputy.r, 
-            frm.deputy.v, 
-            estimator.initCovFromRic(
-                np.array([nav['deputyCov']['R'], nav['deputyCov']['I'], nav['deputyCov']['C'],
-                          nav['deputyCov']['Rv'],nav['deputyCov']['Iv'],nav['deputyCov']['Cv']]), 
-                frm.deputy.r, 
-                frm.deputy.v), 
-            frm.chief.r, 
-            frm.chief.v, 
-            estimator.initCovFromRic(
-                np.array([nav['chiefCov']['R'], nav['chiefCov']['I'], nav['chiefCov']['C'],
-                          nav['chiefCov']['Rv'],nav['chiefCov']['Iv'],nav['chiefCov']['Cv']]), 
-                frm.chief.r, 
-                frm.chief.v))
+            frm.deputy.r + deputyStateErr[0:3], 
+            frm.deputy.v + deputyStateErr[3:6], 
+            deputyCovInit, 
+            frm.chief.r + chiefStateErr[0:3], 
+            frm.chief.v + chiefStateErr[3:6], 
+            chiefCovInit)
         # Sync states
         fsw.nav.sync()
         
-        # Guidance
-        
-        # Control
-        
-        return fsw
+    # Guidance
+    fsw.guid.attitudeGuidance(fsw.nav.relPosRectRic, fsw.nav.dcmInr2Ric)
+    
+    # Control
+    
+    return fsw

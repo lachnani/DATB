@@ -5,8 +5,11 @@ Created on Thu Sep 17 19:52:45 2026
 @author: Hakim Lachnani
 """
 
+import sys
 import numpy as np
 from numpy import linalg as la
+
+COND_LIM = 1.0 / sys.float_info.epsilon
 
 class ExtendedKalmanFilter:
     """ Base EKF class
@@ -228,12 +231,18 @@ def measurementUpdate(x, P, n, y, H, R):
         measurement normalized innovarions squared
 
     """
+    # Residual Covariance
     S = residualCov(P, H, R)
-    K = kalmanGain(P, H, S)
-    xUpd = x + np.matmul(K, y)
-    PUpd = np.matmul(np.eye(n) - np.matmul(K,H),P)
-    PUpd = symmetrize(PUpd)
-    return xUpd, PUpd, normInvnSqr(y, S)
+    # Condition check to ensure invertibility
+    if la.cond(S) < COND_LIM:
+        K = kalmanGain(P, H, S)
+        xUpd = x + np.matmul(K, y)
+        PUpd = np.matmul(np.eye(n) - np.matmul(K,H),P)
+        PUpd = symmetrize(PUpd)
+        return xUpd, PUpd, normInvnSqr(y, S)
+    else:
+        return x, P, 0.0
+    
         
 def residualCov(P, H, R):
     return np.matmul(H,np.matmul(P,np.transpose(H))) + R

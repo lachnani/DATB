@@ -174,9 +174,14 @@ class Simulator():
             
             # Propagate FSW
             if self.settings["fsw"]["status"] == True and (self.t % self.settings["fsw"]["dt"] == 0):
+                # Check whether measurement is available
+                if (self.t > self.settings["fsw"]["firstMeasT"]) and \
+                   (self.t % self.settings["fsw"]["measDt"] == 0):
+                    measAvailable = True
+                else:
+                    measAvailable = False
                 # Generate measurement at the current epoch (which has the previous epoch's attitude)
                 # This assumes that the FSW has the correct measurement covariance
-                measAvailable = False
                 if measAvailable:
                     self.calculateTruthMeas()
                     sensorMeas = meas.get(self.frm, self.fsw.nav.fltrMeasCov)

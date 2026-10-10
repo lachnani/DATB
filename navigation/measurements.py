@@ -52,7 +52,7 @@ def inertialMeasurementSensitivity(fltr):
     ### Azimuth and Elevation
     # Partials of the LOS unit vector wrt az and el in LOS frame ([1] Eq 6.86)
     P_az_los = np.array([-np.cos(fltr.el)*np.sin(fltr.az),np.cos(fltr.el)*np.cos(fltr.az),0.0])
-    P_el_los = np.array([-np.sin(fltr.el)*np.cos(fltr.az),-np.sin(fltr.el)*np.sin(fltr.az),0.0])
+    P_el_los = np.array([-np.sin(fltr.el)*np.cos(fltr.az),-np.sin(fltr.el)*np.sin(fltr.az),np.cos(fltr.el)])
     # Partials of the LOS unit vector wrt az and el in Inr frame 
     P_az_inr = np.matmul(np.transpose(fltr.dcmInr2Los),P_az_los)
     P_el_inr = np.matmul(np.transpose(fltr.dcmInr2Los),P_el_los)
