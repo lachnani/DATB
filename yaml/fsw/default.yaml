@@ -21,7 +21,7 @@ navigation:
   measCov:
     az: 1.0e-6
     el: 1.0e-6
-    rng: 1.0e-8
+    rng: 1.0e-4
     rngRate: 1.0e-4
   deputyCov:
     R: 0.0009
