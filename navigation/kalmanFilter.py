@@ -237,7 +237,8 @@ def measurementUpdate(x, P, n, y, H, R):
     if la.cond(S) < COND_LIM:
         K = kalmanGain(P, H, S)
         xUpd = x + np.matmul(K, y)
-        PUpd = np.matmul(np.eye(n) - np.matmul(K,H),P)
+        I_KH = np.eye(n) - np.matmul(K,H)
+        PUpd = np.matmul(I_KH , np.matmul(P, np.transpose(I_KH))) + np.matmul(K , np.matmul(R, np.transpose(K)))
         PUpd = symmetrize(PUpd)
         return xUpd, PUpd, normInvnSqr(y, S)
     else:
@@ -258,3 +259,6 @@ def normEstErrSqr(dx, P):
 
 def normInvnSqr(nu, S):
     return np.matmul(np.transpose(nu),np.matmul(la.inv(S),nu))
+
+def checkPositiveDefinite(P):
+    return np.all(la.eig(P) > 0)

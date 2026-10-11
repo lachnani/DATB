@@ -193,7 +193,7 @@ class RelativeDecoupledInertialRelativeFilter:
                                                         self.numStates, 
                                                         self.measResidual[self.measIndx], 
                                                         self.measSensititivityMat[self.measIndx,:],
-                                                        self.measCov[self.measIndx,self.measIndx])
+                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)])
         
         # Sync filter to update all intermediate states
         self.sync()
@@ -404,7 +404,7 @@ class ChiefDecoupledDualInertialFilter:
                                                         self.numStates, 
                                                         self.measResidual[self.measIndx], 
                                                         self.measSensititivityMat[self.measIndx,:],
-                                                        self.measCov[self.measIndx,self.measIndx])
+                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)])
         
         # Sync filter to update all intermediate states
         self.sync()
@@ -823,7 +823,7 @@ class InertialRelativeFilter:
                                                         self.numStates, 
                                                         self.measResidual[self.measIndx], 
                                                         self.measSensititivityMat[self.measIndx,:],
-                                                        self.measCov[self.measIndx,self.measIndx])
+                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)])
         
         # Sync filter to update all intermediate states
         self.sync()

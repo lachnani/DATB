@@ -24,16 +24,16 @@ navigation:
     rng: 1.0e-8
     rngRate: 1.0e-4
   deputyCov:
-    R: 0.9
-    I: 0.9
-    C: 0.9
+    R: 0.0009
+    I: 0.0009
+    C: 0.0009
     Rv: 1.3e-9
     Iv: 1.3e-9
     Cv: 1.3e-9
   chiefCov:
-    R: 0.9
-    I: 0.9
-    C: 0.9
+    R: 0.0009
+    I: 0.0009
+    C: 0.0009
     Rv: 1.3e-9
     Iv: 1.3e-9
     Cv: 1.3e-9

@@ -19,8 +19,8 @@ fsw:
   status: True
   dt: 2.0
   bufferDepth: 100
-  measDt: 6000.0
-  firstMeasT: 43200.0
+  measDt: 600.0
+  firstMeasT: 21600.0
   initErr: True
 formation:
   relStates: True

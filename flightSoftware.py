@@ -239,8 +239,11 @@ class Navigation:
         
     def checkCorruption(self):
         
-        # TODO: Add a check
         self.fltrCorrupted = False
+        
+        # Check positive definiteness
+        if not kalmanFilter.checkPositiveDefinite(self.fltr.P):
+            self.fltrCorrupted = True
         
     def checkConsistency(self):
         
