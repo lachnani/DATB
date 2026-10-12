@@ -199,12 +199,15 @@ def propagateCov(P, Phi, Q):
         propagated state covariance
 
     """
-    return symmetrize(np.matmul(Phi,np.matmul(P,np.transpose(Phi))) + Q)
+    return symmetrize((abaT(Phi, P)) + Q)
 
-def measurementUpdate(x, P, n, y, H, R):
+def measurementUpdate(x, P, n, y, H, R, beta = 0):
     """
-    Update state and covariance with measurements z. Follows Figure 
-    10.3.3-1 of [1].
+    Update state and covariance with residuals y. Follows Figure 
+    10.3.3-1 of [1]. Uses the stable Joseph form update.
+    
+    Uderweighting performed using Lear's method. See Carpenter and D'Souza, 
+    "Navigation Filter Best Practices"
 
     Parameters
     ----------
@@ -220,6 +223,8 @@ def measurementUpdate(x, P, n, y, H, R):
         measurement sensitivity matrix
     R : mxm double
         measurement covariance
+    beta : double
+        underweighting factor
 
     Returns
     -------
@@ -235,18 +240,28 @@ def measurementUpdate(x, P, n, y, H, R):
     S = residualCov(P, H, R)
     # Condition check to ensure invertibility
     if la.cond(S) < COND_LIM:
+        # NIS
+        nis = normInvnSqr(y, S)
+        # Underweighting factor
+        if beta > 0:
+            S = S + beta*abaT(H, P)
+        # Kalman gain
         K = kalmanGain(P, H, S)
+        # State Update
         xUpd = x + np.matmul(K, y)
+        # Covariance Update
         I_KH = np.eye(n) - np.matmul(K,H)
-        PUpd = np.matmul(I_KH , np.matmul(P, np.transpose(I_KH))) + np.matmul(K , np.matmul(R, np.transpose(K)))
+        PUpd = abaT(I_KH, P) + abaT(K, R)
         PUpd = symmetrize(PUpd)
-        return xUpd, PUpd, normInvnSqr(y, S)
+        return xUpd, PUpd, nis
     else:
         return x, P, 0.0
     
+def abaT(a, b):
+    return np.matmul(a,np.matmul(b,np.transpose(a)))   
         
 def residualCov(P, H, R):
-    return np.matmul(H,np.matmul(P,np.transpose(H))) + R
+    return abaT(H, P) + R
         
 def kalmanGain(P, H, S):
     return np.matmul(P,np.matmul(np.transpose(H),la.inv(S)))

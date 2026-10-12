@@ -65,7 +65,8 @@ class RelativeDecoupledInertialRelativeFilter:
             rc, vc, Pc, 
             rd, vd, Pd, 
             Qd, Qrel, dvVar, measCov, 
-            pertc = None, pertd = None
+            pertc = None, pertd = None,
+            alpha = 0, beta = 0
             ):
         
         # Filter constants
@@ -120,6 +121,10 @@ class RelativeDecoupledInertialRelativeFilter:
         # Save perturbation libraries
         self.chiefPerturbations = pertc
         self.deputyPerturbations = pertd
+        
+        # Save underweighting settings
+        self.underweightAlpha = alpha
+        self.underweightBeta = beta
         
         # Initialize the filter states
         self.x = np.concatenate([self.deputyPosInr, self.deputyVelInr, self.relPosInr, self.relVelInr])
@@ -187,13 +192,20 @@ class RelativeDecoupledInertialRelativeFilter:
         # Index based on measurement type
         self.measIndx = measurements.measType[self.measType]
         
+        # Determine underweighting factor
+        beta = 0.0
+        if self.underweightAlpha > 0.0:
+            if kf.abaT(self.measSensititivityMat[self.measIndx,:],self.P) > self.underweightAlpha:
+                beta = self.underweightBeta
+        
         # Perform state update
         self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
                                                         self.P, 
                                                         self.numStates, 
                                                         self.measResidual[self.measIndx], 
                                                         self.measSensititivityMat[self.measIndx,:],
-                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)])
+                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)],
+                                                        beta)
         
         # Sync filter to update all intermediate states
         self.sync()
@@ -278,7 +290,8 @@ class ChiefDecoupledDualInertialFilter:
             rc, vc, Pc, 
             rd, vd, Pd, 
             Qc, Qd, dvVar, measCov, 
-            pertc = None, pertd = None
+            pertc = None, pertd = None,
+            alpha = 0, beta = 0
             ):
         
         # Filter constants
@@ -333,6 +346,10 @@ class ChiefDecoupledDualInertialFilter:
         # Save perturbation libraries
         self.chiefPerturbations = pertc
         self.deputyPerturbations = pertd
+        
+        # Save underweighting settings
+        self.underweightAlpha = alpha
+        self.underweightBeta = beta
         
         # Initialize the filter states
         self.x = np.concatenate([self.deputyPosInr, self.deputyVelInr, self.chiefPosInr, self.chiefVelInr])
@@ -398,13 +415,20 @@ class ChiefDecoupledDualInertialFilter:
         # Index based on measurement type
         self.measIndx = measurements.measType[self.measType]
         
+        # Determine underweighting factor
+        beta = 0.0
+        if self.underweightAlpha > 0.0:
+            if kf.abaT(self.measSensititivityMat[self.measIndx,:],self.P) > self.underweightAlpha:
+                beta = self.underweightBeta
+        
         # Perform state update
         self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
                                                         self.P, 
                                                         self.numStates, 
                                                         self.measResidual[self.measIndx], 
                                                         self.measSensititivityMat[self.measIndx,:],
-                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)])
+                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)],
+                                                        beta)
         
         # Sync filter to update all intermediate states
         self.sync()
@@ -486,7 +510,8 @@ class DualInertialFilter:
             rc, vc, Pc, 
             rd, vd, Pd, 
             Qc, Qd, dvVar, measCov, 
-            pertc = None, pertd = None
+            pertc = None, pertd = None,
+            alpha = 0, beta = 0
             ):
         
         # Filter constants
@@ -541,6 +566,10 @@ class DualInertialFilter:
         # Save perturbation libraries
         self.chiefPerturbations = pertc
         self.deputyPerturbations = pertd
+        
+        # Save underweighting settings
+        self.underweightAlpha = alpha
+        self.underweightBeta = beta
         
         # Initialize the filter states
         self.x = np.concatenate([self.deputyPosInr, self.deputyVelInr, self.chiefPosInr, self.chiefVelInr])
@@ -606,13 +635,20 @@ class DualInertialFilter:
         # Index based on measurement type
         self.measIndx = measurements.measType[self.measType]
         
+        # Determine underweighting factor
+        beta = 0.0
+        if self.underweightAlpha > 0.0:
+            if kf.abaT(self.measSensititivityMat[self.measIndx,:],self.P) > self.underweightAlpha:
+                beta = self.underweightBeta
+        
         # Perform state update
         self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
                                                         self.P, 
                                                         self.numStates, 
                                                         self.measResidual[self.measIndx], 
                                                         self.measSensititivityMat[self.measIndx,:],
-                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)])
+                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)],
+                                                        beta)
         
         # Sync filter to update all intermediate states
         self.sync()
@@ -694,7 +730,8 @@ class InertialRelativeFilter:
             rc, vc, Pc, 
             rd, vd, Pd, 
             Qc, Qd, dvVar, measCov, 
-            pertc = None, pertd = None
+            pertc = None, pertd = None,
+            alpha = 0, beta = 0
             ):
         
         # Filter constants
@@ -749,6 +786,10 @@ class InertialRelativeFilter:
         # Save perturbation libraries
         self.chiefPerturbations = pertc
         self.deputyPerturbations = pertd
+        
+        # Save underweighting settings
+        self.underweightAlpha = alpha
+        self.underweightBeta = beta
         
         # Initialize the filter states
         self.x = np.concatenate([self.deputyPosInr, self.deputyVelInr, self.relPosInr, self.relVelInr])
@@ -817,13 +858,20 @@ class InertialRelativeFilter:
         # Index based on measurement type
         self.measIndx = measurements.measType[self.measType]
         
+        # Determine underweighting factor
+        beta = 0.0
+        if self.underweightAlpha > 0.0:
+            if kf.abaT(self.measSensititivityMat[self.measIndx,:],self.P) > self.underweightAlpha:
+                beta = self.underweightBeta
+        
         # Perform state update
         self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
                                                         self.P, 
                                                         self.numStates, 
                                                         self.measResidual[self.measIndx], 
                                                         self.measSensititivityMat[self.measIndx,:],
-                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)])
+                                                        self.measCov[np.ix_(self.measIndx,self.measIndx)],
+                                                        beta)
         
         # Sync filter to update all intermediate states
         self.sync()
