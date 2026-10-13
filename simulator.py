@@ -280,6 +280,7 @@ class Simulator():
             self.log.fswNavFltrDiverged[self.log.i]   = self.fsw.nav.fltrDiverged
             self.log.fswNavFltrCorrupted[self.log.i]  = self.fsw.nav.fltrCorrupted
             self.log.fswNavFltrConsistent[self.log.i] = self.fsw.nav.fltrConsistent
+            self.log.fswNavFltrUnderweight[self.log.i]= self.fsw.nav.fltrUnderweight
             # Filter Covariances
             self.log.fswNavCovVehEciDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.deputyCovInr)
             self.log.fswNavCovRsoEciDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.chiefCovInr)

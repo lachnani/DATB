@@ -108,6 +108,7 @@ class Log():
             self.fswNavFltrDiverged   = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
             self.fswNavFltrCorrupted  = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
             self.fswNavFltrConsistent = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
+            self.fswNavFltrUnderweight= pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
             # Filter Covariances
             self.fswNavCovVehEciDiag  = pd.DataFrame(np.zeros((size,6)), columns=['X', 'Y', 'Z', 'Xv', 'Yv', 'Zv']).T
             self.fswNavCovRsoEciDiag  = pd.DataFrame(np.zeros((size,6)), columns=['X', 'Y', 'Z', 'Xv', 'Yv', 'Zv']).T

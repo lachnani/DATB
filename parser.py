@@ -213,7 +213,9 @@ def parseFlightSoftware(frm, fsw, yaml, initErr = False):
             np.array([nav['dvVar']['sf'],nav['dvVar']['q'],nav['dvVar']['p']]), 
             np.diag([nav['measCov']['az'],nav['measCov']['el'],nav['measCov']['rng'],nav['measCov']['rngRate']]),
             frm.deputy.pert,
-            frm.chief.pert)
+            frm.chief.pert,
+            nav['underweight']['alpha'],
+            nav['underweight']['beta'])
         # Initial Covariance
         deputyCovInit = estimator.initCovFromRic(
             np.array([nav['deputyCov']['R'], nav['deputyCov']['I'], nav['deputyCov']['C'],

@@ -582,34 +582,40 @@ def FilterStatus_Plot(log, path, tag):
     fig_fltrStatus_plt = plt.figure()
     plt.suptitle('Filter Statuses')
     
-    ax1 = plt.subplot(5,1,1)
+    ax1 = plt.subplot(3,2,1)
     ax1.plot(log.time.loc['simTime',:], log.fswNavFltrInit.loc['Status',:])[0]
     ax1.set_xlabel("Time [s]")
     ax1.set_ylabel("Initialized")
     plt.grid()
     
-    ax2 = plt.subplot(5,1,2)
+    ax2 = plt.subplot(3,2,2)
     ax2.plot(log.time.loc['simTime',:], log.fswNavFltrConverged.loc['Status',:])[0]
     ax2.set_xlabel("Time [s]")
     ax2.set_ylabel("Converged")
     plt.grid()
     
-    ax3 = plt.subplot(5,1,3)
+    ax3 = plt.subplot(3,2,3)
     ax3.plot(log.time.loc['simTime',:], log.fswNavFltrDiverged.loc['Status',:])[0]
     ax3.set_xlabel("Time [s]")
     ax3.set_ylabel("Diverged")
     plt.grid()
     
-    ax4 = plt.subplot(5,1,4)
+    ax4 = plt.subplot(3,2,4)
     ax4.plot(log.time.loc['simTime',:], log.fswNavFltrCorrupted.loc['Status',:])[0]
     ax4.set_xlabel("Time [s]")
     ax4.set_ylabel("Corrupted")
     plt.grid()
     
-    ax5 = plt.subplot(5,1,5)
+    ax5 = plt.subplot(3,2,5)
     ax5.plot(log.time.loc['simTime',:], log.fswNavFltrConsistent.loc['Status',:])[0]
     ax5.set_xlabel("Time [s]")
-    ax5.set_ylabel("Consisten")
+    ax5.set_ylabel("Consistent")
+    plt.grid()
+    
+    ax6 = plt.subplot(3,2,6)
+    ax6.plot(log.time.loc['simTime',:], log.fswNavFltrUnderweight.loc['Status',:])[0]
+    ax6.set_xlabel("Time [s]")
+    ax6.set_ylabel("Underweighting")
     plt.grid()
        
     fig_fltrStatus_plt.tight_layout()

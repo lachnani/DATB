@@ -37,6 +37,9 @@ navigation:
     Rv: 1.3e-9
     Iv: 1.3e-9
     Cv: 1.3e-9
+  underweight:
+    alpha: 1.0
+    beta: 0.2
   filterType: "DualInertial"
 guidance:
   status: False

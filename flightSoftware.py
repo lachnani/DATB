@@ -75,6 +75,7 @@ class Navigation:
         self.fltrDiverged = False
         self.fltrCorrupted = False
         self.fltrConsistent = True
+        self.fltrUnderweight = False
         
         # Initialize deputy states
         self.deputyPosInr = np.zeros((3,))
@@ -124,7 +125,8 @@ class Navigation:
         
     def configureFilter(self, 
                         deputyProcNoiseRic, chiefProcNoiseRic, relProcNoiseRic,
-                        dvVar, measCov, deputyPert = None, chiefPert = None):
+                        dvVar, measCov, deputyPert = None, chiefPert = None,
+                        alpha = 0, beta = 0):
         
         self.fltrDeputyProcNoiseRic = deputyProcNoiseRic
         self.fltrChiefProcNoiseRic = chiefProcNoiseRic
@@ -133,6 +135,8 @@ class Navigation:
         self.fltrMeasCov = measCov
         self.fltrDeputyPert = deputyPert
         self.fltrChiefPert = chiefPert
+        self.fltrAlpha = alpha
+        self.fltrBeta = beta
         
         # Account for missing drag terms
         if not self.fltrDeputyPert["drag"]:
@@ -161,7 +165,8 @@ class Navigation:
                 deputyPosInr, deputyVelInr, deputyCovInr, 
                 self.fltrChiefProcNoiseRic, self.fltrDeputyProcNoiseRic, 
                 self.fltrDvVar, self.fltrMeasCov,
-                self.fltrChiefPert, self.fltrDeputyPert)
+                self.fltrChiefPert, self.fltrDeputyPert,
+                self.fltrAlpha, self.fltrBeta)
         elif self.filterType == "InertialRelative":
             self.fltr =  estimator.InertialRelativeFilter(
                 self.tJ2000, 
@@ -170,7 +175,8 @@ class Navigation:
                 deputyPosInr, deputyVelInr, deputyCovInr, 
                 self.fltrDeputyProcNoiseRic, self.fltrRelProcNoiseRic,
                 self.fltrDvVar, self.fltrMeasCov,
-                self.fltrChiefPert, self.fltrDeputyPert)
+                self.fltrChiefPert, self.fltrDeputyPert,
+                self.fltrAlpha, self.fltrBeta)
         elif self.filterType == "ChiefDecoupledDualInertial":
             self.fltr = estimator.ChiefDecoupledDualInertialFilter(
                 self.tJ2000, 
@@ -179,7 +185,8 @@ class Navigation:
                 deputyPosInr, deputyVelInr, deputyCovInr, 
                 self.fltrChiefProcNoiseRic, self.fltrDeputyProcNoiseRic, 
                 self.fltrDvVar, self.fltrMeasCov,
-                self.fltrChiefPert, self.fltrDeputyPert)
+                self.fltrChiefPert, self.fltrDeputyPert,
+                self.fltrAlpha, self.fltrBeta)
         elif self.filterType == "RelativeDecoupledInertialRelative":
             self.fltr =  estimator.RelativeDecoupledInertialRelativeFilter(
                 self.tJ2000, 
@@ -188,7 +195,8 @@ class Navigation:
                 deputyPosInr, deputyVelInr, deputyCovInr, 
                 self.fltrDeputyProcNoiseRic, self.fltrRelProcNoiseRic,
                 self.fltrDvVar, self.fltrMeasCov,
-                self.fltrChiefPert, self.fltrDeputyPert)
+                self.fltrChiefPert, self.fltrDeputyPert,
+                self.fltrAlpha, self.fltrBeta)
         
         # Mark the filter as initialized
         self.fltrInit = True
@@ -251,6 +259,9 @@ class Navigation:
         self.fltrConsistent = True
         
     def sync(self):
+        
+        # Statuses
+        self.fltrUnderweight = self.fltr.underweighting
         
         # Deputy and Chief inertial states
         self.deputyPosInr = self.fltr.deputyPosInr

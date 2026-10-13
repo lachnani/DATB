@@ -123,6 +123,7 @@ class RelativeDecoupledInertialRelativeFilter:
         self.deputyPerturbations = pertd
         
         # Save underweighting settings
+        self.underweighting = False
         self.underweightAlpha = alpha
         self.underweightBeta = beta
         
@@ -194,9 +195,13 @@ class RelativeDecoupledInertialRelativeFilter:
         
         # Determine underweighting factor
         beta = 0.0
+        self.underweighting = False
         if self.underweightAlpha > 0.0:
-            if kf.abaT(self.measSensititivityMat[self.measIndx,:],self.P) > self.underweightAlpha:
-                beta = self.underweightBeta
+            tracePBar = np.trace(self.relCovRectRic[0:3,0:3])
+            if tracePBar > 0:
+                if np.sqrt(tracePBar) > self.underweightAlpha:
+                    beta = self.underweightBeta
+                    self.underweighting = True
         
         # Perform state update
         self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
@@ -348,6 +353,7 @@ class ChiefDecoupledDualInertialFilter:
         self.deputyPerturbations = pertd
         
         # Save underweighting settings
+        self.underweighting = False
         self.underweightAlpha = alpha
         self.underweightBeta = beta
         
@@ -417,9 +423,13 @@ class ChiefDecoupledDualInertialFilter:
         
         # Determine underweighting factor
         beta = 0.0
+        self.underweighting = False
         if self.underweightAlpha > 0.0:
-            if kf.abaT(self.measSensititivityMat[self.measIndx,:],self.P) > self.underweightAlpha:
-                beta = self.underweightBeta
+            tracePBar = np.trace(self.relCovRectRic[0:3,0:3])
+            if tracePBar > 0:
+                if np.sqrt(tracePBar) > self.underweightAlpha:
+                    beta = self.underweightBeta
+                    self.underweighting = True
         
         # Perform state update
         self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
@@ -568,6 +578,7 @@ class DualInertialFilter:
         self.deputyPerturbations = pertd
         
         # Save underweighting settings
+        self.underweighting = False
         self.underweightAlpha = alpha
         self.underweightBeta = beta
         
@@ -637,9 +648,13 @@ class DualInertialFilter:
         
         # Determine underweighting factor
         beta = 0.0
+        self.underweighting = False
         if self.underweightAlpha > 0.0:
-            if kf.abaT(self.measSensititivityMat[self.measIndx,:],self.P) > self.underweightAlpha:
-                beta = self.underweightBeta
+            tracePBar = np.trace(self.relCovRectRic[0:3,0:3])
+            if tracePBar > 0:
+                if np.sqrt(tracePBar) > self.underweightAlpha:
+                    beta = self.underweightBeta
+                    self.underweighting = True
         
         # Perform state update
         self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
@@ -788,6 +803,7 @@ class InertialRelativeFilter:
         self.deputyPerturbations = pertd
         
         # Save underweighting settings
+        self.underweighting = False
         self.underweightAlpha = alpha
         self.underweightBeta = beta
         
@@ -860,9 +876,13 @@ class InertialRelativeFilter:
         
         # Determine underweighting factor
         beta = 0.0
+        self.underweighting = False
         if self.underweightAlpha > 0.0:
-            if kf.abaT(self.measSensititivityMat[self.measIndx,:],self.P) > self.underweightAlpha:
-                beta = self.underweightBeta
+            tracePBar = np.trace(self.relCovRectRic[0:3,0:3])
+            if tracePBar > 0:
+                if np.sqrt(tracePBar) > self.underweightAlpha:
+                    beta = self.underweightBeta
+                    self.underweighting = True
         
         # Perform state update
         self.x, self.P, self.nis = kf.measurementUpdate(self.x, 
