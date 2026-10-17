@@ -168,13 +168,13 @@ class DualInertialFilter:
         # Update timestep
         self.tJ2000 = self.tJ2000 + dt
         
+        # Propagate States
+        self.x[0:6] = stateUpdateInertial(dt, self.x[0:6], aCtrlInEci, self.deputyPerturbations, self.moon.r, self.sun.r)
+        self.x[6:12] = stateUpdateInertial(dt, self.x[6:12], np.zeros((3,)), self.chiefPerturbations, self.moon.r, self.sun.r)
+        
         # Update ephemerides
         self.sun.update(self.tJ2000)
         self.moon.update(self.tJ2000)
-        
-        # Propagate States
-        self.x[0:6] = stateUpdateInertial(dt, self.x[0:6], aCtrlInEci, self.deputyPerturbations)
-        self.x[6:12] = stateUpdateInertial(dt, self.x[6:12], np.zeros((3,)), self.chiefPerturbations)
         
         # Propagate Covariance
         self.P = kf.propagateCov(self.P, stm, stateProcNoiseInr)
@@ -425,14 +425,14 @@ class InertialRelativeFilter:
         # Update timestep
         self.tJ2000 = self.tJ2000 + dt
         
+        # Propagate States
+        self.x[0:6] = stateUpdateInertial(dt, self.x[0:6], aCtrlInEci, self.deputyPerturbations, self.moon.r, self.sun.r)
+        self.x[6:12] = self.x[0:6] - stateUpdateInertial(
+            dt, np.concatenate((self.chiefPosInr, self.chiefVelInr)), np.zeros((3,)), self.chiefPerturbations, self.moon.r, self.sun.r)
+        
         # Update ephemerides
         self.sun.update(self.tJ2000)
         self.moon.update(self.tJ2000)
-        
-        # Propagate States
-        self.x[0:6] = stateUpdateInertial(dt, self.x[0:6], aCtrlInEci, self.deputyPerturbations)
-        self.x[6:12] = self.x[0:6] - stateUpdateInertial(
-            dt, np.concatenate((self.chiefPosInr, self.chiefVelInr)), np.zeros((3,)), self.chiefPerturbations)
         
         # Propagate Covariance
         self.P = kf.propagateCov(self.P, stm, stateProcNoiseInr)
@@ -513,7 +513,7 @@ def ncvProcessNoise(dt, Q = np.eye(3)):
                     [Q*(dt**3)/3, Q*(dt**2)/2],
                     [Q*(dt**2)/2, Q*dt       ]])
 
-def stateUpdateInertial(dt, x, u, pert = None):
+def stateUpdateInertial(dt, x, u, pert = None, rMoon = np.zeros(3), rSun = np.zeros(3)):
     r = x[0:3]
     v = x[3:6]
     if pert == None:
@@ -528,29 +528,9 @@ def stateUpdateInertial(dt, x, u, pert = None):
             }
         
     uDyn.Orbit_rk4(pert["solarGrav"], pert["lunarGrav"], pert["drag"], pert["jnum"], \
-                   np.zeros((3,)), np.zeros((3,)), pert["Cd"], pert["normalizedArea"], \
+                   rMoon, rSun, pert["Cd"], pert["normalizedArea"], \
                    u, dt, r, v)
     return np.concatenate([r, v])
-
-def stateUpdateChiefAnchor(dt, x, u, param = None):
-    # Extract chief and deputy state
-    xc0 = x[0:6]
-    xd0 = x[6:12] + xc0
-    # Propagate 
-    xc = stateUpdateInertial(dt, xc0, np.zeros((3,)), param)
-    xd = stateUpdateInertial(dt, xd0, u, param)
-    # Reform relative state
-    return np.concatenate([xc,xd-xc])
-
-def stateUpdateDeputyAnchor(dt, x, u, param = None):
-    # Extract chief and deputy state
-    xd0 = x[0:6]
-    xc0 = xd0 - x[6:12]
-    # Propagate 
-    xc = stateUpdateInertial(dt, xc0, np.zeros((3,)), param)
-    xd = stateUpdateInertial(dt, xd0, u, param)
-    # Reform relative state
-    return np.concatenate([xd,xd-xc])
 
 def stmInertial(dt, x):
     """
