@@ -131,12 +131,12 @@ class TestEstimator(unittest.TestCase):
         frm.dcmInr2Los = np.matmul(frm.dcmRic2Los,frm.dcmInr2Ric)
         
         ### Initialize DIF class
-        dif = est.DualInertialFilter(
+        dif = est.DualInertialFilter(True, 
             tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
         
         ### Initialize IRF class
-        irf = est.InertialRelativeFilter(
-            tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
+        irf = est.InertialRelativeFilter(True,
+            tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, procVar, np.zeros((3,3)), dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
@@ -274,8 +274,8 @@ class TestEstimator(unittest.TestCase):
         frm.dcmInr2Los = np.matmul(frm.dcmRic2Los,frm.dcmInr2Ric)
         
         ### Initialize RD-IRF class
-        rdirf = est.RelativeDecoupledInertialRelativeFilter(
-            tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, 0.5*procVar, dvVar, measCov)
+        rdirf = est.InertialRelativeFilter(False,
+            tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, np.zeros((3,3)), procVar, 0.5*procVar, dvVar, measCov)
         
         ### Propagate through 2 hours
         tf = 2*3600
@@ -353,7 +353,7 @@ class TestEstimator(unittest.TestCase):
         frm.dcmInr2Los = np.matmul(frm.dcmRic2Los,frm.dcmInr2Ric)
         
         ### Initialize CD-DIF class
-        cddif = est.ChiefDecoupledDualInertialFilter(
+        cddif = est.DualInertialFilter(False, 
             tJ2000, frm.dcmInr2Los, rc, vc, P0, rd, vd, P0, procVar, procVar, dvVar, measCov)
         
         ### Propagate through 2 hours

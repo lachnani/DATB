@@ -157,8 +157,13 @@ class Navigation:
         self.fltrType = filterType
         
         # Initialize filter
-        if self.fltrType == "DualInertial":
+        if "DualInertial" in self.fltrType:
+            if self.fltrType == "ChiefDecoupledDualInertial":
+                coupling = False
+            else:
+                coupling = True
             self.fltr = estimator.DualInertialFilter(
+                coupling,
                 self.tJ2000, 
                 dcmInr2Los,
                 chiefPosInr, chiefVelInr, chiefCovInr, 
@@ -167,33 +172,18 @@ class Navigation:
                 self.fltrDvVar, self.fltrMeasCov,
                 self.fltrChiefPert, self.fltrDeputyPert,
                 self.fltrAlpha, self.fltrBeta)
-        elif self.filterType == "InertialRelative":
+        elif "InertialRelative" in self.fltrType:
+            if self.fltrType == "RelativeDecoupledInertialRelative":
+                coupling = False
+            else:
+                coupling = True
             self.fltr =  estimator.InertialRelativeFilter(
+                coupling,
                 self.tJ2000, 
                 dcmInr2Los,
                 chiefPosInr, chiefVelInr, chiefCovInr, 
                 deputyPosInr, deputyVelInr, deputyCovInr, 
-                self.fltrDeputyProcNoiseRic, self.fltrRelProcNoiseRic,
-                self.fltrDvVar, self.fltrMeasCov,
-                self.fltrChiefPert, self.fltrDeputyPert,
-                self.fltrAlpha, self.fltrBeta)
-        elif self.filterType == "ChiefDecoupledDualInertial":
-            self.fltr = estimator.ChiefDecoupledDualInertialFilter(
-                self.tJ2000, 
-                dcmInr2Los,
-                chiefPosInr, chiefVelInr, chiefCovInr, 
-                deputyPosInr, deputyVelInr, deputyCovInr, 
-                self.fltrChiefProcNoiseRic, self.fltrDeputyProcNoiseRic, 
-                self.fltrDvVar, self.fltrMeasCov,
-                self.fltrChiefPert, self.fltrDeputyPert,
-                self.fltrAlpha, self.fltrBeta)
-        elif self.filterType == "RelativeDecoupledInertialRelative":
-            self.fltr =  estimator.RelativeDecoupledInertialRelativeFilter(
-                self.tJ2000, 
-                dcmInr2Los,
-                chiefPosInr, chiefVelInr, chiefCovInr, 
-                deputyPosInr, deputyVelInr, deputyCovInr, 
-                self.fltrDeputyProcNoiseRic, self.fltrRelProcNoiseRic,
+                self.fltrChiefProcNoiseRic, self.fltrDeputyProcNoiseRic, self.fltrRelProcNoiseRic,
                 self.fltrDvVar, self.fltrMeasCov,
                 self.fltrChiefPert, self.fltrDeputyPert,
                 self.fltrAlpha, self.fltrBeta)
