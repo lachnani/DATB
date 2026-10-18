@@ -4,7 +4,7 @@ numSims: 10
 sim:
   dynamics:
     status: True
-    dt: 1.0
+    dt: 5.0
     kov:
       type: "PRISM"
       R: 1
@@ -19,7 +19,7 @@ sim:
     animations: False
   fsw: 
     status: True
-    dt: 2.0
+    dt: 10.0
     bufferDepth: 100
     measDt: 600.0
     firstMeasT: 21600.0

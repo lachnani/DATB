@@ -115,6 +115,9 @@ for simNum in range(numSims):
     mcRelVelCurvRicErr[:,:,simNum] = mcLog[simNum].fswNavRelVelCurvRicErr.to_numpy()
     mcOeVehErr[:,:,simNum] = mcLog[simNum].oeVeh.to_numpy() - mcLog[simNum].fswNavOeVeh.to_numpy()
     mcOeRsoErr[:,:,simNum] = mcLog[simNum].oeRso.to_numpy() - mcLog[simNum].fswNavOeRso.to_numpy()
+# Wrap angles to [-pi, pi)
+mcOeVehErr[2:6,:,:] = (mcOeVehErr[2:6,:,:] + np.pi) % (2 * np.pi) - np.pi
+mcOeRsoErr[2:6,:,:] = (mcOeRsoErr[2:6,:,:] + np.pi) % (2 * np.pi) - np.pi
 
 print("MC: Computing Statistics ...")
 relPosRectRicErrStd = np.std(mcRelPosRectRicErr, axis = 2)
@@ -147,7 +150,10 @@ Path(log_base_path).mkdir(parents=True, exist_ok=True)
 
 log_file_path = os.path.join(log_base_path, 'log.pkl')
 with open(log_file_path, 'wb') as outp:
-    pickle.dump(mcLog, outp)
+    pickle.dump({'cfg': cfg,
+                 'mcLog': mcLog,
+                 'mcStats': mcStats},
+                outp)
 
 """ Plots """
 print("MC: Plotting Data ...")

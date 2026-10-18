@@ -33,6 +33,8 @@ def plotAll(mcLog, mcStats, path, tag, settings):
     # Error statistics plots
     RectRicStats_Plot(mcStats, path, tag)
     CurvRicStats_Plot(mcStats, path, tag)
+    ChiefOeStats_Plot(mcStats, path, tag)
+    DeputyOeStats_Plot(mcStats, path, tag)
     
 
     
@@ -350,4 +352,116 @@ def CurvRicStats_Plot(mcStats, path, tag):
     fig_curvRic_plt.tight_layout()
     
     fullFigPath = path + r"\rectRicStats_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def ChiefOeStats_Plot(mcStats, path, tag):
+    """
+    Chief Keplerian Element statistics
+
+    """
+    
+    fig_oe_plt = plt.figure()
+    plt.suptitle(r"Chief Orbit Element 3$\sigma$ Errors")
+    
+    ax = plt.subplot(3,2,1)
+    ax.plot(mcStats['time'], 3*mcStats['oeRsoErrStd'][0,:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a [km]")
+    plt.title('Semimajor-Axis')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    ax.plot(mcStats['time'], 3*mcStats['oeRsoErrStd'][1,:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("e")
+    plt.title('Eccentricity')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeRsoErrStd'][2,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("i [deg]")
+    plt.title('Inclination')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeRsoErrStd'][3,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("RAAN [deg]")
+    plt.title('RAAN')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeRsoErrStd'][4,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\omega$ [deg]")
+    plt.title('Argument of Perigee')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeRsoErrStd'][5,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("M [deg]")
+    plt.title('Mean Anomaly')
+    plt.grid()
+       
+    fig_oe_plt.tight_layout()
+    
+    fullFigPath = path + r"\chiefOeStats_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def DeputyOeStats_Plot(mcStats, path, tag):
+    """
+    Deputy Keplerian Element statistics
+
+    """
+    
+    fig_oe_plt = plt.figure()
+    plt.suptitle(r"Deputy Orbit Element 3$\sigma$ Errors")
+    
+    ax = plt.subplot(3,2,1)
+    ax.plot(mcStats['time'], 3*mcStats['oeVehErrStd'][0,:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a [km]")
+    plt.title('Semimajor-Axis')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    ax.plot(mcStats['time'], 3*mcStats['oeVehErrStd'][1,:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("e")
+    plt.title('Eccentricity')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeVehErrStd'][2,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("i [deg]")
+    plt.title('Inclination')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeVehErrStd'][3,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("RAAN [deg]")
+    plt.title('RAAN')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeVehErrStd'][4,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\omega$ [deg]")
+    plt.title('Argument of Perigee')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeVehErrStd'][5,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("M [deg]")
+    plt.title('Mean Anomaly')
+    plt.grid()
+       
+    fig_oe_plt.tight_layout()
+    
+    fullFigPath = path + r"\deputyOeStats_" + tag + r".png"
     plt.savefig(fullFigPath)
