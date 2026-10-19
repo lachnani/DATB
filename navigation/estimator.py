@@ -148,8 +148,8 @@ class DualInertialFilter:
         
     def propagate(self, dt, aCtrlInEci):        
         # Compute process nosie
-        deputyProcNoiseInr = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
-        chiefProcNoiseInr = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
+        deputyProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
+        chiefProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
         stateProcNoiseInr = np.block([
                                      [deputyProcNoiseInr, np.zeros((6, 6))],
                                      [np.zeros((6, 6))  , chiefProcNoiseInr]])
@@ -393,9 +393,9 @@ class InertialRelativeFilter:
         
     def propagate(self, dt, aCtrlInEci):        
         # Compute process nosie
-        deputyProcNoiseInr = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
+        deputyProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
         if self.coupled:
-            chiefProcNoiseInr = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
+            chiefProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
             stateProcNoiseInr = np.block([
                                          [deputyProcNoiseInr, deputyProcNoiseInr                    ],
                                          [deputyProcNoiseInr, deputyProcNoiseInr + chiefProcNoiseInr]])

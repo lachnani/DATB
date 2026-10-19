@@ -200,6 +200,14 @@ def propagateCov(P, Phi, Q):
 
     """
     return symmetrize((abaT(Phi, P)) + Q)
+# =============================================================================
+#     n = P.shape[0]
+#     W = la.cholesky(P)
+#     T, WProp = la.qr(np.hstack([np.dot(Phi, W),la.cholesky(Phi),]).T)
+#     WProp = WProp[:n, :n].T
+#     PProp = W @ W.T + symmetrize(Q)
+#     return PProp
+# =============================================================================
 
 def measurementUpdate(x, P, n, y, H, R, beta = 0):
     """
@@ -256,6 +264,18 @@ def measurementUpdate(x, P, n, y, H, R, beta = 0):
         I_KH = np.eye(n) - np.matmul(K,H)
         PUpd = abaT(I_KH, P) + abaT(K, R + betaHPHT)
         PUpd = symmetrize(PUpd)
+# =============================================================================
+#         # Alternative UDU approach
+#         U, D = uduDecomposition(P)
+#         xUpd, UUpd, DUpd = uduMeasurementUpdate(x, U, D, y, H, R, 0)
+#         PUpd = uduComposition(UUpd, DUpd)
+# =============================================================================
+# =============================================================================
+#         # Alternative Square Root approach
+#         W = la.cholesky(P)
+#         xUpd, WUpd = squareRootMeasurementUpdate(x, W, y, H, R, 0)
+#         PUpd = WUpd @ WUpd.T
+# =============================================================================
         return xUpd, PUpd, nis
     else:
         return x, P, 0.0
@@ -289,6 +309,117 @@ def checkPositiveDefinite(P, tol = 1e-10):
         
     # Step 3: Calculate eigenvalues and verify they are strictly positive
     return np.all(la.eigvals(P) > tol)
+
+def squareRootScalarMeasurementUpdate(x, W, y, h, r, beta = 0):
+    """
+    Measurement update of the square root filter for scalar measurements.
+    
+    Ref: Tapley, Shutz, and Born, "Statistical Orbit Determination", Equation
+    (5.7.17)
+
+    Parameters
+    ----------
+    x : nx1 double
+        state vector
+    W : nxn double
+        Lower triangular matrix from covariance Cholesky decomposition.
+    y : double
+        scalar measurement residual (z - zHat)
+    h : n double
+        Row of sensitivity matrix.
+    r : double
+        measurement variance.
+    beta : double
+        underweighting factor
+
+    Returns
+    -------
+    xUpd : nx1 double
+        updated state vector
+    WUpd : nxn double
+        updated lower triangular matrix from covariance Cholesky decomposition.
+    """
+    
+    F = W.T @ h.T 
+    alpha = 1/(np.dot(F,F) + r)
+    gamma = 1/(1 + np.sqrt(r*alpha))
+    k = alpha * W @ F
+    xUpd = x + k * y
+    WUpd = W - gamma * np.outer(k,F)
+    return xUpd, WUpd
+
+def squareRootMeasurementUpdate(x, W, y, H, R, beta = 0):
+    """
+    Measurement update of the Square Root filter for vector measurements.
+    
+    Ref: Tapley, Shutz, and Born, "Statistical Orbit Determination"
+
+    Parameters
+    ----------
+    x : nx1 double
+        state vector
+    W : nxn double
+        Lower triangular matrix from covariance Cholesky decomposition.
+    n : int
+        state dimension
+    y : mx1 double
+        measurement residual (z - zHat)
+    H : mxn double
+        measurement sensitivity matrix
+    R : mxm double
+        measurement covariance
+    beta : double
+        underweighting factor
+
+    Returns
+    -------
+    xUpd : nx1 double
+        updated state vector
+    WUpd : nxn double
+        updated lower triangular matrix from covariance Cholesky decomposition.
+
+    """
+    
+    # extract size of state space
+    n = len(x)
+    m = len(y)
+
+# =============================================================================
+#     # calculate corrected state mean, covariance
+#     xUpd = x.copy()
+#     WUpd = W.copy()
+#     for i in range(m):
+#         # extract components for updating i-th coordinate's covariance
+#         h = H[i, :]
+#         r = R[i, i]
+# 
+#         # Compute scalar measurement update
+#         xUpd, WUpd = squareRootScalarMeasurementUpdate(xUpd, WUpd, y[i], h, r)
+# =============================================================================
+
+    # Decompose observation covariance
+    LR = la.cholesky(R)
+
+    # construct matrix M = [    R^{1/2}^{T},            0;
+    #                       (C S_{t|t-1})^T,  S_{t|t-1}^T]
+    M = np.zeros(2 * [m + n])
+    M[0:m, 0:m] = LR.T
+    M[m:, 0:m] = H.dot(
+        W
+    ).T
+    M[m:, m:] = W.T
+
+    # solve for [((C P_{t|t-1} C^T + R)^{1/2})^T,         K^T;
+    #                                          0,   S_{t|t}^T] = QR(M)
+    (_, S) = la.qr(M)
+    kalman_gain = S[0:m, m:].T
+
+    # correct mean
+    xUpd = x + np.dot(kalman_gain, y)
+
+    WUpd = S[m:, m:].T
+        
+    return xUpd, WUpd
 
 def uduComposition(U, D):
     return U.dot(np.diag(D)).dot(U.T)
@@ -367,9 +498,8 @@ def uduScalarMeasurementUpdate(U, D, h, r, beta = 0):
     n = len(h)
 
     f = h.dot(U)  # len(f) == n
-    g = np.diag(D).dot(f)  # len(g) == n_dim-state
-    alpha0 = f.dot(g)
-    alpha = (1 + beta)*f.dot(g) + r 
+    g = np.diag(D).dot(f)  # len(g) == n
+    alpha = f.dot(g) + r 
 
     gamma = np.zeros(n)
     UBar = np.zeros((n, n))
@@ -436,7 +566,7 @@ def uduMeasurementUpdate(x, U, D, y, H, R, beta = 0):
     DUpd = D.copy() 
     for i in range(m):
         # extract components for updating i-th coordinate's covariance
-        h = H[i]
+        h = H[i, :]
         r = R[i, i]
 
         # calculate new UDU' decomposition for corrected state covariance
