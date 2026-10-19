@@ -41,6 +41,8 @@ def plotAll(log, path, tag, settings):
     DeputyCov_Plot(log, path, tag)
     RelCov_Plot(log, path, tag)
     SmaVariance_Plot(log, path, tag)
+    # Filter Consistency Metrics Plots
+    Consistency_Plot(log, path, tag)
     
 def ChiefOe_Plot(log, path, tag):
     """
@@ -785,4 +787,31 @@ def SmaVariance_Plot(log, path, tag):
     fig_smaVar_plt.tight_layout()
     
     fullFigPath = path + r"\smaVariance_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def Consistency_Plot(log, path, tag):
+    """
+    Filter Consistency Plots
+
+    """
+    
+    fig_consistency_plt = plt.figure()
+    
+    ax1 = plt.subplot(2,1,1)
+    ax1.plot(log.time.loc['simTime',:], log.fswNavMeasNrmInvnSqr.loc['NIS',:])[0]
+    ax1.set_xlabel("Time [s]")
+    ax1.set_ylabel("NIS")
+    plt.title('Normalized Innovations Squared')
+    plt.grid()
+    
+    ax2 = plt.subplot(2,1,2)
+    ax2.plot(log.time.loc['simTime',:], log.fswNavFltrNrmEstErrSqr.loc['NEES',:])[0]
+    ax2.set_xlabel("Time [s]")
+    ax2.set_ylabel("NEES")
+    plt.title('Normalized Estimation Error Squared')
+    plt.grid()
+       
+    fig_consistency_plt.tight_layout()
+    
+    fullFigPath = path + r"\consistency_" + tag + r".png"
     plt.savefig(fullFigPath)

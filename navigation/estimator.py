@@ -120,6 +120,7 @@ class DualInertialFilter:
         self.measCov = measCov
         self.measType = "anglesRange"
         self.measResidual = np.zeros((4,))
+        self.nis = 0.0
         
         # Save process noise matrices
         self.deputyProcNoiseInRic = Qd
@@ -358,6 +359,7 @@ class InertialRelativeFilter:
         self.measCov = measCov
         self.measType = "anglesRange"
         self.measResidual = np.zeros((4,))
+        self.nis = 0.0
         
         # Save process noise matrices
         self.deputyProcNoiseInRic = Qd

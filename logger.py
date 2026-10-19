@@ -132,5 +132,8 @@ class Log():
             self.fswNavRoeErr            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dlambda', 'dex', 'dey', 'dix', 'diy']).T
             self.fswNavRectClroeErr      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
             self.fswNavCurvClroeErr      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
+            # Filter Consistency Metrics
+            self.fswNavMeasNrmInvnSqr   = pd.DataFrame(np.zeros((size,1)), columns=['NIS']).T
+            self.fswNavFltrNrmEstErrSqr = pd.DataFrame(np.zeros((size,1)), columns=['NEES']).T
             
         

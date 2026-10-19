@@ -14,6 +14,7 @@ from dynamics import orbit as orb
 from planning import passiveSafety as ps
 from kinematics import kinematicsUtils as uKin
 from navigation import measurements as meas
+from navigation import kalmanFilter
 import logger
 
 
@@ -304,6 +305,15 @@ class Simulator():
             self.log.fswNavRoeErr[self.log.i]            = self.log.roe[self.log.i] - self.log.fswNavRoe[self.log.i]
             self.log.fswNavRectClroeErr[self.log.i]      = self.log.rectClroe[self.log.i] - self.log.fswNavRectClroe[self.log.i]
             self.log.fswNavCurvClroeErr[self.log.i]      = self.log.curvClroe[self.log.i] - self.log.fswNavCurvClroe[self.log.i]
+            # Filter Consistency Metrics
+            self.log.fswNavMeasNrmInvnSqr[self.log.i] = self.fsw.nav.fltr.nis
+            if "DualInertial" in self.fsw.nav.fltrType:
+                x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.chief.r, self.frm.chief.v])
+            elif "InertialRelative" in self.fltrType:
+                x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.relPosRectRic, self.frm.relVelRectRic])
+            dx = x - self.fsw.nav.fltr.x
+            self.log.fswNavFltrNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(dx, self.fsw.nav.fltr.P)
+                
     
     def terminate(self):
         

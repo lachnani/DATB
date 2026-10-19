@@ -278,8 +278,17 @@ def normEstErrSqr(dx, P):
 def normInvnSqr(nu, S):
     return np.matmul(np.transpose(nu),np.matmul(la.inv(S),nu))
 
-def checkPositiveDefinite(P):
-    return np.all(la.eig(P) > 0)
+def checkPositiveDefinite(P, tol = 1e-10):
+    # Step 1: Ensure it is a square matrix
+    if P.shape[0] != P.shape[1]:
+        return False
+        
+    # Step 2: Check for symmetry
+    if not np.allclose(P, P.T):
+        return False
+        
+    # Step 3: Calculate eigenvalues and verify they are strictly positive
+    return np.all(la.eigvals(P) > tol)
 
 def uduComposition(U, D):
     return U.dot(np.diag(D)).dot(U.T)

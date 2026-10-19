@@ -46,7 +46,7 @@ class Main:
             self.nav.propagate(self.dt, self.ctrl.aCtrlInEci)
             if measAvailable == True:
                 self.nav.update(meas, measType)
-                # self.nav.runChecks()
+            self.nav.runChecks()
             self.nav.sync()
         
         # Guidance
@@ -224,6 +224,11 @@ class Navigation:
         
         # Update output states
         self.sync()
+        
+    def runChecks(self):
+        
+        # For now, just check corruption
+        self.checkCorruption()
         
     def checkConvergence(self):
         
