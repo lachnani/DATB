@@ -108,6 +108,8 @@ mcRelPosCurvRicErr = np.zeros((3,sim_len,numSims))
 mcRelVelCurvRicErr = np.zeros((3,sim_len,numSims))
 mcOeVehErr = np.zeros((6,sim_len,numSims))
 mcOeRsoErr = np.zeros((6,sim_len,numSims))
+mcNrmInvnSqr = np.zeros((sim_len,numSims))
+mcNrmEstErrSqr = np.zeros((sim_len,numSims))
 for simNum in range(numSims):
     mcRelPosRectRicErr[:,:,simNum] = mcLog[simNum].fswNavRelPosRectRicErr.to_numpy()
     mcRelVelRectRicErr[:,:,simNum] = mcLog[simNum].fswNavRelVelRectRicErr.to_numpy()
@@ -115,6 +117,8 @@ for simNum in range(numSims):
     mcRelVelCurvRicErr[:,:,simNum] = mcLog[simNum].fswNavRelVelCurvRicErr.to_numpy()
     mcOeVehErr[:,:,simNum] = mcLog[simNum].oeVeh.to_numpy() - mcLog[simNum].fswNavOeVeh.to_numpy()
     mcOeRsoErr[:,:,simNum] = mcLog[simNum].oeRso.to_numpy() - mcLog[simNum].fswNavOeRso.to_numpy()
+    mcNrmInvnSqr[:,simNum] = mcLog[simNum].fswNavMeasNrmInvnSqr.to_numpy()
+    mcNrmEstErrSqr[:,simNum] = mcLog[simNum].fswNavFltrNrmEstErrSqr.to_numpy()
 # Wrap angles to [-pi, pi)
 mcOeVehErr[2:6,:,:] = (mcOeVehErr[2:6,:,:] + np.pi) % (2 * np.pi) - np.pi
 mcOeRsoErr[2:6,:,:] = (mcOeRsoErr[2:6,:,:] + np.pi) % (2 * np.pi) - np.pi
@@ -126,6 +130,8 @@ relPosCurvRicErrStd = np.std(mcRelPosCurvRicErr, axis = 2)
 relVelCurvRicErrStd = np.std(mcRelVelCurvRicErr, axis = 2)
 oeVehErrStd = np.std(mcOeVehErr, axis = 2)
 oeRsoErrStd = np.std(mcOeRsoErr, axis = 2)
+avgNrmInvnSqr = np.mean(mcNrmInvnSqr, axis = 1)
+avgNrmEstErrSqr = np.mean(mcNrmEstErrSqr, axis = 1)
 
 print("MC: Packing Statistics ...")
 mcStats = {
@@ -135,7 +141,9 @@ mcStats = {
     "relPosCurvRicErrStd": relPosCurvRicErrStd,
     "relVelCurvRicErrStd": relVelCurvRicErrStd,
     "oeVehErrStd": oeVehErrStd,
-    "oeRsoErrStd": oeRsoErrStd
+    "oeRsoErrStd": oeRsoErrStd,
+    "avgNrmInvnSqr": avgNrmInvnSqr,
+    "avgNrmEstErrSqr": avgNrmEstErrSqr
 }
 
 """ Save Log """

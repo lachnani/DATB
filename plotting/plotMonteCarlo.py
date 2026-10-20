@@ -35,6 +35,7 @@ def plotAll(mcLog, mcStats, path, tag, settings):
     CurvRicStats_Plot(mcStats, path, tag)
     ChiefOeStats_Plot(mcStats, path, tag)
     DeputyOeStats_Plot(mcStats, path, tag)
+    ConsistencyStats_Plot(mcStats, path, tag)
     
 
     
@@ -464,4 +465,31 @@ def DeputyOeStats_Plot(mcStats, path, tag):
     fig_oe_plt.tight_layout()
     
     fullFigPath = path + r"\deputyOeStats_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def ConsistencyStats_Plot(mcStats, path, tag):
+    """
+    Filter Consistency Stats Plots
+
+    """
+    
+    fig_consistency_plt = plt.figure()
+    
+    ax1 = plt.subplot(2,1,1)
+    ax1.plot(mcStats['time'], mcStats['avgNrmInvnSqr'])[0]
+    ax1.set_xlabel("Time [s]")
+    ax1.set_ylabel("NIS")
+    plt.title('Average Normalized Innovations Squared')
+    plt.grid()
+    
+    ax2 = plt.subplot(2,1,2)
+    ax2.plot(mcStats['time'], mcStats['avgNrmEstErrSqr'])[0]
+    ax2.set_xlabel("Time [s]")
+    ax2.set_ylabel("NEES")
+    plt.title('Average Normalized Estimation Error Squared')
+    plt.grid()
+       
+    fig_consistency_plt.tight_layout()
+    
+    fullFigPath = path + r"\consistencyStats_" + tag + r".png"
     plt.savefig(fullFigPath)
