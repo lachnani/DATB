@@ -33,7 +33,10 @@ def plotAll(mcLog, mcStats, path, tag, settings):
     # Error statistics plots
     RectRicStats_Plot(mcStats, path, tag)
     CurvRicStats_Plot(mcStats, path, tag)
+    DoeStats_Plot(mcStats, path, tag)
+    ChiefInrStats_Plot(mcStats, path, tag)
     ChiefOeStats_Plot(mcStats, path, tag)
+    DeputyInrStats_Plot(mcStats, path, tag)
     DeputyOeStats_Plot(mcStats, path, tag)
     ConsistencyStats_Plot(mcStats, path, tag)
     
@@ -355,6 +358,96 @@ def CurvRicStats_Plot(mcStats, path, tag):
     fullFigPath = path + r"\rectRicStats_" + tag + r".png"
     plt.savefig(fullFigPath)
     
+def DoeStats_Plot(mcStats, path, tag):
+    """
+    Delta Keplerian Orbit element statistics
+
+    """
+    
+    fig_doe_plt = plt.figure()
+    plt.suptitle(r"Differential Keplerian Orbit Element 3$\sigma$ Errors")
+    
+    ax = plt.subplot(3,2,1)
+    ax.plot(mcStats['time'], 3*mcStats['doeErrStd'][0,:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta a$ [km]")
+    plt.title('Delta Semimajor-Axis')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    ax.plot(mcStats['time'], 3*mcStats['doeErrStd'][1,:])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta e$")
+    plt.title('Delta Eccentricity')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['doeErrStd'][2,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta i$ [deg]")
+    plt.title('Delta Inclination')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['doeErrStd'][3,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta RAAN$ [deg]")
+    plt.title('Delta RAAN')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['doeErrStd'][4,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta\omega$ [deg]")
+    plt.title('Delta Argument of Perigee')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['doeErrStd'][5,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta M$ [deg]")
+    plt.title('Delta Mean Anomaly')
+    plt.grid()
+       
+    fig_doe_plt.tight_layout()
+    
+    fullFigPath = path + r"\doeStats_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def ChiefInrStats_Plot(mcStats, path, tag):
+    """
+    Chief inertial position and velocity statistics
+
+    """
+    
+    fig_inr_plt = plt.figure()
+    plt.suptitle(r"Chief Inertial 3$\sigma$ Errors")
+    
+    ax = plt.subplot(2,1,1)
+    ax.plot(mcStats['time'], 3*mcStats['posRsoErrStd'][0,:], label='X')[0]
+    ax.plot(mcStats['time'], 3*mcStats['posRsoErrStd'][1,:], label='Y')[0]
+    ax.plot(mcStats['time'], 3*mcStats['posRsoErrStd'][2,:], label='Z')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    ax.legend()
+    plt.title('Chief Inertial Position Error')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    ax.plot(mcStats['time'], 3*mcStats['velRsoErrStd'][0,:], label='X')[0]
+    ax.plot(mcStats['time'], 3*mcStats['velRsoErrStd'][1,:], label='Y')[0]
+    ax.plot(mcStats['time'], 3*mcStats['velRsoErrStd'][2,:], label='Z')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    ax.legend()
+    plt.title('Chief Inertial Velocity Error')
+    plt.grid()
+       
+    fig_inr_plt.tight_layout()
+    
+    fullFigPath = path + r"\chiefInrStats_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
 def ChiefOeStats_Plot(mcStats, path, tag):
     """
     Chief Keplerian Element statistics
@@ -409,6 +502,40 @@ def ChiefOeStats_Plot(mcStats, path, tag):
     fig_oe_plt.tight_layout()
     
     fullFigPath = path + r"\chiefOeStats_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def DeputyInrStats_Plot(mcStats, path, tag):
+    """
+    Deputy inertial position and velocity statistics
+
+    """
+    
+    fig_inr_plt = plt.figure()
+    plt.suptitle(r"Deputy Inertial 3$\sigma$ Errors")
+    
+    ax = plt.subplot(2,1,1)
+    ax.plot(mcStats['time'], 3*mcStats['posVehErrStd'][0,:], label='X')[0]
+    ax.plot(mcStats['time'], 3*mcStats['posVehErrStd'][1,:], label='Y')[0]
+    ax.plot(mcStats['time'], 3*mcStats['posVehErrStd'][2,:], label='Z')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    ax.legend()
+    plt.title('Deputy Inertial Position Error')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    ax.plot(mcStats['time'], 3*mcStats['velVehErrStd'][0,:], label='X')[0]
+    ax.plot(mcStats['time'], 3*mcStats['velVehErrStd'][1,:], label='Y')[0]
+    ax.plot(mcStats['time'], 3*mcStats['velVehErrStd'][2,:], label='Z')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    ax.legend()
+    plt.title('Deputy Inertial Velocity Error')
+    plt.grid()
+       
+    fig_inr_plt.tight_layout()
+    
+    fullFigPath = path + r"\deputyInrStats_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def DeputyOeStats_Plot(mcStats, path, tag):

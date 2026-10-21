@@ -186,7 +186,10 @@ def parseFlightSoftwareInit(epoch, yaml):
         epoch, yaml['dt'], 
         yaml['bufferDepth'])
 
-def parseFlightSoftware(frm, fsw, yaml, initErr = False):
+def parseFlightSoftware(frm, fsw, yaml, 
+                        initErr = False,
+                        deputyStateErr = np.zeros(6,), chiefStateErr = np.zeros(6,)
+                        ):
     """
     Parse FSW yaml file
 
@@ -205,7 +208,7 @@ def parseFlightSoftware(frm, fsw, yaml, initErr = False):
     # Navigation
     nav = yaml['navigation']
     if nav['status'] == True:
-        # TODO: Current assumes perfect perturbation knowledge; also weird behavior when initializing perts...
+        # TODO: Current assumes perfect perturbation knowledge
         fsw.nav.configureFilter(
             np.diag([nav['deputyProcNoise']['R'],nav['deputyProcNoise']['I'],nav['deputyProcNoise']['C']]), 
             np.diag([nav['chiefProcNoise']['R'],nav['chiefProcNoise']['I'],nav['chiefProcNoise']['C']]), 
@@ -231,9 +234,6 @@ def parseFlightSoftware(frm, fsw, yaml, initErr = False):
         if initErr:
             deputyStateErr = np.random.multivariate_normal(np.zeros(6,),deputyCovInit)
             chiefStateErr = np.random.multivariate_normal(np.zeros(6,),chiefCovInit)
-        else:
-            deputyStateErr = np.zeros(6,)
-            chiefStateErr = np.zeros(6,)
         # Line of sight frame
         dcmRic2Los, dcmInr2Los = formation.losFrames(frm.relPosRectRic, frm.dcmInr2Ric)
         # Initialize Filter
