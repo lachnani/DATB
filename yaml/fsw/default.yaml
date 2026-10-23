@@ -41,6 +41,12 @@ navigation:
     alpha: 1.0
     beta: 0.2
   filterType: "DualInertial"
+  pert:
+      jnum: 2
+      solarGrav: False
+      lunarGrav: False
+      SRP: False
+      drag: False
 guidance:
   status: False
 control: 

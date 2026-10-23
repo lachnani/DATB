@@ -63,17 +63,17 @@ fsw:
   navigation: 
     status: True
     deputyProcNoise:
-      R: 1.0e-15
-      I: 1.0e-15
-      C: 1.0e-15
+      R: 3.0e-13
+      I: 3.0e-13
+      C: 3.0e-13
     chiefProcNoise:
-      R: 1.0e-15
-      I: 1.0e-15
-      C: 1.0e-15
+      R: 3.0e-13
+      I: 3.0e-13
+      C: 3.0e-13
     relProcNoise:
-      R: 2.0e-15
-      I: 2.0e-15
-      C: 2.0e-15
+      R: 6.0e-13
+      I: 6.0e-13
+      C: 6.0e-13
     dvVar:
       sf: 0.01
       q: 0.0001
@@ -101,6 +101,12 @@ fsw:
       alpha: 1.0
       beta: 0.2
     filterType: "DualInertial"
+    pert:
+      jnum: 2
+      solarGrav: False
+      lunarGrav: False
+      SRP: False
+      drag: False
   guidance:
     status: False
   control: 

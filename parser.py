@@ -208,15 +208,15 @@ def parseFlightSoftware(frm, fsw, yaml,
     # Navigation
     nav = yaml['navigation']
     if nav['status'] == True:
-        # TODO: Current assumes perfect perturbation knowledge
+        # Configure filter settings
         fsw.nav.configureFilter(
             np.diag([nav['deputyProcNoise']['R'],nav['deputyProcNoise']['I'],nav['deputyProcNoise']['C']]), 
             np.diag([nav['chiefProcNoise']['R'],nav['chiefProcNoise']['I'],nav['chiefProcNoise']['C']]), 
             np.diag([nav['relProcNoise']['R'],nav['relProcNoise']['I'],nav['relProcNoise']['C']]),
             np.array([nav['dvVar']['sf'],nav['dvVar']['q'],nav['dvVar']['p']]), 
             np.diag([nav['measCov']['az'],nav['measCov']['el'],nav['measCov']['rng'],nav['measCov']['rngRate']]),
-            frm.deputy.pert,
-            frm.chief.pert,
+            nav['pert'],
+            nav['pert'],
             nav['underweight']['alpha'],
             nav['underweight']['beta'])
         # Initial Covariance
