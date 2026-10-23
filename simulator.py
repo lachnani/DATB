@@ -309,7 +309,7 @@ class Simulator():
             self.log.fswNavMeasNrmInvnSqr[self.log.i] = self.fsw.nav.fltr.nis
             if "DualInertial" in self.fsw.nav.fltrType:
                 x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.chief.r, self.frm.chief.v])
-            elif "InertialRelative" in self.fltrType:
+            elif "InertialRelative" in self.fsw.nav.fltrType:
                 x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.relPosRectRic, self.frm.relVelRectRic])
             dx = x - self.fsw.nav.fltr.x
             self.log.fswNavFltrNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(dx, self.fsw.nav.fltr.P)

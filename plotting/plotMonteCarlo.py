@@ -8,14 +8,14 @@ Created on Sun Mar 23 22:04:28 2025
 import matplotlib.pyplot as plt
 import numpy as np
 
-def visAll(mcLog, mcStats, path, tag, settings):
+def visAll(mcLog, mcStats, path, tag, settings = None):
     """
     Plot all available plots and animations
 
     """
     plotAll(mcLog, mcStats, path, tag, settings)
     
-def plotAll(mcLog, mcStats, path, tag, settings):
+def plotAll(mcLog, mcStats, path, tag, settings = None):
     """
     Plot all available plots
 
@@ -40,7 +40,14 @@ def plotAll(mcLog, mcStats, path, tag, settings):
     DeputyOeStats_Plot(mcStats, path, tag)
     ConsistencyStats_Plot(mcStats, path, tag)
     
-
+def plotComp(mcStats, mcStr, path, tag):
+    """
+    Plots comparison plots
+    
+    """
+    
+    DoeStatsComp_Plot(mcStats, mcStr, path, tag)
+    
     
 def RectRicProj_Plot(mcLog, path, tag):
     """
@@ -321,7 +328,29 @@ def RectRicStats_Plot(mcStats, path, tag):
        
     fig_rectRic_plt.tight_layout()
     
-    fullFigPath = path + r"\rectRicStats_" + tag + r".png"
+    fullFigPath = path + r"\rectRicStd_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+    fig_rectRic_plt = plt.figure()
+    plt.suptitle(r"Rectilinear RIC Root Mean Square Errors")
+    
+    ax = plt.subplot(2,1,1)
+    ax.plot(mcStats['time'], mcStats['relPosRectRicRMSErr'])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    plt.title('Relative Rectilinear RIC Position RMSE')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    ax.plot(mcStats['time'], mcStats['relVelRectRicRMSErr'])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    plt.title('Relative Rectilinear RIC Velocity RMSE')
+    plt.grid()
+       
+    fig_rectRic_plt.tight_layout()
+    
+    fullFigPath = path + r"\rectRicRMSE_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def CurvRicStats_Plot(mcStats, path, tag):
@@ -355,7 +384,29 @@ def CurvRicStats_Plot(mcStats, path, tag):
        
     fig_curvRic_plt.tight_layout()
     
-    fullFigPath = path + r"\rectRicStats_" + tag + r".png"
+    fullFigPath = path + r"\rectRicStd_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+    fig_curvRic_plt = plt.figure()
+    plt.suptitle(r"Curvilinear RIC Root Mean Square Errors")
+    
+    ax = plt.subplot(2,1,1)
+    ax.plot(mcStats['time'], mcStats['relPosCurvRicRMSErr'])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    plt.title('Relative Curvilinear RIC Position RMSE')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    ax.plot(mcStats['time'], mcStats['relVelCurvRicRMSErr'])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    plt.title('Relative Curvilinear RIC Velocity RMSE')
+    plt.grid()
+       
+    fig_curvRic_plt.tight_layout()
+    
+    fullFigPath = path + r"\curvRicRMSE_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def DoeStats_Plot(mcStats, path, tag):
@@ -411,7 +462,7 @@ def DoeStats_Plot(mcStats, path, tag):
        
     fig_doe_plt.tight_layout()
     
-    fullFigPath = path + r"\doeStats_" + tag + r".png"
+    fullFigPath = path + r"\doeStd_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def ChiefInrStats_Plot(mcStats, path, tag):
@@ -445,7 +496,29 @@ def ChiefInrStats_Plot(mcStats, path, tag):
        
     fig_inr_plt.tight_layout()
     
-    fullFigPath = path + r"\chiefInrStats_" + tag + r".png"
+    fullFigPath = path + r"\chiefInrStd_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+    fig_inr_plt = plt.figure()
+    plt.suptitle(r"Chief Inertial Root Mean Square Errors")
+    
+    ax = plt.subplot(2,1,1)
+    ax.plot(mcStats['time'], mcStats['posRsoRMSErr'])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    plt.title('Chief Inertial Position RMSE')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    ax.plot(mcStats['time'], mcStats['velRsoRMSErr'])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    plt.title('Chief Inertial Velocity RMSE')
+    plt.grid()
+       
+    fig_inr_plt.tight_layout()
+    
+    fullFigPath = path + r"\chiefInrRMSE_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def ChiefOeStats_Plot(mcStats, path, tag):
@@ -501,7 +574,7 @@ def ChiefOeStats_Plot(mcStats, path, tag):
        
     fig_oe_plt.tight_layout()
     
-    fullFigPath = path + r"\chiefOeStats_" + tag + r".png"
+    fullFigPath = path + r"\chiefOeStd_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def DeputyInrStats_Plot(mcStats, path, tag):
@@ -535,7 +608,29 @@ def DeputyInrStats_Plot(mcStats, path, tag):
        
     fig_inr_plt.tight_layout()
     
-    fullFigPath = path + r"\deputyInrStats_" + tag + r".png"
+    fullFigPath = path + r"\deputyInrStd_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+    fig_inr_plt = plt.figure()
+    plt.suptitle(r"Deputy Inertial Root Mean Square Errors")
+    
+    ax = plt.subplot(2,1,1)
+    ax.plot(mcStats['time'], mcStats['posVehRMSErr'])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    plt.title('Deputy Inertial Position RMSE')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    ax.plot(mcStats['time'], mcStats['velVehRMSErr'])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    plt.title('Deputy Inertial Velocity RMSE')
+    plt.grid()
+       
+    fig_inr_plt.tight_layout()
+    
+    fullFigPath = path + r"\deputyInrRMSE_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def DeputyOeStats_Plot(mcStats, path, tag):
@@ -591,7 +686,7 @@ def DeputyOeStats_Plot(mcStats, path, tag):
        
     fig_oe_plt.tight_layout()
     
-    fullFigPath = path + r"\deputyOeStats_" + tag + r".png"
+    fullFigPath = path + r"\deputyOeStd_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def ConsistencyStats_Plot(mcStats, path, tag):
@@ -619,4 +714,72 @@ def ConsistencyStats_Plot(mcStats, path, tag):
     fig_consistency_plt.tight_layout()
     
     fullFigPath = path + r"\consistencyStats_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Delta Keplerian Orbit element statistics comparison
+
+    """
+    
+    fig_doe_plt = plt.figure()
+    plt.suptitle(r"Differential Keplerian Orbit Element 3$\sigma$ Errors")
+    
+    ax = plt.subplot(3,2,1)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['doeErrStd'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta a$ [km]")
+    ax.legend()
+    plt.title('Delta Semimajor-Axis')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['doeErrStd'][1,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta e$")
+    ax.legend()
+    plt.title('Delta Eccentricity')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['doeErrStd'][2,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta i$ [deg]")
+    ax.legend()
+    plt.title('Delta Inclination')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['doeErrStd'][3,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta RAAN$ [deg]")
+    ax.legend()
+    plt.title('Delta RAAN')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['doeErrStd'][4,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta\omega$ [deg]")
+    ax.legend()
+    plt.title('Delta Argument of Perigee')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['doeErrStd'][5,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\delta M$ [deg]")
+    ax.legend()
+    plt.title('Delta Mean Anomaly')
+    plt.grid()
+       
+    fig_doe_plt.tight_layout()
+    
+    fullFigPath = path + r"\doeStatsComp_" + tag + r".png"
     plt.savefig(fullFigPath)
