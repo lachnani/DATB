@@ -63,26 +63,26 @@ fsw:
   navigation: 
     status: True
     deputyProcNoise:
-      R: 6.0e-10
-      I: 6.0e-10
-      C: 6.0e-10
+      R: 1.0e-15
+      I: 1.0e-15
+      C: 1.0e-15
     chiefProcNoise:
-      R: 6.0e-10
-      I: 6.0e-10
-      C: 6.0e-10
+      R: 1.0e-15
+      I: 1.0e-15
+      C: 1.0e-15
     relProcNoise:
-      R: 2.0e-10
-      I: 2.0e-10
-      C: 2.0e-10
+      R: 2.0e-15
+      I: 2.0e-15
+      C: 2.0e-15
     dvVar:
       sf: 0.01
       q: 0.0001
       p: 0.0001
     measCov:
-      az: 1.0e-6
-      el: 1.0e-6
-      rng: 1.0e-4
-      rngRate: 1.0e-4
+      az: 2.0e-6
+      el: 2.0e-6
+      rng: 2.0e-4
+      rngRate: 2.0e-4
     deputyCov:
       R: 0.0009
       I: 0.0009
