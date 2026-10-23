@@ -46,8 +46,14 @@ def plotComp(mcStats, mcStr, path, tag):
     
     """
     
+    RectRicStatsComp_Plot(mcStats, mcStr, path, tag)
+    CurvRicStatsComp_Plot(mcStats, mcStr, path, tag)
     DoeStatsComp_Plot(mcStats, mcStr, path, tag)
-    
+    ChiefInrStatsComp_Plot(mcStats, mcStr, path, tag)
+    ChiefOeStatsComp_Plot(mcStats, mcStr, path, tag)
+    DeputyInrStatsComp_Plot(mcStats, mcStr, path, tag)
+    DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag)
+    ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag)
     
 def RectRicProj_Plot(mcLog, path, tag):
     """
@@ -716,6 +722,70 @@ def ConsistencyStats_Plot(mcStats, path, tag):
     fullFigPath = path + r"\consistencyStats_" + tag + r".png"
     plt.savefig(fullFigPath)
     
+def RectRicStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Rectilinear RIC position and velocity statistics comparison
+
+    """
+    
+    fig_rectRic_plt = plt.figure()
+    plt.suptitle(r"Rectilinear RIC Root Mean Square Errors")
+    
+    ax = plt.subplot(2,1,1)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['relPosRectRicRMSErr'], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    ax.legend()
+    plt.title('Relative Rectilinear RIC Position RMSE')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['relVelRectRicRMSErr'], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    ax.legend()
+    plt.title('Relative Rectilinear RIC Velocity RMSE')
+    plt.grid()
+       
+    fig_rectRic_plt.tight_layout()
+    
+    fullFigPath = path + r"\rectRicRMSEComp_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def CurvRicStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Curvilinear RIC position and velocity statistics comparison
+
+    """
+    
+    fig_curvRic_plt = plt.figure()
+    plt.suptitle(r"Curvilinear RIC Root Mean Square Errors")
+    
+    ax = plt.subplot(2,1,1)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['relPosCurvRicRMSErr'], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    ax.legend()
+    plt.title('Relative Curvilinear RIC Position RMSE')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['relVelCurvRicRMSErr'], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    ax.legend()
+    plt.title('Relative Curvilinear RIC Velocity RMSE')
+    plt.grid()
+       
+    fig_curvRic_plt.tight_layout()
+    
+    fullFigPath = path + r"\curvRicRMSEComp_" + tag + r".png"
+    plt.savefig(fullFigPath)    
+    
 def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
     """
     Delta Keplerian Orbit element statistics comparison
@@ -781,5 +851,237 @@ def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
        
     fig_doe_plt.tight_layout()
     
-    fullFigPath = path + r"\doeStatsComp_" + tag + r".png"
+    fullFigPath = path + r"\doeStdComp_" + tag + r".png"
     plt.savefig(fullFigPath)
+    
+def ChiefInrStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Chief inertial position and velocity statistics comparison
+
+    """
+    
+    fig_inr_plt = plt.figure()
+    plt.suptitle(r"Chief Inertial Root Mean Square Errors")
+    
+    ax = plt.subplot(2,1,1)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['posRsoRMSErr'], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    ax.legend()
+    plt.title('Chief Inertial Position RMSE')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['posRsoRMSErr'], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    ax.legend()
+    plt.title('Chief Inertial Velocity RMSE')
+    plt.grid()
+       
+    fig_inr_plt.tight_layout()
+    
+    fullFigPath = path + r"\chiefInrRMSEComp_" + tag + r".png"
+    plt.savefig(fullFigPath)
+  
+def ChiefOeStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Chief Keplerian Element statistics comparison
+
+    """
+    
+    fig_oe_plt = plt.figure()
+    plt.suptitle(r"Chief Orbit Element 3$\sigma$ Errors")
+    
+    ax = plt.subplot(3,2,1)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['oeRsoErrStd'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a [km]")
+    ax.legend()
+    plt.title('Semimajor-Axis')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['oeRsoErrStd'][1,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("e")
+    ax.legend()
+    plt.title('Eccentricity')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeRsoErrStd'][2,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("i [deg]")
+    ax.legend()
+    plt.title('Inclination')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeRsoErrStd'][3,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("RAAN [deg]")
+    ax.legend()
+    plt.title('RAAN')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeRsoErrStd'][4,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\omega$ [deg]")
+    ax.legend()
+    plt.title('Argument of Perigee')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeRsoErrStd'][5,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("M [deg]")
+    ax.legend()
+    plt.title('Mean Anomaly')
+    plt.grid()
+       
+    fig_oe_plt.tight_layout()
+    
+    fullFigPath = path + r"\chiefOeStdComp_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def DeputyInrStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Deputy inertial position and velocity statistics comparison
+
+    """
+    
+    fig_inr_plt = plt.figure()
+    plt.suptitle(r"Deputy Inertial Root Mean Square Errors")
+    
+    ax = plt.subplot(2,1,1)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['posVehRMSErr'], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Position [km]")
+    ax.legend()
+    plt.title('Deputy Inertial Position RMSE')
+    plt.grid()
+    
+    ax = plt.subplot(2,1,2)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['posVehRMSErr'], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("Velocity [km/s]")
+    ax.legend()
+    plt.title('Deputy Inertial Velocity RMSE')
+    plt.grid()
+       
+    fig_inr_plt.tight_layout()
+    
+    fullFigPath = path + r"\deputyInrRMSEComp_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Deputy Keplerian Element statistics comparison
+
+    """
+    
+    fig_oe_plt = plt.figure()
+    plt.suptitle(r"Deputy Orbit Element 3$\sigma$ Errors")
+    
+    ax = plt.subplot(3,2,1)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['oeVehErrStd'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("a [km]")
+    ax.legend()
+    plt.title('Semimajor-Axis')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['oeVehErrStd'][1,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("e")
+    ax.legend()
+    plt.title('Eccentricity')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeVehErrStd'][2,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("i [deg]")
+    ax.legend()
+    plt.title('Inclination')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeVehErrStd'][3,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("RAAN [deg]")
+    ax.legend()
+    plt.title('RAAN')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeVehErrStd'][4,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel(r"$\omega$ [deg]")
+    ax.legend()
+    plt.title('Argument of Perigee')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeVehErrStd'][5,:]), label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("M [deg]")
+    ax.legend()
+    plt.title('Mean Anomaly')
+    plt.grid()
+       
+    fig_oe_plt.tight_layout()
+    
+    fullFigPath = path + r"\deputyOeStdComp_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Filter Consistency Stats comparison
+
+    """
+    
+    fig_consistency_plt = plt.figure()
+    
+    ax1 = plt.subplot(2,1,1)
+    for ii in range(len(mcStats)):
+        ax1.plot(mcStats[ii]['time'], mcStats[ii]['avgNrmInvnSqr'], label=mcStr[ii])[0]
+    ax1.set_xlabel("Time [s]")
+    ax1.set_ylabel("NIS")
+    ax1.legend()
+    plt.title('Average Normalized Innovations Squared')
+    plt.grid()
+    
+    ax2 = plt.subplot(2,1,2)
+    for ii in range(len(mcStats)):
+        ax2.plot(mcStats[ii]['time'], mcStats[ii]['avgNrmEstErrSqr'], label=mcStr[ii])[0]
+    ax2.set_xlabel("Time [s]")
+    ax2.set_ylabel("NEES")
+    ax2.legend()
+    plt.title('Average Normalized Estimation Error Squared')
+    plt.grid()
+       
+    fig_consistency_plt.tight_layout()
+    
+    fullFigPath = path + r"\consistencyStatsComp_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    

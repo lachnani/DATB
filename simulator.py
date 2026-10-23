@@ -310,7 +310,7 @@ class Simulator():
             if "DualInertial" in self.fsw.nav.fltrType:
                 x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.chief.r, self.frm.chief.v])
             elif "InertialRelative" in self.fsw.nav.fltrType:
-                x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.relPosRectRic, self.frm.relVelRectRic])
+                x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.relPosInr, self.frm.relVelInr])
             dx = x - self.fsw.nav.fltr.x
             self.log.fswNavFltrNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(dx, self.fsw.nav.fltr.P)
                 
@@ -332,12 +332,15 @@ class Simulator():
             print("SIM: Realtime factor: %.2f" % (self.t/elapsed_time))
             print("-----------------------------------------------------")
             
-    def impulsiveBurn(self, dvEci, sv = "Deputy"):
+    def impulsiveBurn(self, dvEci, sv = "Deputy", enablePert = True):
         """
         Executes impulsive burn
         """
         # Perturb Delta-V
-        dvEciPert = pertVec(dvEci, self.burnPertAngDeg, self.burnPertMagPerc)
+        if enablePert:
+            dvEciPert = pertVec(dvEci, self.burnPertAngDeg, self.burnPertMagPerc)
+        else:
+            dvEciPert = dvEci
         
         # Apply delta-v by moving the inertial velocity and incrementing the
         # accumulated delta-v

@@ -167,6 +167,10 @@ class Formation():
         if relStateType != "RELSTATE_ROE":
             uKin.oe2roe(self.chief.oe, self.deputy.oe, self.roe)
             
+        # Relative inertial states
+        self.relPosInr = self.deputy.r - self.chief.r
+        self.relVelInr = self.deputy.v - self.chief.v
+            
         # Set perturbations
         self.chief.pert = pert
         self.deputy.pert = pert
@@ -227,6 +231,8 @@ class Formation():
         uKin.rv2ric(self.chief.r, self.chief.v, self.deputy.r, self.deputy.v, self.relPosRectRic, self.relVelRectRic)
         uKin.rectRic2curvRic(self.chief.r, self.chief.v, self.relPosRectRic, self.relVelRectRic, self.relPosCurvRic, self.relVelCurvRic)
         if (self.settings["relStates"] == True):
+            self.relPosInr = self.deputy.r - self.chief.r
+            self.relVelInr = self.deputy.v - self.chief.v
             # TODO: Fix to wrap angles appropriately...
             self.doe = self.deputy.oe - self.chief.oe
             self.dee = self.deputy.ee - self.chief.ee
