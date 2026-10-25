@@ -9,6 +9,8 @@ import sys
 import numpy as np
 from numpy import linalg as la
 
+from mathematics import mathematicsUtils as uMath
+
 COND_LIM = 1.0 / sys.float_info.epsilon
 
 class ExtendedKalmanFilter:
@@ -199,7 +201,7 @@ def propagateCov(P, Phi, Q):
         propagated state covariance
 
     """
-    return symmetrize((abaT(Phi, P)) + Q)
+    return symmetrize((uMath.abaT(Phi, P)) + Q)
 # =============================================================================
 #     n = P.shape[0]
 #     W = la.cholesky(P)
@@ -252,7 +254,7 @@ def measurementUpdate(x, P, n, y, H, R, beta = 0):
         # NIS
         nis = normInvnSqr(y, S)
         # Underweighting factor
-        HPHT = abaT(H, P)
+        HPHT = uMath.abaT(H, P)
         betaHPHT = beta*HPHT
         if beta > 0:
             S = S + betaHPHT
@@ -262,7 +264,7 @@ def measurementUpdate(x, P, n, y, H, R, beta = 0):
         xUpd = x + np.matmul(K, y)
         # Covariance Update
         I_KH = np.eye(n) - np.matmul(K,H)
-        PUpd = abaT(I_KH, P) + abaT(K, R + betaHPHT)
+        PUpd = uMath.abaT(I_KH, P) + uMath.abaT(K, R + betaHPHT)
         PUpd = symmetrize(PUpd)
 # =============================================================================
 #         # Alternative UDU approach
@@ -278,13 +280,10 @@ def measurementUpdate(x, P, n, y, H, R, beta = 0):
 # =============================================================================
         return xUpd, PUpd, nis
     else:
-        return x, P, 0.0
-    
-def abaT(a, b):
-    return np.matmul(a,np.matmul(b,np.transpose(a)))   
+        return x, P, 0.0  
         
 def residualCov(P, H, R):
-    return abaT(H, P) + R
+    return uMath.abaT(H, P) + R
         
 def kalmanGain(P, H, S):
     return np.matmul(P,np.matmul(np.transpose(H),la.inv(S)))

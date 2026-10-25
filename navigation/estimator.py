@@ -12,6 +12,7 @@ from kinematics import kinematicsUtils as uKin
 from dynamics import ephemerides as eph
 import measurements
 import kalmanFilter as kf
+from mathematics import mathematicsUtils as uMath
 
         
 class DualInertialFilter:
@@ -148,8 +149,8 @@ class DualInertialFilter:
         
     def propagate(self, dt, aCtrlInEci):        
         # Compute process nosie
-        deputyProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
-        chiefProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
+        deputyProcNoiseInr = ncvProcessNoise(dt, uMath.abaT(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
+        chiefProcNoiseInr = ncvProcessNoise(dt, uMath.abaT(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
         stateProcNoiseInr = np.block([
                                      [deputyProcNoiseInr, np.zeros((6, 6))],
                                      [np.zeros((6, 6))  , chiefProcNoiseInr]])
@@ -393,14 +394,14 @@ class InertialRelativeFilter:
         
     def propagate(self, dt, aCtrlInEci):        
         # Compute process nosie
-        deputyProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
+        deputyProcNoiseInr = ncvProcessNoise(dt, uMath.abaT(np.transpose(self.dcmInr2DepRic),self.deputyProcNoiseInRic))
         if self.coupled:
-            chiefProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
+            chiefProcNoiseInr = ncvProcessNoise(dt, uMath.abaT(np.transpose(self.dcmInr2Ric),self.chiefProcNoiseInRic))
             stateProcNoiseInr = np.block([
                                          [deputyProcNoiseInr, deputyProcNoiseInr                    ],
                                          [deputyProcNoiseInr, deputyProcNoiseInr + chiefProcNoiseInr]])
         else:
-            relProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2DepRic),self.relProcNoiseInRic))
+            relProcNoiseInr = ncvProcessNoise(dt, uMath.abaT(np.transpose(self.dcmInr2DepRic),self.relProcNoiseInRic))
             stateProcNoiseInr = np.block([
                                          [deputyProcNoiseInr, np.zeros((6, 6))],
                                          [np.zeros((6, 6)),   relProcNoiseInr ]])

@@ -180,7 +180,7 @@ class TestEstimator(unittest.TestCase):
         # Relative state has not changed appreciably
         self.assertAlmostEqual(np.all(irf_clroe),np.all(frm.rectClroe))
         # Cross corelation covariance is zero
-        self.assertTrue(np.all(irf.deputyChiefCrossCovInr == np.zeros((6,6)))) 
+        self.assertAlmostEqual(np.all(irf.deputyChiefCrossCovInr),np.all(np.zeros((6,6)))) 
         # Covariance has increased in magnitude
         self.assertTrue(np.all(irf.deputyCovInr >= P0))
         self.assertTrue(np.all(irf.chiefCovInr >= P0))

@@ -33,7 +33,7 @@ def scenario(sim, dvTbl, acc = None):
             # Propagate to burn epoch
             sim.run(dvTbl.t[ii])
             # Compute burn in Eci
-            dvEci = dvTbl.convertToEci(sim.frm.dcmInr2Ric)
+            dvEci = dvTbl.asInr(0, sim.frm.dcmInr2Ric)
             # Execute burn
             if acc == None:
                 sim.impulsiveBurn(dvEci, sv = "Chief", enablePert = False)
