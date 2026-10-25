@@ -711,9 +711,12 @@ def ConsistencyStats_Plot(mcStats, path, tag):
     plt.grid()
     
     ax2 = plt.subplot(2,1,2)
-    ax2.plot(mcStats['time'], mcStats['avgNrmEstErrSqr'])[0]
+    ax2.plot(mcStats['time'], mcStats['avgRsoNrmEstErrSqr'], label = 'Chief')[0]
+    ax2.plot(mcStats['time'], mcStats['avgVehNrmEstErrSqr'], label = 'Deputy')[0]
+    ax2.plot(mcStats['time'], mcStats['avgRelNrmEstErrSqr'], label = 'Relative')[0]
     ax2.set_xlabel("Time [s]")
     ax2.set_ylabel("NEES")
+    ax2.legend()
     plt.title('Average Normalized Estimation Error Squared')
     plt.grid()
        
@@ -1062,7 +1065,7 @@ def ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag):
     
     fig_consistency_plt = plt.figure()
     
-    ax1 = plt.subplot(2,1,1)
+    ax1 = plt.subplot(4,1,1)
     for ii in range(len(mcStats)):
         ax1.plot(mcStats[ii]['time'], mcStats[ii]['avgNrmInvnSqr'], label=mcStr[ii])[0]
     ax1.set_xlabel("Time [s]")
@@ -1071,13 +1074,29 @@ def ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.title('Average Normalized Innovations Squared')
     plt.grid()
     
-    ax2 = plt.subplot(2,1,2)
+    ax2 = plt.subplot(4,1,2)
     for ii in range(len(mcStats)):
-        ax2.plot(mcStats[ii]['time'], mcStats[ii]['avgNrmEstErrSqr'], label=mcStr[ii])[0]
+        ax2.plot(mcStats[ii]['time'], mcStats[ii]['avgRsoNrmEstErrSqr'], label=mcStr[ii])[0]
     ax2.set_xlabel("Time [s]")
-    ax2.set_ylabel("NEES")
+    ax2.set_ylabel("Chief NEES")
     ax2.legend()
     plt.title('Average Normalized Estimation Error Squared')
+    plt.grid()
+    
+    ax3 = plt.subplot(4,1,3)
+    for ii in range(len(mcStats)):
+        ax3.plot(mcStats[ii]['time'], mcStats[ii]['avgVehNrmEstErrSqr'], label=mcStr[ii])[0]
+    ax3.set_xlabel("Time [s]")
+    ax3.set_ylabel("Deputy NEES")
+    ax3.legend()
+    plt.grid()
+    
+    ax4 = plt.subplot(4,1,4)
+    for ii in range(len(mcStats)):
+        ax4.plot(mcStats[ii]['time'], mcStats[ii]['avgRelNrmEstErrSqr'], label=mcStr[ii])[0]
+    ax4.set_xlabel("Time [s]")
+    ax4.set_ylabel("Relative NEES")
+    ax4.legend()
     plt.grid()
        
     fig_consistency_plt.tight_layout()

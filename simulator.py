@@ -307,12 +307,16 @@ class Simulator():
             self.log.fswNavCurvClroeErr[self.log.i]      = self.log.curvClroe[self.log.i] - self.log.fswNavCurvClroe[self.log.i]
             # Filter Consistency Metrics
             self.log.fswNavMeasNrmInvnSqr[self.log.i] = self.fsw.nav.fltr.nis
-            if "DualInertial" in self.fsw.nav.fltrType:
-                x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.chief.r, self.frm.chief.v])
-            elif "InertialRelative" in self.fsw.nav.fltrType:
-                x = np.concatenate([self.frm.deputy.r, self.frm.deputy.v, self.frm.relPosInr, self.frm.relVelInr])
-            dx = x - self.fsw.nav.fltr.x
-            self.log.fswNavFltrNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(dx, self.fsw.nav.fltr.P)
+            self.log.fswNavVehNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(
+                np.concatenate([self.log.fswNavPosVehEciErr[self.log.i], self.log.fswNavVelVehEciErr[self.log.i]]), 
+                self.fsw.nav.fltr.deputyCovInr)
+            self.log.fswNavRsoNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(
+                np.concatenate([self.log.fswNavPosRsoEciErr[self.log.i], self.log.fswNavVelRsoEciErr[self.log.i]]), 
+                self.fsw.nav.fltr.chiefCovInr)
+            self.log.fswNavRelNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(
+                np.concatenate([self.log.fswNavRelPosRectRicErr[self.log.i], self.log.fswNavRelVelRectRicErr[self.log.i]]), 
+                self.fsw.nav.fltr.relCovRectRic)
+            
                 
     
     def terminate(self):

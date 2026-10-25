@@ -22,7 +22,9 @@ def computeMcStats(mcLog, numSims):
     mcVelRsoErr = np.zeros((3,sim_len,numSims))
     mcOeRsoErr = np.zeros((6,sim_len,numSims))
     mcNrmInvnSqr = np.zeros((sim_len,numSims))
-    mcNrmEstErrSqr = np.zeros((sim_len,numSims))
+    mcRelNrmEstErrSqr = np.zeros((sim_len,numSims))
+    mcVehNrmEstErrSqr = np.zeros((sim_len,numSims))
+    mcRsoNrmEstErrSqr = np.zeros((sim_len,numSims))
     for simNum in range(numSims):
         mcRelPosRectRicErr[:,:,simNum] = mcLog[simNum].fswNavRelPosRectRicErr.to_numpy()
         mcRelVelRectRicErr[:,:,simNum] = mcLog[simNum].fswNavRelVelRectRicErr.to_numpy()
@@ -36,7 +38,9 @@ def computeMcStats(mcLog, numSims):
         mcVelRsoErr[:,:,simNum] = mcLog[simNum].fswNavVelRsoEciErr.to_numpy()
         mcOeRsoErr[:,:,simNum] = mcLog[simNum].oeRso.to_numpy() - mcLog[simNum].fswNavOeRso.to_numpy()
         mcNrmInvnSqr[:,simNum] = mcLog[simNum].fswNavMeasNrmInvnSqr.to_numpy()
-        mcNrmEstErrSqr[:,simNum] = mcLog[simNum].fswNavFltrNrmEstErrSqr.to_numpy()
+        mcRelNrmEstErrSqr[:,simNum] = mcLog[simNum].fswNavRelNrmEstErrSqr.to_numpy()
+        mcVehNrmEstErrSqr[:,simNum] = mcLog[simNum].fswNavVehNrmEstErrSqr.to_numpy()
+        mcRsoNrmEstErrSqr[:,simNum] = mcLog[simNum].fswNavRsoNrmEstErrSqr.to_numpy()
     # Wrap angles to [-pi, pi)
     mcDoeErr[2:6,:,:]   = (mcDoeErr[2:6,:,:]   + np.pi) % (2 * np.pi) - np.pi
     mcOeVehErr[2:6,:,:] = (mcOeVehErr[2:6,:,:] + np.pi) % (2 * np.pi) - np.pi
@@ -66,7 +70,9 @@ def computeMcStats(mcLog, numSims):
     velRsoRMSErr = rootMeanSum(mcVelRsoErr)
     # Consistency
     avgNrmInvnSqr = np.mean(mcNrmInvnSqr, axis = 1)
-    avgNrmEstErrSqr = np.mean(mcNrmEstErrSqr, axis = 1)
+    avgRelNrmEstErrSqr = np.mean(mcRelNrmEstErrSqr, axis = 1)
+    avgVehNrmEstErrSqr = np.mean(mcVehNrmEstErrSqr, axis = 1)
+    avgRsoNrmEstErrSqr = np.mean(mcRsoNrmEstErrSqr, axis = 1)
 
     print("MC: Packing Statistics ...")
     mcStats = {
@@ -91,7 +97,9 @@ def computeMcStats(mcLog, numSims):
         "posRsoRMSErr": posRsoRMSErr,
         "velRsoRMSErr": velRsoRMSErr,
         "avgNrmInvnSqr": avgNrmInvnSqr,
-        "avgNrmEstErrSqr": avgNrmEstErrSqr
+        "avgRelNrmEstErrSqr": avgRelNrmEstErrSqr,
+        "avgVehNrmEstErrSqr": avgVehNrmEstErrSqr,
+        "avgRsoNrmEstErrSqr": avgRsoNrmEstErrSqr
     }
     
     return mcStats

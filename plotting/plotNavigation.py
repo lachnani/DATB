@@ -805,9 +805,12 @@ def Consistency_Plot(log, path, tag):
     plt.grid()
     
     ax2 = plt.subplot(2,1,2)
-    ax2.plot(log.time.loc['simTime',:], log.fswNavFltrNrmEstErrSqr.loc['NEES',:])[0]
+    ax2.plot(log.time.loc['simTime',:], log.fswNavRsoNrmEstErrSqr.loc['NEES',:], label='Chief')[0]
+    ax2.plot(log.time.loc['simTime',:], log.fswNavVehNrmEstErrSqr.loc['NEES',:], label='Deputy')[0]
+    ax2.plot(log.time.loc['simTime',:], log.fswNavRelNrmEstErrSqr.loc['NEES',:], label='Relative')[0]
     ax2.set_xlabel("Time [s]")
     ax2.set_ylabel("NEES")
+    ax2.legend()
     plt.title('Normalized Estimation Error Squared')
     plt.grid()
        

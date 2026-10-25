@@ -146,7 +146,8 @@ print("-----------------------------------------------------")
 print("MC: Saving Data ...")
 log_time = datetime.now()
 log_time_str = dts = log_time.strftime("%Y%h%d_%H%M")
-log_folder = cfg_file + '_' \
+log_folder = 'kfComp' + '_' \
+           + cfg_file + '_' \
            + scr_file + '_' \
            + log_time_str
 log_base_path = os.path.join("log", log_folder)
