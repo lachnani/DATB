@@ -41,14 +41,14 @@ def scenario(sim, wptTbl, accVeh = None, stm = None,
     # Immediately burn to target the first waypoint
     dvEci = np.matmul(np.transpose(sim.frm.dcmInr2Ric), burnTblDv[:,0])
     sim.impulsiveBurn(dvEci)
-    print(f"SCR: Executing [{1000*burnTblDv[0,0]:.4f},{1000*burnTblDv[2,0]:.4f},{1000*burnTblDv[2,0]:.4f}] m/s RIC DV to target waypoint 1")
+    print(f"SCR: Executing [{1000*burnTblDv[0,0]:.4f},{1000*burnTblDv[1,0]:.4f},{1000*burnTblDv[2,0]:.4f}] m/s RIC DV to target waypoint 1")
     
     # Target the subsequent waypoints
     for wpt in range(wptTbl.numWpts-1):
         if wptTbl.t[wpt+1] < sim.settings["simDuration"]:
             if accVeh == None:
                 # Execute Implulsive burn
-                sim.run(wptTbl.t[wpt])
+                sim.runUntil(wptTbl.t[wpt])
                 dvRic = wg.wptBurn(stm.Phi(sim.frm.t,wptTbl.t[wpt+1]), 
                                 sim.frm.relPosRectRic, 
                                 sim.frm.relVelRectRic, 
@@ -60,7 +60,7 @@ def scenario(sim, wptTbl, accVeh = None, stm = None,
                 dvRicNom = burnTblDv[:,wpt+1]
                 dvTimeNom = np.linalg.norm(dvRicNom)/accVeh
                 # Simulate to burn decision time
-                sim.run(wptTbl.t[wpt] - dvTimeNom*burnComputeTimeScale/2)
+                sim.runUntil(wptTbl.t[wpt] - dvTimeNom*burnComputeTimeScale/2)
                 # Propagate current states to waypoint time
                 rWpt, vWpt = stm.prop(sim.frm.t, 
                                 sim.frm.relPosRectRic, 
@@ -75,7 +75,7 @@ def scenario(sim, wptTbl, accVeh = None, stm = None,
                 dvMag = np.linalg.norm(dvRic)
                 dvTime = dvMag/accVeh
                 # Simulate to burn start time
-                sim.run(wptTbl.t[wpt] - dvTime/2)
+                sim.runUntil(wptTbl.t[wpt] - dvTime/2)
                 # Execute Burn
                 dvCyc = np.ceil(dvTime/sim.settings["dynamics"]["dt"])
                 dvAcc = dvMag/dvCyc*sim.settings["dynamics"]["dt"]
@@ -85,11 +85,11 @@ def scenario(sim, wptTbl, accVeh = None, stm = None,
                 for ii in range(dvCyc):
                     accEciDir = np.matmul(np.transpose(sim.frm.dcmInr2Ric), accRicDir)
                     sim.frm.deputy.aCtrlInEci = accEciDir * dvAcc
-                    sim.run(sim.settings["dynamics"]["dt"])
+                    sim.runFor(sim.settings["dynamics"]["dt"])
                 sim.frm.deputy.aCtrlInEci = np.zeros((3,))
             print(f"SCR: Executing [{1000*dvRic[0]:.4f},{1000*dvRic[1]:.4f},{1000*dvRic[2]:.4f}] m/s RIC DV to target waypoint {wpt+2}")
     
-    sim.run(sim.settings["simDuration"])
+    sim.runUntil(sim.settings["simDuration"])
     sim.terminate()
     
 

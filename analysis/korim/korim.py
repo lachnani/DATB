@@ -164,7 +164,7 @@ for simNum in range(cfg["numSims"]):
         initConds[simNum,:] = sim.frm.rectClroe
     
     # Run the Sim
-    sim.run(simDuration)
+    sim.runUntil(simDuration)
     
     # Log OPSA truth data
     tKovBreachTruth[simNum] = sim.log.tKovBreach
@@ -318,7 +318,7 @@ for othNum in range(numOth):
             sim = simulator.Simulator(settings_fp, parser.parseFormation(frm_sim), 0, quiet = True)
             
             # Run the Sim
-            sim.run(simDuration)
+            sim.runUntil(simDuration)
             
             # Plot the result
             iPlot = sim.log.relPosCurvRic.loc['I',0:sim.log.i].to_numpy()

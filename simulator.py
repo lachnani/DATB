@@ -139,7 +139,7 @@ class Simulator():
             self.terminate()
         
     
-    def run(self, t):
+    def runUntil(self, t):
         """
         Runs simulation to given time
 
@@ -203,6 +203,9 @@ class Simulator():
                 self.updateLog()
             
             self.checkStatus()
+            
+    def runFor(self, t):
+        self.runUntil(self.t + t)
                 
     def updateLog(self):
         

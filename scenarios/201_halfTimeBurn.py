@@ -28,17 +28,17 @@ def scenario(sim):
     idleTime = sim.settings["simDuration"]/2 - 50
     
     print("SCR: Idling for {} seconds".format(idleTime))
-    sim.run(idleTime)
+    sim.runUntil(idleTime)
     
     print("SCR: Performing 1 m/s RSO In-Track Burn with 0.01 m/s^2")
     accEci = np.matmul(np.transpose(sim.frm.dcmInr2Ric), np.array([0,0.00001,0]))
     sim.frm.chief.aCtrlInEci = accEci # In km/s^2
-    sim.run(idleTime + 100)
+    sim.runUntil(idleTime + 100)
     print("SCR: RSO Burn Complete")
     
     print("SCR: Idling for {} seconds".format(idleTime))
     sim.frm.chief.aCtrlInEci = np.zeros((3,))
-    sim.run(sim.settings["simDuration"])
+    sim.runUntil(sim.settings["simDuration"])
     
     sim.terminate()
     

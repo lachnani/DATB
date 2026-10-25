@@ -70,7 +70,7 @@ def scenario(sim, relPosRic = None, rptFreq = None, dtStart = None, stm = None):
     print(f"SCR: Executing [{1000*dvRic[0]:.4f},{1000*dvRic[1]:.4f},{1000*dvRic[2]:.4f}] m/s RIC DV to target waypoint 1")
     
     for wpt in range(numWpts-1):
-        sim.run(wptTbl.t[wpt])
+        sim.runUntil(wptTbl.t[wpt])
         dvRic = wg.wptBurn(stm.Phi(sim.frm.t,wptTbl.t[wpt+1]), 
                         sim.frm.relPosRectRic, 
                         sim.frm.relVelRectRic, 
@@ -79,7 +79,7 @@ def scenario(sim, relPosRic = None, rptFreq = None, dtStart = None, stm = None):
         sim.impulsiveBurn(dvEci)
         print(f"SCR: Executing [{1000*dvRic[0]:.4f},{1000*dvRic[1]:.4f},{1000*dvRic[2]:.4f}] m/s RIC DV to target waypoint {wpt+2}")
     
-    sim.run(sim.settings["simDuration"])
+    sim.runUntil(sim.settings["simDuration"])
     sim.terminate()
     
 

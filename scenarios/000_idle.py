@@ -21,7 +21,7 @@ def scenario(sim):
     """
     print("SCR: Running idle for {} seconds".format(sim.settings["simDuration"]))
     
-    sim.run(sim.settings["simDuration"])
+    sim.runUntil(sim.settings["simDuration"])
     
     sim.terminate()
     

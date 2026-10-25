@@ -5,8 +5,7 @@ Created on Wed Mar 19 11:09:44 2025
 @author: Hakim Lachnani
 """
 
-import numpy as np
-import simulator
+from mathematics import mathematicsUtils as uMath
 
 def scenario(sim, dvTbl, acc = None):
     """
@@ -27,11 +26,12 @@ def scenario(sim, dvTbl, acc = None):
     """
     print("SCR: Running chiefDv for {} seconds".format(sim.settings["simDuration"]))
     
-    # Target the subsequent waypoints
+    # Execute DV table
     for ii in range(dvTbl.t):
         if dvTbl.t[ii] < sim.settings["simDuration"]:
+            print(f"SCR: Executing [{1000*dvTbl.dv[0,ii]:.4f},{1000*dvTbl.dv[1,ii]:.4f},{1000*dvTbl.dv[2,ii]:.4f}] m/s {dvTbl.frame[ii]} DV")
             # Propagate to burn epoch
-            sim.run(dvTbl.t[ii])
+            sim.runUntil(dvTbl.t[ii])
             # Compute burn in Eci
             dvEci = dvTbl.asInr(0, sim.frm.dcmInr2Ric)
             # Execute burn
@@ -39,11 +39,19 @@ def scenario(sim, dvTbl, acc = None):
                 sim.impulsiveBurn(dvEci, sv = "Chief", enablePert = False)
             else:
                 # Scale the burn and acceleration to meet the DV
-                dvAcc = acc
-                accEciDir = dvEci/np.linalg.norm(dvEci)
-                sim.frm.deputy.aCtrlInEci = accEciDir * dvAcc
+                dvEciDir, dvMag = uMath.unitVec(dvEci)
+                dvDur = dvMag/acc
+                dvCyc = round(dvDur/sim.settings["dynamics"]["dt"])
+                if dvCyc == 0:
+                    # Acceleration is too large, execute impulsively
+                    sim.impulsiveBurn(dvEci, sv = "Chief", enablePert = False)
+                else:
+                    dvDur = dvCyc * sim.settings["dynamics"]["dt"]
+                    dvAcc = dvMag/dvDur
+                    sim.frm.deputy.aCtrlInEci = dvEciDir * dvAcc
+                    sim.runFor(dvDur)
     
-    sim.run(sim.settings["simDuration"])
+    sim.runUntil(sim.settings["simDuration"])
     sim.terminate()
     
 
