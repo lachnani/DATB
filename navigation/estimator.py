@@ -400,7 +400,7 @@ class InertialRelativeFilter:
                                          [deputyProcNoiseInr, deputyProcNoiseInr                    ],
                                          [deputyProcNoiseInr, deputyProcNoiseInr + chiefProcNoiseInr]])
         else:
-            relProcNoiseInr = ncvProcessNoise(dt, np.matmul(np.transpose(self.dcmInr2DepRic),self.relProcNoiseInRic))
+            relProcNoiseInr = ncvProcessNoise(dt, kf.abaT(np.transpose(self.dcmInr2DepRic),self.relProcNoiseInRic))
             stateProcNoiseInr = np.block([
                                          [deputyProcNoiseInr, np.zeros((6, 6))],
                                          [np.zeros((6, 6)),   relProcNoiseInr ]])

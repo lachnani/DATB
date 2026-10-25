@@ -36,7 +36,9 @@ Hard-coded inputs
 
 testFilterFormulations = [
     "DualInertial",
-    "InertialRelative"
+    "InertialRelative",
+    "ChiefDecoupledDualInertial",
+    "RelativeDecoupledInertialRelative"
     ]
 
 print("-----------------------------------------------------")
@@ -138,7 +140,6 @@ elapsed_time = end_time - start_time
 print("MC: Simulations completed in %.1f seconds" % elapsed_time)
 print("MC: Average Realtime factor: %.2f" % (settings["simDuration"]*numSims*len(testFilterFormulations)/elapsed_time))
 print("-----------------------------------------------------")
-
 
 
 """ Save Log """
