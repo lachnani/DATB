@@ -735,6 +735,7 @@ def RectRicStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.suptitle(r"Rectilinear RIC Root Mean Square Errors")
     
     ax = plt.subplot(2,1,1)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], mcStats[ii]['relPosRectRicRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -744,6 +745,7 @@ def RectRicStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(2,1,2)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], mcStats[ii]['relVelRectRicRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -767,6 +769,7 @@ def CurvRicStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.suptitle(r"Curvilinear RIC Root Mean Square Errors")
     
     ax = plt.subplot(2,1,1)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], mcStats[ii]['relPosCurvRicRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -776,6 +779,7 @@ def CurvRicStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(2,1,2)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], mcStats[ii]['relVelCurvRicRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -799,6 +803,7 @@ def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.suptitle(r"Differential Keplerian Orbit Element 3$\sigma$ Errors")
     
     ax = plt.subplot(3,2,1)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['doeErrStd'][0,:], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -808,6 +813,7 @@ def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,2)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['doeErrStd'][1,:], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -817,6 +823,7 @@ def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,3)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['doeErrStd'][2,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -826,6 +833,7 @@ def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,4)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['doeErrStd'][3,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -835,6 +843,7 @@ def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,5)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['doeErrStd'][4,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -844,6 +853,7 @@ def DoeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,6)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['doeErrStd'][5,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -867,6 +877,7 @@ def ChiefInrStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.suptitle(r"Chief Inertial Root Mean Square Errors")
     
     ax = plt.subplot(2,1,1)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], mcStats[ii]['posRsoRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -876,6 +887,7 @@ def ChiefInrStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(2,1,2)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], mcStats[ii]['posRsoRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -899,6 +911,7 @@ def ChiefOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.suptitle(r"Chief Orbit Element 3$\sigma$ Errors")
     
     ax = plt.subplot(3,2,1)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['oeRsoErrStd'][0,:], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -908,6 +921,7 @@ def ChiefOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,2)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['oeRsoErrStd'][1,:], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -917,6 +931,7 @@ def ChiefOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,3)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeRsoErrStd'][2,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -926,6 +941,7 @@ def ChiefOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,4)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeRsoErrStd'][3,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -935,6 +951,7 @@ def ChiefOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,5)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeRsoErrStd'][4,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -944,6 +961,7 @@ def ChiefOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,6)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeRsoErrStd'][5,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -967,6 +985,7 @@ def DeputyInrStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.suptitle(r"Deputy Inertial Root Mean Square Errors")
     
     ax = plt.subplot(2,1,1)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], mcStats[ii]['posVehRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -976,6 +995,7 @@ def DeputyInrStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(2,1,2)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], mcStats[ii]['posVehRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -999,6 +1019,7 @@ def DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.suptitle(r"Deputy Orbit Element 3$\sigma$ Errors")
     
     ax = plt.subplot(3,2,1)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['oeVehErrStd'][0,:], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -1008,6 +1029,7 @@ def DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,2)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*mcStats[ii]['oeVehErrStd'][1,:], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -1017,6 +1039,7 @@ def DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,3)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeVehErrStd'][2,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -1026,6 +1049,7 @@ def DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,4)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeVehErrStd'][3,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -1035,6 +1059,7 @@ def DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,5)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeVehErrStd'][4,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -1044,6 +1069,7 @@ def DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax = plt.subplot(3,2,6)
+    # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax.plot(mcStats[ii]['time'], 3*np.rad2deg(mcStats[ii]['oeVehErrStd'][5,:]), label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
@@ -1066,6 +1092,7 @@ def ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag):
     fig_consistency_plt = plt.figure()
     
     ax1 = plt.subplot(4,1,1)
+    # ax1.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax1.plot(mcStats[ii]['time'], mcStats[ii]['avgNrmInvnSqr'], label=mcStr[ii])[0]
     ax1.set_xlabel("Time [s]")
@@ -1075,6 +1102,7 @@ def ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax2 = plt.subplot(4,1,2)
+    # ax2.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax2.plot(mcStats[ii]['time'], mcStats[ii]['avgRsoNrmEstErrSqr'], label=mcStr[ii])[0]
     ax2.set_xlabel("Time [s]")
@@ -1084,6 +1112,7 @@ def ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax3 = plt.subplot(4,1,3)
+    # ax3.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax3.plot(mcStats[ii]['time'], mcStats[ii]['avgVehNrmEstErrSqr'], label=mcStr[ii])[0]
     ax3.set_xlabel("Time [s]")
@@ -1092,6 +1121,7 @@ def ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag):
     plt.grid()
     
     ax4 = plt.subplot(4,1,4)
+    # ax4.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
         ax4.plot(mcStats[ii]['time'], mcStats[ii]['avgRelNrmEstErrSqr'], label=mcStr[ii])[0]
     ax4.set_xlabel("Time [s]")

@@ -111,3 +111,8 @@ fsw:
     status: False
   control: 
     status: False
+dvTbl:
+  t: 64800
+  dv: [0.0, 0.0, 0.010]
+  frame: "RIC"
+acc: 0.1

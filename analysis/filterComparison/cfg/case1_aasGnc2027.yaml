@@ -1,0 +1,118 @@
+---
+name: "case1_aasGnc2027"
+numSims: 1000
+sim:
+  dynamics:
+    status: True
+    dt: 5.0
+    kov:
+      type: "PRISM"
+      R: 1
+      I: 1
+      C: 1
+  simDuration: 86400
+  log: 
+    status: True
+    dt: 30.0
+  visualizer: 
+    plots: True
+    animations: False
+  fsw: 
+    status: True
+    dt: 10.0
+    bufferDepth: 100
+    measDt: 60.0
+    firstMeasT: 21600.0
+    initErr: True
+  formation:
+    relStates: True
+    environments: True
+    measurements: True
+    orbit:
+      environments: True
+      elements: True
+init:
+  epoch: 793687467.009 
+  chief:
+    state:
+      a: 42000.0
+      e: 0.003
+      i: 2.000
+      RAAN: 0.000
+      argP: 0.000
+      M: 0.000
+    stateType: "STATE_KEPEL"
+  deputy: 0 
+  relState:
+    state:
+      A0: 15.0
+      alpha: 0.0
+      xOff: 0.0
+      yOff: 0.0
+      B0: 0.0
+      beta: 0.0
+  frmType: "FORMATION_CHIEF_ANCHOR"
+  relStateType: "RELSTATE_RECT_CLROE"
+  pert:
+    jnum: 6
+    solarGrav: True
+    lunarGrav: True
+    SRP: False
+    drag: False
+fsw:
+  navigation: 
+    status: True
+    deputyProcNoise:
+      R: 3.0e-13
+      I: 3.0e-13
+      C: 3.0e-13
+    chiefProcNoise:
+      R: 3.0e-13
+      I: 3.0e-13
+      C: 3.0e-13
+    relProcNoise:
+      R: 6.0e-13
+      I: 6.0e-13
+      C: 6.0e-13
+    dvVar:
+      sf: 0.01
+      q: 0.0001
+      p: 0.0001
+    measCov:
+      az: 2.0e-6
+      el: 2.0e-6
+      rng: 2.0e-4
+      rngRate: 2.0e-4
+    deputyCov:
+      R: 0.0009
+      I: 0.0009
+      C: 0.0009
+      Rv: 1.3e-9
+      Iv: 1.3e-9
+      Cv: 1.3e-9
+    chiefCov:
+      R: 0.0009
+      I: 0.0009
+      C: 0.0009
+      Rv: 1.3e-9
+      Iv: 1.3e-9
+      Cv: 1.3e-9
+    underweight:
+      alpha: 1.0
+      beta: 0.2
+    filterType: "DualInertial"
+    pert:
+      jnum: 2
+      solarGrav: False
+      lunarGrav: False
+      SRP: False
+      drag: False
+  guidance:
+    status: False
+  control: 
+    status: False
+dvTbl:
+  t: 64800
+  dv: [0.0, 0.0, 0.010]
+  frame: "RIC"
+acc: 0.1

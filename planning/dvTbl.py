@@ -26,10 +26,10 @@ class deltaVTable():
             self.dv = self.dv[:,1:]
             self.frame = self.frame[1:]
         
-    def appendWpts(self, dvTimes, dvVectors, dvFrames):
+    def appendDvs(self, dvTimes, dvVectors, dvFrames):
         self.t = np.append(self.t, dvTimes)
         self.dv = np.append(self.dv, dvVectors, axis=1)
-        self.frame = self.frame.append(dvFrames)
+        self.frame.append(dvFrames)
         self.numDv += dvTimes.size
         
     def truncate(self, numDv):

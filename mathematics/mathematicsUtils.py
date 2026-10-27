@@ -23,3 +23,6 @@ def vecMag(v):
 def unitVec(v):
     vMag = vecMag(v)
     return v/vMag, vMag
+
+def zeroVec(n = 3):
+    return np.zeros(n,)

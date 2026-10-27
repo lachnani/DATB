@@ -23,6 +23,7 @@ import simulator
 import parser
 from plotting import plotMonteCarlo as pltMC
 import kfMcUtils
+from planning import dvTbl
 
         
 """ 
@@ -67,6 +68,11 @@ if 'wptTbl' in scrArguments:
     wptTbl, frm = parser.parseWptTbl(wptGen, frm)
     if settings["simDuration"] < wptTbl.t[-1]:
         settings["simDuration"] = wptTbl.t[-1]
+        
+if 'dvTbl' in scrArguments:
+    dvt = dvTbl.deltaVTable()
+    dvt.appendDvs(np.array(cfg['dvTbl']['t']),np.array(cfg['dvTbl']['dv']).reshape(3, 1),cfg['dvTbl']['frame'])
+    acc = cfg['acc']
 
 # Define logs
 mcLog = []
@@ -87,6 +93,8 @@ for simNum in range(numSims):
     # Run the Sim
     if 'wptTbl' in scrArguments:
         scr.scenario(sim_case, wptTbl)
+    elif 'dvTbl' in scrArguments:
+        scr.scenario(sim_case, dvt, acc)
     else:
         scr.scenario(sim_case)
     

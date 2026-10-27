@@ -27,14 +27,14 @@ def scenario(sim, dvTbl, acc = None):
     print("SCR: Running chiefDv for {} seconds".format(sim.settings["simDuration"]))
     
     # Execute DV table
-    for ii in range(dvTbl.t):
+    for ii in range(dvTbl.numDv):
         if dvTbl.t[ii] < sim.settings["simDuration"]:
-            print(f"SCR: Executing [{1000*dvTbl.dv[0,ii]:.4f},{1000*dvTbl.dv[1,ii]:.4f},{1000*dvTbl.dv[2,ii]:.4f}] m/s {dvTbl.frame[ii]} DV")
             # Propagate to burn epoch
             sim.runUntil(dvTbl.t[ii])
             # Compute burn in Eci
-            dvEci = dvTbl.asInr(0, sim.frm.dcmInr2Ric)
+            dvEci = dvTbl.asInr(ii, sim.frm.dcmInr2Ric)
             # Execute burn
+            print(f"SCR: Executing [{1000*dvTbl.dv[0,ii]:.4f},{1000*dvTbl.dv[1,ii]:.4f},{1000*dvTbl.dv[2,ii]:.4f}] m/s {dvTbl.frame[ii]} DV")
             if acc == None:
                 sim.impulsiveBurn(dvEci, sv = "Chief", enablePert = False)
             else:
@@ -50,6 +50,7 @@ def scenario(sim, dvTbl, acc = None):
                     dvAcc = dvMag/dvDur
                     sim.frm.deputy.aCtrlInEci = dvEciDir * dvAcc
                     sim.runFor(dvDur)
+                    sim.frm.deputy.aCtrlInEci = uMath.zeroVec()
     
     sim.runUntil(sim.settings["simDuration"])
     sim.terminate()

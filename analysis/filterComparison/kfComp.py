@@ -24,6 +24,7 @@ import parser
 from plotting import plotMonteCarlo as pltMC
 from navigation import estimator
 import kfMcUtils
+from planning import dvTbl
 
 """ 
 Runs Kalman Filter Monte Carlo Comparison Simulations
@@ -79,6 +80,11 @@ if 'wptTbl' in scrArguments:
     if settings["simDuration"] < wptTbl.t[-1]:
         settings["simDuration"] = wptTbl.t[-1]
         
+if 'dvTbl' in scrArguments:
+    dvt = dvTbl.deltaVTable()
+    dvt.appendDvs(np.array(cfg['dvTbl']['t']),np.array(cfg['dvTbl']['dv']).reshape(3, 1),cfg['dvTbl']['frame'])
+    acc = cfg['acc']
+        
 # Generate random input
 print("MC: Generating Inputs ...")
 # Initial Covariance
@@ -125,6 +131,8 @@ for fltrFrm in testFilterFormulations:
         # Run the Sim
         if 'wptTbl' in scrArguments:
             scr.scenario(sim_case, wptTbl)
+        elif 'dvTbl' in scrArguments:
+            scr.scenario(sim_case, dvt, acc)
         else:
             scr.scenario(sim_case)
         
