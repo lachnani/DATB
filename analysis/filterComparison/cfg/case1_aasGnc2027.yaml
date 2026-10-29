@@ -1,6 +1,6 @@
 ---
 name: "case1_aasGnc2027"
-numSims: 1000
+numSims: 100
 sim:
   dynamics:
     status: True
