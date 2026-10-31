@@ -889,7 +889,7 @@ def ChiefInrStatsComp_Plot(mcStats, mcStr, path, tag):
     ax = plt.subplot(2,1,2)
     # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
-        ax.plot(mcStats[ii]['time'], mcStats[ii]['posRsoRMSErr'], label=mcStr[ii])[0]
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['velRsoRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Velocity [km/s]")
     ax.legend()
@@ -997,7 +997,7 @@ def DeputyInrStatsComp_Plot(mcStats, mcStr, path, tag):
     ax = plt.subplot(2,1,2)
     # ax.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
     for ii in range(len(mcStats)):
-        ax.plot(mcStats[ii]['time'], mcStats[ii]['posVehRMSErr'], label=mcStr[ii])[0]
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['velVehRMSErr'], label=mcStr[ii])[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Velocity [km/s]")
     ax.legend()
