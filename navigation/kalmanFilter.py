@@ -297,17 +297,25 @@ def normEstErrSqr(dx, P):
 def normInvnSqr(nu, S):
     return np.matmul(np.transpose(nu),np.matmul(la.inv(S),nu))
 
-def checkPositiveDefinite(P, tol = 1e-10):
-    # Step 1: Ensure it is a square matrix
+def checkPositiveDefinite(P):
+    """
+    Checks if a matrix A is Symmetric Positive Definite (SPD)
+    using Cholesky decomposition.
+    """
+    # 1. Must be square
     if P.shape[0] != P.shape[1]:
         return False
         
-    # Step 2: Check for symmetry
+    # 2. Must be symmetric (within numerical precision)
     if not np.allclose(P, P.T):
         return False
         
-    # Step 3: Calculate eigenvalues and verify they are strictly positive
-    return np.all(la.eigvals(P) > tol)
+    # 3. Cholesky factorization must succeed
+    try:
+        np.linalg.cholesky(P)
+        return True
+    except np.linalg.LinAlgError:
+        return False
 
 def squareRootScalarMeasurementUpdate(x, W, y, h, r, beta = 0):
     """

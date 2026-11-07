@@ -682,3 +682,16 @@ def dvProcessNoise(dv,varSf,varQ,varP):
     return np.block([
             [np.zeros((3, 3)), np.zeros((3, 3))],
             [np.zeros((3, 3)), QSf + QQ + QP   ]])
+
+def covDeterminant(P):
+    return np.array([la.det(P[0:3,0:3]),la.det(P[4:6,4:6])])
+
+def covTrace(P):
+    return np.array([np.trace(P[0:3,0:3]),np.trace(P[4:6,4:6])])
+
+def covEig(P):
+    return np.sort(la.eigvals(P))[::-1]
+
+def covFrobenius(P):
+    return np.array([la.norm(P[0:3,0:3], ord='fro'),la.norm(P[4:6,4:6], ord='fro')])
+    

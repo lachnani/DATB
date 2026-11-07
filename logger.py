@@ -6,7 +6,6 @@ Created on Sat Mar 22 20:30:54 2025
 """
 
 import numpy as np
-import pandas as pd
 
 class Log():
     """ Base Log Class
@@ -27,7 +26,8 @@ class Log():
         self.i = 0
         
         # Times
-        self.time = pd.DataFrame(np.zeros((size,2)), columns=['simTime', 'J2000']).T
+        self.simTime = np.zeros((size,))
+        self.tJ2000  = np.zeros((size,))
         
         # Keep-out volume
         self.kovType = "PRISM"
@@ -37,105 +37,119 @@ class Log():
         
         # Ephemerides
         if (settings["formation"]["orbit"]["environments"] == True):
-            self.sunPosEci = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.moonPosEci = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
+            self.sunPosEci = np.zeros((3,size))
+            self.moonPosEci = np.zeros((3,size))
       
         # Vehicle Parameters
-        self.posVehEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-        self.velVehEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-        self.accThrVehEci   = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-        self.accThrVehRic   = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-        self.dvTotVeh       = pd.DataFrame(np.zeros((size,1)), columns=['DV']).T
+        self.posVehEci      = np.zeros((3,size))
+        self.velVehEci      = np.zeros((3,size))
+        self.accThrVehEci   = np.zeros((3,size))
+        self.accThrVehRic   = np.zeros((3,size))
+        self.dvTotVeh       = np.zeros((size,))
         if (settings["formation"]["orbit"]["elements"] == True):
-            self.oeVeh          = pd.DataFrame(np.zeros((size,6)), columns=['a', 'e', 'i', 'RAAN', 'argP', 'M']).T
-            self.eeVeh          = pd.DataFrame(np.zeros((size,6)), columns=['a', 'l', 'P1', 'P2', 'Q1', 'Q2']).T
+            self.oeVeh          = np.zeros((6,size))
+            self.eeVeh          = np.zeros((6,size))
         if (settings["formation"]["orbit"]["environments"] == True):
-            self.eclipseVeh     = pd.DataFrame(np.zeros((size,1)), columns=['Eclipse']).T
+            self.eclipseVeh     = np.zeros((size,))
         
         # RSO Paramaters
-        self.posRsoEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-        self.velRsoEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-        self.accThrRsoEci   = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-        self.accThrRsoRic   = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-        self.dvTotRso       = pd.DataFrame(np.zeros((size,1)), columns=['DV']).T
+        self.posRsoEci      = np.zeros((3,size))
+        self.velRsoEci      = np.zeros((3,size))
+        self.accThrRsoEci   = np.zeros((3,size))
+        self.accThrRsoRic   = np.zeros((3,size))
+        self.dvTotRso       = np.zeros((size,))
         if (settings["formation"]["orbit"]["elements"] == True):
-            self.oeRso          = pd.DataFrame(np.zeros((size,6)), columns=['a', 'e', 'i', 'RAAN', 'argP', 'M']).T
-            self.eeRso          = pd.DataFrame(np.zeros((size,6)), columns=['a', 'l', 'P1', 'P2', 'Q1', 'Q2']).T
+            self.oeRso          = np.zeros((6,size))
+            self.eeRso          = np.zeros((6,size))
         if (settings["formation"]["orbit"]["environments"] == True):
-            self.eclipseRso     = pd.DataFrame(np.zeros((size,1)), columns=['Eclipse']).T
+            self.eclipseRso     = np.zeros((size,))
         
         # Relative Parameters
-        self.relPosRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-        self.relVelRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-        self.relPosCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-        self.relVelCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-        self.qInrToRic      = pd.DataFrame(np.zeros((size,4)), columns=['qs', 'qx', 'qy', 'qz']).T
+        self.relPosRectRic  = np.zeros((3,size))
+        self.relVelRectRic  = np.zeros((3,size))
+        self.relPosCurvRic  = np.zeros((3,size))
+        self.relVelCurvRic  = np.zeros((3,size))
+        self.qInrToRic      = np.zeros((4,size))
         if (settings["formation"]["relStates"] == True):
-            self.doe            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'de', 'di', 'dRAAN', 'dargP', 'dM']).T
-            self.dee            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dl', 'dP1', 'dP2', 'dQ1', 'dQ2']).T
-            self.roe            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dlambda', 'dex', 'dey', 'dix', 'diy']).T
-            self.rectClroe      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
-            self.curvClroe      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
+            self.doe            = np.zeros((6,size))
+            self.dee            = np.zeros((6,size))
+            self.roe            = np.zeros((6,size))
+            self.rectClroe      = np.zeros((6,size))
+            self.curvClroe      = np.zeros((6,size))
         if (settings["formation"]["environments"] == True):
-            self.losAngles  = pd.DataFrame(np.zeros((size,3)), columns=['Earth', 'Sun', 'Moon']).T
-            self.visibility = pd.DataFrame(np.zeros((size,1)), columns=['Angle']).T
+            self.losAngEarth = np.zeros((size,))
+            self.losAngSun   = np.zeros((size,))
+            self.losAngMoon  = np.zeros((size,))
+            self.visibility  = np.zeros((size,))
         if (settings["formation"]["measurements"] == True):
-            self.measParams = pd.DataFrame(np.zeros((size,4)), columns=['Rng', 'Rng-Rate', 'Az', 'El']).T
-            self.qRicToLos  = pd.DataFrame(np.zeros((size,4)), columns=['qs', 'qx', 'qy', 'qz']).T
-            self.qInrToLos  = pd.DataFrame(np.zeros((size,4)), columns=['qs', 'qx', 'qy', 'qz']).T
+            self.measParams = np.zeros((4,size))
+            self.qRicToLos  = np.zeros((4,size))
+            self.qInrToLos  = np.zeros((4,size))
         
         # Navigation Flight Software
         if (settings["fsw"]["status"] == True):
             # Estimated States
-            self.fswNavPosVehEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.fswNavVelVehEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.fswNavOeVeh          = pd.DataFrame(np.zeros((size,6)), columns=['a', 'e', 'i', 'RAAN', 'argP', 'M']).T
-            self.fswNavPosRsoEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.fswNavVelRsoEci      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.fswNavOeRso          = pd.DataFrame(np.zeros((size,6)), columns=['a', 'e', 'i', 'RAAN', 'argP', 'M']).T
-            self.fswNavRelPosRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-            self.fswNavRelVelRectRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-            self.fswNavRelPosCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-            self.fswNavRelVelCurvRic  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-            self.fswNavDoe            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'de', 'di', 'dRAAN', 'dargP', 'dM']).T
-            self.fswNavDee            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dl', 'dP1', 'dP2', 'dQ1', 'dQ2']).T
-            self.fswNavRoe            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dlambda', 'dex', 'dey', 'dix', 'diy']).T
-            self.fswNavRectClroe      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
-            self.fswNavCurvClroe      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
+            self.fswNavPosVehEci      = np.zeros((3,size))
+            self.fswNavVelVehEci      = np.zeros((3,size))
+            self.fswNavOeVeh          = np.zeros((6,size))
+            self.fswNavPosRsoEci      = np.zeros((3,size))
+            self.fswNavVelRsoEci      = np.zeros((3,size))
+            self.fswNavOeRso          = np.zeros((6,size))
+            self.fswNavRelPosRectRic  = np.zeros((3,size))
+            self.fswNavRelVelRectRic  = np.zeros((3,size))
+            self.fswNavRelPosCurvRic  = np.zeros((3,size))
+            self.fswNavRelVelCurvRic  = np.zeros((3,size))
+            self.fswNavDoe            = np.zeros((6,size))
+            self.fswNavDee            = np.zeros((6,size))
+            self.fswNavRoe            = np.zeros((6,size))
+            self.fswNavRectClroe      = np.zeros((6,size))
+            self.fswNavCurvClroe      = np.zeros((6,size))
             # Filter Statuses
-            self.fswNavFltrInit       = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
-            self.fswNavFltrConverged  = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
-            self.fswNavFltrDiverged   = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
-            self.fswNavFltrCorrupted  = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
-            self.fswNavFltrConsistent = pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
-            self.fswNavFltrUnderweight= pd.DataFrame(np.zeros((size,1)), columns=['Status']).T
+            self.fswNavFltrInit       = np.zeros((size,))
+            self.fswNavFltrConverged  = np.zeros((size,))
+            self.fswNavFltrDiverged   = np.zeros((size,))
+            self.fswNavFltrCorrupted  = np.zeros((size,))
+            self.fswNavFltrConsistent = np.zeros((size,))
+            self.fswNavFltrUnderweight= np.zeros((size,))
             # Filter Covariances
-            self.fswNavCovVehEciDiag  = pd.DataFrame(np.zeros((size,6)), columns=['X', 'Y', 'Z', 'Xv', 'Yv', 'Zv']).T
-            self.fswNavCovRsoEciDiag  = pd.DataFrame(np.zeros((size,6)), columns=['X', 'Y', 'Z', 'Xv', 'Yv', 'Zv']).T
-            self.fswNavCovRelRicDiag  = pd.DataFrame(np.zeros((size,6)), columns=['R', 'I', 'C', 'Rv', 'Iv', 'Cv']).T
-            self.fswNavVehSmaVar      = pd.DataFrame(np.zeros((size,1)), columns=['var']).T
-            self.fswNavRsoSmaVar      = pd.DataFrame(np.zeros((size,1)), columns=['var']).T
+            self.fswNavCovVehEciDiag  = np.zeros((6,size))
+            self.fswNavCovVehEciDet   = np.zeros((2,size))
+            self.fswNavCovVehEciTrace = np.zeros((2,size))
+            self.fswNavCovVehEciFro   = np.zeros((2,size))
+            self.fswNavCovVehEciEig   = np.zeros((6,size))
+            self.fswNavCovRsoEciDiag  = np.zeros((6,size))
+            self.fswNavCovRsoEciDet   = np.zeros((2,size))
+            self.fswNavCovRsoEciTrace = np.zeros((2,size))
+            self.fswNavCovRsoEciFro   = np.zeros((2,size))
+            self.fswNavCovRsoEciEig   = np.zeros((6,size))
+            self.fswNavCovRelRicDiag  = np.zeros((6,size))
+            self.fswNavCovRelRicDet   = np.zeros((2,size))
+            self.fswNavCovRelRicTrace = np.zeros((2,size))
+            self.fswNavCovRelRicFro   = np.zeros((2,size))
+            self.fswNavCovRelRicEig   = np.zeros((6,size))
+            self.fswNavVehSmaVar      = np.zeros((size,))
+            self.fswNavRsoSmaVar      = np.zeros((size,))
             # Measurement Residuals
-            self.fswNavMeasType       = pd.DataFrame(np.zeros((size,1)), columns=['type']).T
-            self.fswNavMeasRes        = pd.DataFrame(np.zeros((size,4)), columns=['az', 'el', 'rng', 'rngRate']).T
+            self.fswNavMeasType       = ['']*size
+            self.fswNavMeasRes        = np.zeros((4,size))
             # Errors
-            self.fswNavPosVehEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.fswNavVelVehEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.fswNavPosRsoEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.fswNavVelRsoEciErr      = pd.DataFrame(np.zeros((size,3)), columns=['X', 'Y', 'Z']).T
-            self.fswNavRelPosRectRicErr  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-            self.fswNavRelVelRectRicErr  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-            self.fswNavRelPosCurvRicErr  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-            self.fswNavRelVelCurvRicErr  = pd.DataFrame(np.zeros((size,3)), columns=['R', 'I', 'C']).T
-            self.fswNavDoeErr            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'de', 'di', 'dRAAN', 'dargP', 'dM']).T
-            self.fswNavDeeErr            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dl', 'dP1', 'dP2', 'dQ1', 'dQ2']).T
-            self.fswNavRoeErr            = pd.DataFrame(np.zeros((size,6)), columns=['da', 'dlambda', 'dex', 'dey', 'dix', 'diy']).T
-            self.fswNavRectClroeErr      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
-            self.fswNavCurvClroeErr      = pd.DataFrame(np.zeros((size,6)), columns=['A0', 'alpha', 'xOff', 'yOff', 'B0', 'beta']).T
+            self.fswNavPosVehEciErr      = np.zeros((3,size))
+            self.fswNavVelVehEciErr      = np.zeros((3,size))
+            self.fswNavPosRsoEciErr      = np.zeros((3,size))
+            self.fswNavVelRsoEciErr      = np.zeros((3,size))
+            self.fswNavRelPosRectRicErr  = np.zeros((3,size))
+            self.fswNavRelVelRectRicErr  = np.zeros((3,size))
+            self.fswNavRelPosCurvRicErr  = np.zeros((3,size))
+            self.fswNavRelVelCurvRicErr  = np.zeros((3,size))
+            self.fswNavDoeErr            = np.zeros((6,size))
+            self.fswNavDeeErr            = np.zeros((6,size))
+            self.fswNavRoeErr            = np.zeros((6,size))
+            self.fswNavRectClroeErr      = np.zeros((6,size))
+            self.fswNavCurvClroeErr      = np.zeros((6,size))
             # Filter Consistency Metrics
-            self.fswNavMeasNrmInvnSqr   = pd.DataFrame(np.zeros((size,1)), columns=['NIS']).T
-            self.fswNavVehNrmEstErrSqr  = pd.DataFrame(np.zeros((size,1)), columns=['NEES']).T
-            self.fswNavRsoNrmEstErrSqr  = pd.DataFrame(np.zeros((size,1)), columns=['NEES']).T
-            self.fswNavRelNrmEstErrSqr  = pd.DataFrame(np.zeros((size,1)), columns=['NEES']).T
+            self.fswNavMeasNrmInvnSqr   = np.zeros((size,))
+            self.fswNavVehNrmEstErrSqr  = np.zeros((size,))
+            self.fswNavRsoNrmEstErrSqr  = np.zeros((size,))
+            self.fswNavRelNrmEstErrSqr  = np.zeros((size,))
             
         

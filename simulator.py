@@ -15,6 +15,7 @@ from planning import passiveSafety as ps
 from kinematics import kinematicsUtils as uKin
 from navigation import measurements as meas
 from navigation import kalmanFilter
+from navigation import estimator
 import logger
 
 
@@ -210,74 +211,77 @@ class Simulator():
     def updateLog(self):
         
         # Times
-        self.log.time[self.log.i] = np.array((self.t, self.frm.chief.tJ2000))
+        self.log.simTime[self.log.i] = self.t
+        self.log.tJ2000[self.log.i]   =self.frm.chief.tJ2000
         
         # Ephemerides
         if (self.settings["formation"]["orbit"]["environments"] == True):
-            self.log.sunPosEci[self.log.i] = self.frm.deputy.sun.r
-            self.log.moonPosEci[self.log.i] = self.frm.deputy.moon.r
+            self.log.sunPosEci[:,self.log.i] = self.frm.deputy.sun.r
+            self.log.moonPosEci[:,self.log.i] = self.frm.deputy.moon.r
         
         # Vehicle Parameters
-        self.log.posVehEci[self.log.i]      = self.frm.deputy.r
-        self.log.velVehEci[self.log.i]      = self.frm.deputy.v
-        self.log.accThrVehEci[self.log.i]   = self.frm.deputy.aCtrlInEci
-        self.log.accThrVehRic[self.log.i]   = np.matmul(self.frm.dcmInr2Ric, self.frm.deputy.aCtrlInEci)
+        self.log.posVehEci[:,self.log.i]      = self.frm.deputy.r
+        self.log.velVehEci[:,self.log.i]      = self.frm.deputy.v
+        self.log.accThrVehEci[:,self.log.i]   = self.frm.deputy.aCtrlInEci
+        self.log.accThrVehRic[:,self.log.i]   = np.matmul(self.frm.dcmInr2Ric, self.frm.deputy.aCtrlInEci)
         self.log.dvTotVeh[self.log.i]       = self.frm.deputy.dvTot
         if (self.settings["formation"]["orbit"]["elements"] == True):
-            self.log.oeVeh[self.log.i]          = self.frm.deputy.oe
-            self.log.eeVeh[self.log.i]          = self.frm.deputy.ee
+            self.log.oeVeh[:,self.log.i]          = self.frm.deputy.oe
+            self.log.eeVeh[:,self.log.i]          = self.frm.deputy.ee
         if (self.settings["formation"]["orbit"]["environments"] == True):
             self.log.eclipseVeh[self.log.i]     = self.frm.deputy.inEclipse
         
         # RSO Paramaters
-        self.log.posRsoEci[self.log.i]      = self.frm.chief.r
-        self.log.velRsoEci[self.log.i]      = self.frm.chief.v
-        self.log.accThrRsoEci[self.log.i]   = self.frm.chief.aCtrlInEci
-        self.log.accThrRsoRic[self.log.i]   = np.matmul(self.frm.dcmInr2Ric, self.frm.chief.aCtrlInEci)
+        self.log.posRsoEci[:,self.log.i]      = self.frm.chief.r
+        self.log.velRsoEci[:,self.log.i]      = self.frm.chief.v
+        self.log.accThrRsoEci[:,self.log.i]   = self.frm.chief.aCtrlInEci
+        self.log.accThrRsoRic[:,self.log.i]   = np.matmul(self.frm.dcmInr2Ric, self.frm.chief.aCtrlInEci)
         self.log.dvTotRso[self.log.i]       = self.frm.chief.dvTot
         if (self.settings["formation"]["orbit"]["elements"] == True):
-            self.log.oeRso[self.log.i]          = self.frm.chief.oe 
-            self.log.eeRso[self.log.i]          = self.frm.chief.ee
+            self.log.oeRso[:,self.log.i]          = self.frm.chief.oe 
+            self.log.eeRso[:,self.log.i]          = self.frm.chief.ee
         if (self.settings["formation"]["orbit"]["environments"] == True):
             self.log.eclipseRso[self.log.i]     = self.frm.chief.inEclipse
         
         # Relative Parameters
-        self.log.relPosRectRic[self.log.i]  = self.frm.relPosRectRic
-        self.log.relVelRectRic[self.log.i]  = self.frm.relVelRectRic
-        self.log.relPosCurvRic[self.log.i]  = self.frm.relPosCurvRic
-        self.log.relVelCurvRic[self.log.i]  = self.frm.relVelCurvRic
-        self.log.qInrToRic[self.log.i]      = R.from_matrix(self.frm.dcmInr2Ric).as_quat()
+        self.log.relPosRectRic[:,self.log.i]  = self.frm.relPosRectRic
+        self.log.relVelRectRic[:,self.log.i]  = self.frm.relVelRectRic
+        self.log.relPosCurvRic[:,self.log.i]  = self.frm.relPosCurvRic
+        self.log.relVelCurvRic[:,self.log.i]  = self.frm.relVelCurvRic
+        self.log.qInrToRic[:,self.log.i]      = R.from_matrix(self.frm.dcmInr2Ric).as_quat()
         if (self.settings["formation"]["relStates"] == True):
-            self.log.doe[self.log.i]            = self.frm.doe
-            self.log.dee[self.log.i]            = self.frm.dee
-            self.log.roe[self.log.i]            = self.frm.roe
-            self.log.rectClroe[self.log.i]      = self.frm.rectClroe
-            self.log.curvClroe[self.log.i]      = self.frm.curvClroe
+            self.log.doe[:,self.log.i]            = self.frm.doe
+            self.log.dee[:,self.log.i]            = self.frm.dee
+            self.log.roe[:,self.log.i]            = self.frm.roe
+            self.log.rectClroe[:,self.log.i]      = self.frm.rectClroe
+            self.log.curvClroe[:,self.log.i]      = self.frm.curvClroe
         if (self.settings["formation"]["environments"] == True):
-            self.log.losAngles[self.log.i]  = np.array((self.frm.losEarthAng, self.frm.losSunAng, self.frm.losMoonAng))
-            self.log.visibility[self.log.i] = self.frm.visibilityAng
+            self.log.losAngEarth[self.log.i] = self.frm.losEarthAng
+            self.log.losAngSun[self.log.i]   = self.frm.losSunAng
+            self.log.losAngMoon[self.log.i]  = self.frm.losMoonAng
+            self.log.visibility[self.log.i]  = self.frm.visibilityAng
         if (self.settings["formation"]["measurements"] == True):
-            self.log.measParams[self.log.i] = np.array((self.frm.rng, self.frm.rngRate, self.frm.az, self.frm.el))
-            self.log.qRicToLos[self.log.i]  = R.from_matrix(self.frm.dcmRic2Los).as_quat()
-            self.log.qInrToLos[self.log.i]  = R.from_matrix(self.frm.dcmInr2Los).as_quat()
+            self.log.measParams[:,self.log.i] = np.array((self.frm.rng, self.frm.rngRate, self.frm.az, self.frm.el))
+            self.log.qRicToLos[:,self.log.i]  = R.from_matrix(self.frm.dcmRic2Los).as_quat()
+            self.log.qInrToLos[:,self.log.i]  = R.from_matrix(self.frm.dcmInr2Los).as_quat()
         
         if self.settings["fsw"]["status"] == True:
             # Estimated States
-            self.log.fswNavPosVehEci[self.log.i]      = self.fsw.nav.deputyPosInr
-            self.log.fswNavVelVehEci[self.log.i]      = self.fsw.nav.deputyVelInr
-            self.log.fswNavOeVeh[self.log.i]          = self.fsw.nav.deputyOrbEl
-            self.log.fswNavPosRsoEci[self.log.i]      = self.fsw.nav.chiefPosInr
-            self.log.fswNavVelRsoEci[self.log.i]      = self.fsw.nav.chiefVelInr
-            self.log.fswNavOeRso[self.log.i]          = self.fsw.nav.chiefOrbEl
-            self.log.fswNavRelPosRectRic[self.log.i]  = self.fsw.nav.relPosRectRic
-            self.log.fswNavRelVelRectRic[self.log.i]  = self.fsw.nav.relVelRectRic
-            self.log.fswNavRelPosCurvRic[self.log.i]  = self.fsw.nav.relPosCurvRic
-            self.log.fswNavRelVelCurvRic[self.log.i]  = self.fsw.nav.relVelCurvRic
-            self.log.fswNavDoe[self.log.i]            = self.fsw.nav.diffOrbEl
-            self.log.fswNavDee[self.log.i]            = self.fsw.nav.diffEqEl
-            self.log.fswNavRoe[self.log.i]            = self.fsw.nav.relOrbEl
-            self.log.fswNavRectClroe[self.log.i]      = self.fsw.nav.rectClroe
-            self.log.fswNavCurvClroe[self.log.i]      = self.fsw.nav.curvClroe
+            self.log.fswNavPosVehEci[:,self.log.i]      = self.fsw.nav.deputyPosInr
+            self.log.fswNavVelVehEci[:,self.log.i]      = self.fsw.nav.deputyVelInr
+            self.log.fswNavOeVeh[:,self.log.i]          = self.fsw.nav.deputyOrbEl
+            self.log.fswNavPosRsoEci[:,self.log.i]      = self.fsw.nav.chiefPosInr
+            self.log.fswNavVelRsoEci[:,self.log.i]      = self.fsw.nav.chiefVelInr
+            self.log.fswNavOeRso[:,self.log.i]          = self.fsw.nav.chiefOrbEl
+            self.log.fswNavRelPosRectRic[:,self.log.i]  = self.fsw.nav.relPosRectRic
+            self.log.fswNavRelVelRectRic[:,self.log.i]  = self.fsw.nav.relVelRectRic
+            self.log.fswNavRelPosCurvRic[:,self.log.i]  = self.fsw.nav.relPosCurvRic
+            self.log.fswNavRelVelCurvRic[:,self.log.i]  = self.fsw.nav.relVelCurvRic
+            self.log.fswNavDoe[:,self.log.i]            = self.fsw.nav.diffOrbEl
+            self.log.fswNavDee[:,self.log.i]            = self.fsw.nav.diffEqEl
+            self.log.fswNavRoe[:,self.log.i]            = self.fsw.nav.relOrbEl
+            self.log.fswNavRectClroe[:,self.log.i]      = self.fsw.nav.rectClroe
+            self.log.fswNavCurvClroe[:,self.log.i]      = self.fsw.nav.curvClroe
             # Filter Statuses
             self.log.fswNavFltrInit[self.log.i]       = self.fsw.nav.fltrInit
             self.log.fswNavFltrConverged[self.log.i]  = self.fsw.nav.fltrConverged
@@ -286,38 +290,50 @@ class Simulator():
             self.log.fswNavFltrConsistent[self.log.i] = self.fsw.nav.fltrConsistent
             self.log.fswNavFltrUnderweight[self.log.i]= self.fsw.nav.fltrUnderweight
             # Filter Covariances
-            self.log.fswNavCovVehEciDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.deputyCovInr)
-            self.log.fswNavCovRsoEciDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.chiefCovInr)
-            self.log.fswNavCovRelRicDiag[self.log.i]  = np.diag(self.fsw.nav.fltr.relCovRectRic)
-            self.log.fswNavVehSmaVar[self.log.i]      = self.fsw.nav.deputySmaVar
-            self.log.fswNavRsoSmaVar[self.log.i]      = self.fsw.nav.chiefSmaVar
+            self.log.fswNavCovVehEciDiag[:,self.log.i]  = np.diag(self.fsw.nav.fltr.deputyCovInr)
+            self.log.fswNavCovVehEciDet[:,self.log.i]   = estimator.covDeterminant(self.fsw.nav.fltr.deputyCovInr)
+            self.log.fswNavCovVehEciTrace[:,self.log.i] = estimator.covTrace(self.fsw.nav.fltr.deputyCovInr)
+            self.log.fswNavCovVehEciFro[:,self.log.i]   = estimator.covFrobenius(self.fsw.nav.fltr.deputyCovInr)
+            self.log.fswNavCovVehEciEig[:,self.log.i]   = estimator.covEig(self.fsw.nav.fltr.deputyCovInr)
+            self.log.fswNavCovRsoEciDiag[:,self.log.i]  = np.diag(self.fsw.nav.fltr.chiefCovInr)
+            self.log.fswNavCovRsoEciDet[:,self.log.i]   = estimator.covDeterminant(self.fsw.nav.fltr.chiefCovInr)
+            self.log.fswNavCovRsoEciTrace[:,self.log.i] = estimator.covTrace(self.fsw.nav.fltr.chiefCovInr)
+            self.log.fswNavCovRsoEciFro[:,self.log.i]   = estimator.covFrobenius(self.fsw.nav.fltr.chiefCovInr)
+            self.log.fswNavCovRsoEciEig[:,self.log.i]   = estimator.covEig(self.fsw.nav.fltr.chiefCovInr)
+            self.log.fswNavCovRelRicDiag[:,self.log.i]  = np.diag(self.fsw.nav.fltr.relCovRectRic)
+            self.log.fswNavCovRelRicDet[:,self.log.i]   = estimator.covDeterminant(self.fsw.nav.fltr.relCovRectRic)
+            self.log.fswNavCovRelRicTrace[:,self.log.i] = estimator.covTrace(self.fsw.nav.fltr.relCovRectRic)
+            self.log.fswNavCovRelRicFro[:,self.log.i]   = estimator.covFrobenius(self.fsw.nav.fltr.relCovRectRic)
+            self.log.fswNavCovRelRicEig[:,self.log.i]   = estimator.covEig(self.fsw.nav.fltr.relCovRectRic)
+            self.log.fswNavVehSmaVar[self.log.i]        = self.fsw.nav.deputySmaVar
+            self.log.fswNavRsoSmaVar[self.log.i]        = self.fsw.nav.chiefSmaVar
             # Measurement Residuals
             self.log.fswNavMeasType[self.log.i]       = self.fsw.nav.fltr.measType
-            self.log.fswNavMeasRes[self.log.i]        = self.fsw.nav.fltr.measResidual
+            self.log.fswNavMeasRes[:,self.log.i]      = self.fsw.nav.fltr.measResidual
             # Errors
-            self.log.fswNavPosVehEciErr[self.log.i]      = self.log.posVehEci[self.log.i] - self.log.fswNavPosVehEci[self.log.i]
-            self.log.fswNavVelVehEciErr[self.log.i]      = self.log.velVehEci[self.log.i] - self.log.fswNavVelVehEci[self.log.i]
-            self.log.fswNavPosRsoEciErr[self.log.i]      = self.log.posRsoEci[self.log.i] - self.log.fswNavPosRsoEci[self.log.i]
-            self.log.fswNavVelRsoEciErr[self.log.i]      = self.log.velRsoEci[self.log.i] - self.log.fswNavVelRsoEci[self.log.i]
-            self.log.fswNavRelPosRectRicErr[self.log.i]  = self.log.relPosRectRic[self.log.i] - self.log.fswNavRelPosRectRic[self.log.i]
-            self.log.fswNavRelVelRectRicErr[self.log.i]  = self.log.relVelRectRic[self.log.i] - self.log.fswNavRelVelRectRic[self.log.i]
-            self.log.fswNavRelPosCurvRicErr[self.log.i]  = self.log.relPosCurvRic[self.log.i] - self.log.fswNavRelPosCurvRic[self.log.i]
-            self.log.fswNavRelVelCurvRicErr[self.log.i]  = self.log.relVelCurvRic[self.log.i] - self.log.fswNavRelVelCurvRic[self.log.i]
-            self.log.fswNavDoeErr[self.log.i]            = self.log.doe[self.log.i] - self.log.fswNavDoe[self.log.i]
-            self.log.fswNavDeeErr[self.log.i]            = self.log.dee[self.log.i] - self.log.fswNavDee[self.log.i]
-            self.log.fswNavRoeErr[self.log.i]            = self.log.roe[self.log.i] - self.log.fswNavRoe[self.log.i]
-            self.log.fswNavRectClroeErr[self.log.i]      = self.log.rectClroe[self.log.i] - self.log.fswNavRectClroe[self.log.i]
-            self.log.fswNavCurvClroeErr[self.log.i]      = self.log.curvClroe[self.log.i] - self.log.fswNavCurvClroe[self.log.i]
+            self.log.fswNavPosVehEciErr[:,self.log.i]      = self.log.posVehEci[:,self.log.i] - self.log.fswNavPosVehEci[:,self.log.i]
+            self.log.fswNavVelVehEciErr[:,self.log.i]      = self.log.velVehEci[:,self.log.i] - self.log.fswNavVelVehEci[:,self.log.i]
+            self.log.fswNavPosRsoEciErr[:,self.log.i]      = self.log.posRsoEci[:,self.log.i] - self.log.fswNavPosRsoEci[:,self.log.i]
+            self.log.fswNavVelRsoEciErr[:,self.log.i]      = self.log.velRsoEci[:,self.log.i] - self.log.fswNavVelRsoEci[:,self.log.i]
+            self.log.fswNavRelPosRectRicErr[:,self.log.i]  = self.log.relPosRectRic[:,self.log.i] - self.log.fswNavRelPosRectRic[:,self.log.i]
+            self.log.fswNavRelVelRectRicErr[:,self.log.i]  = self.log.relVelRectRic[:,self.log.i] - self.log.fswNavRelVelRectRic[:,self.log.i]
+            self.log.fswNavRelPosCurvRicErr[:,self.log.i]  = self.log.relPosCurvRic[:,self.log.i] - self.log.fswNavRelPosCurvRic[:,self.log.i]
+            self.log.fswNavRelVelCurvRicErr[:,self.log.i]  = self.log.relVelCurvRic[:,self.log.i] - self.log.fswNavRelVelCurvRic[:,self.log.i]
+            self.log.fswNavDoeErr[:,self.log.i]            = self.log.doe[:,self.log.i] - self.log.fswNavDoe[:,self.log.i]
+            self.log.fswNavDeeErr[:,self.log.i]            = self.log.dee[:,self.log.i] - self.log.fswNavDee[:,self.log.i]
+            self.log.fswNavRoeErr[:,self.log.i]            = self.log.roe[:,self.log.i] - self.log.fswNavRoe[:,self.log.i]
+            self.log.fswNavRectClroeErr[:,self.log.i]      = self.log.rectClroe[:,self.log.i] - self.log.fswNavRectClroe[:,self.log.i]
+            self.log.fswNavCurvClroeErr[:,self.log.i]      = self.log.curvClroe[:,self.log.i] - self.log.fswNavCurvClroe[:,self.log.i]
             # Filter Consistency Metrics
-            self.log.fswNavMeasNrmInvnSqr[self.log.i] = self.fsw.nav.fltr.nis
+            self.log.fswNavMeasNrmInvnSqr[self.log.i]  = self.fsw.nav.fltr.nis
             self.log.fswNavVehNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(
-                np.concatenate([self.log.fswNavPosVehEciErr[self.log.i], self.log.fswNavVelVehEciErr[self.log.i]]), 
+                np.concatenate([self.log.fswNavPosVehEciErr[:,self.log.i], self.log.fswNavVelVehEciErr[:,self.log.i]]), 
                 self.fsw.nav.fltr.deputyCovInr)
             self.log.fswNavRsoNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(
-                np.concatenate([self.log.fswNavPosRsoEciErr[self.log.i], self.log.fswNavVelRsoEciErr[self.log.i]]), 
+                np.concatenate([self.log.fswNavPosRsoEciErr[:,self.log.i], self.log.fswNavVelRsoEciErr[:,self.log.i]]), 
                 self.fsw.nav.fltr.chiefCovInr)
             self.log.fswNavRelNrmEstErrSqr[self.log.i] = kalmanFilter.normEstErrSqr(
-                np.concatenate([self.log.fswNavRelPosRectRicErr[self.log.i], self.log.fswNavRelVelRectRicErr[self.log.i]]), 
+                np.concatenate([self.log.fswNavRelPosRectRicErr[:,self.log.i], self.log.fswNavRelVelRectRicErr[:,self.log.i]]), 
                 self.fsw.nav.fltr.relCovRectRic)
             
                 
