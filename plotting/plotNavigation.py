@@ -363,21 +363,51 @@ def ChiefCov_Plot(log, path, tag):
     
 def ChiefCovMetrics_Plot(log, path, tag):
     """
-    Chief position covariance metrics
+    Chief covariance metrics
     
     """
-    data = np.block([
-        [np.sqrt(log.fswNavCovRsoEciDet[0,:])],
-        [log.fswNavCovRsoEciTrace[0,:]],
-        [log.fswNavCovRsoEciEig[0,:]],
-        [log.fswNavCovRsoEciFro[0,:]]])
-    pg.plotTwoByTwo(
-        log.simTime, 
-        data, 
-        ['[km^3]','[km^2]','[km^2]','[km^2]'], 
-        ['Sqrt Determinant','Trace','Largest Eigenvalue','Frobenius Norm'], 
-        path + r"\chiefCovarianceMetrics_" + tag + r".png",
-        suptitle='Chief Position Covariance Metrics')
+    
+    fig = plt.figure()
+    plt.suptitle('Chief Covariance Metrics')
+    
+    ax = plt.subplot(2,2,1)
+    ax.plot(log.simTime, np.sqrt(log.fswNavCovRsoEciDet[0,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^3]")
+    plt.title('Position Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,2)
+    ax.plot(log.simTime, log.fswNavCovRsoEciTrace[0,:], label='Trace')[0]
+    ax.plot(log.simTime, log.fswNavCovRsoEciEig[0,:], label='Max Eig')[0]
+    ax.plot(log.simTime, log.fswNavCovRsoEciFro[0,:], label='Frobenius Norm')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Position Covariance Size')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,3)
+    ax.plot(log.simTime, np.sqrt(log.fswNavCovRsoEciDet[1,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[(km/s)^3]")
+    plt.title('Velocity Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,4)
+    ax.plot(log.simTime, log.fswNavCovRsoEciTrace[1,:], label='Trace')[0]
+    ax.plot(log.simTime, log.fswNavCovRsoEciEig[3,:], label='Max Eig')[0]
+    ax.plot(log.simTime, log.fswNavCovRsoEciFro[1,:], label='Frobenius Norm')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[(km/s)^2]")
+    ax.legend()
+    plt.title('Velocity Covariance Size')
+    plt.grid()
+       
+    fig.tight_layout()
+    
+    fullFigPath = path + r"\chiefCovarianceMetrics_" + tag + r".png"
+    plt.savefig(fullFigPath)
     
 def DeputyCov_Plot(log, path, tag):
     """
@@ -394,21 +424,51 @@ def DeputyCov_Plot(log, path, tag):
     
 def DeputyCovMetrics_Plot(log, path, tag):
     """
-    Deputy position covariance metrics
+    Deputy covariance metrics
     
     """
-    data = np.block([
-        [np.sqrt(log.fswNavCovVehEciDet[0,:])],
-        [log.fswNavCovVehEciTrace[0,:]],
-        [log.fswNavCovVehEciEig[0,:]],
-        [log.fswNavCovVehEciFro[0,:]]])
-    pg.plotTwoByTwo(
-        log.simTime, 
-        data, 
-        ['[km^3]','[km^2]','[km^2]','[km^2]'], 
-        ['Sqrt Determinant','Trace','Largest Eigenvalue','Frobenius Norm'], 
-        path + r"\deputyCovarianceMetrics_" + tag + r".png",
-        suptitle='Deputy Position Covariance Metrics')
+    
+    fig = plt.figure()
+    plt.suptitle('Deputy Covariance Metrics')
+    
+    ax = plt.subplot(2,2,1)
+    ax.plot(log.simTime, np.sqrt(log.fswNavCovVehEciDet[0,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^3]")
+    plt.title('Position Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,2)
+    ax.plot(log.simTime, log.fswNavCovVehEciTrace[0,:], label='Trace')[0]
+    ax.plot(log.simTime, log.fswNavCovVehEciEig[0,:], label='Max Eig')[0]
+    ax.plot(log.simTime, log.fswNavCovVehEciFro[0,:], label='Frobenius Norm')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Position Covariance Size')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,3)
+    ax.plot(log.simTime, np.sqrt(log.fswNavCovVehEciDet[1,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[(km/s)^3]")
+    plt.title('Velocity Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,4)
+    ax.plot(log.simTime, log.fswNavCovVehEciTrace[1,:], label='Trace')[0]
+    ax.plot(log.simTime, log.fswNavCovVehEciEig[3,:], label='Max Eig')[0]
+    ax.plot(log.simTime, log.fswNavCovVehEciFro[1,:], label='Frobenius Norm')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[(km/s)^2]")
+    ax.legend()
+    plt.title('Velocity Covariance Size')
+    plt.grid()
+       
+    fig.tight_layout()
+    
+    fullFigPath = path + r"\deputyCovarianceMetrics_" + tag + r".png"
+    plt.savefig(fullFigPath)
     
 def RelCov_Plot(log, path, tag):
     """
@@ -425,21 +485,50 @@ def RelCov_Plot(log, path, tag):
     
 def RelCovMetrics_Plot(log, path, tag):
     """
-    Relative position covariance metrics
+    Relative covariance metrics
     
-    """
-    data = np.block([
-        [np.sqrt(log.fswNavCovRelRicDet[0,:])],
-        [log.fswNavCovRelRicTrace[0,:]],
-        [log.fswNavCovRelRicEig[0,:]],
-        [log.fswNavCovRelRicFro[0,:]]])
-    pg.plotTwoByTwo(
-        log.simTime, 
-        data, 
-        ['[km^3]','[km^2]','[km^2]','[km^2]'], 
-        ['Sqrt Determinant','Trace','Largest Eigenvalue','Frobenius Norm'], 
-        path + r"\relativeCovarianceMetrics_" + tag + r".png",
-        suptitle='Relative RIC Position Covariance Metrics')
+    """    
+    fig = plt.figure()
+    plt.suptitle('Relative RIC Covariance Metrics')
+    
+    ax = plt.subplot(2,2,1)
+    ax.plot(log.simTime, np.sqrt(log.fswNavCovRelRicDet[0,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^3]")
+    plt.title('Position Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,2)
+    ax.plot(log.simTime, log.fswNavCovRelRicTrace[0,:], label='Trace')[0]
+    ax.plot(log.simTime, log.fswNavCovRelRicEig[0,:], label='Max Eig')[0]
+    ax.plot(log.simTime, log.fswNavCovRelRicFro[0,:], label='Frobenius Norm')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Position Covariance Size')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,3)
+    ax.plot(log.simTime, np.sqrt(log.fswNavCovRelRicDet[1,:]))[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[(km/s)^3]")
+    plt.title('Velocity Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(2,2,4)
+    ax.plot(log.simTime, log.fswNavCovRelRicTrace[1,:], label='Trace')[0]
+    ax.plot(log.simTime, log.fswNavCovRelRicEig[3,:], label='Max Eig')[0]
+    ax.plot(log.simTime, log.fswNavCovRelRicFro[1,:], label='Frobenius Norm')[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[(km/s)^2]")
+    ax.legend()
+    plt.title('Velocity Covariance Size')
+    plt.grid()
+       
+    fig.tight_layout()
+    
+    fullFigPath = path + r"\relativeCovarianceMetrics_" + tag + r".png"
+    plt.savefig(fullFigPath)
     
 def SmaVariance_Plot(log, path, tag):
     """

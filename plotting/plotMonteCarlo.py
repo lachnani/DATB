@@ -8,6 +8,8 @@ Created on Sun Mar 23 22:04:28 2025
 import matplotlib.pyplot as plt
 import numpy as np
 
+from plotting import plotGeneric as pg
+
 def visAll(mcLog, mcStats, path, tag, settings = None):
     """
     Plot all available plots and animations
@@ -34,10 +36,13 @@ def plotAll(mcLog, mcStats, path, tag, settings = None):
     RectRicStats_Plot(mcStats, path, tag)
     CurvRicStats_Plot(mcStats, path, tag)
     DoeStats_Plot(mcStats, path, tag)
+    RelCovStats_Plot(mcStats, path, tag)
     ChiefInrStats_Plot(mcStats, path, tag)
     ChiefOeStats_Plot(mcStats, path, tag)
+    ChiefCovStats_Plot(mcStats, path, tag)
     DeputyInrStats_Plot(mcStats, path, tag)
     DeputyOeStats_Plot(mcStats, path, tag)
+    DeputyCovStats_Plot(mcStats, path, tag)
     ConsistencyStats_Plot(mcStats, path, tag)
     
 def plotComp(mcStats, mcStr, path, tag):
@@ -54,6 +59,7 @@ def plotComp(mcStats, mcStr, path, tag):
     DeputyInrStatsComp_Plot(mcStats, mcStr, path, tag)
     DeputyOeStatsComp_Plot(mcStats, mcStr, path, tag)
     ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag)
+    CovarianceStatsComp_Plot(mcStats, mcStr, path, tag)
     
 def RectRicProj_Plot(mcLog, path, tag):
     """
@@ -68,10 +74,10 @@ def RectRicProj_Plot(mcLog, path, tag):
     
     ax1 = plt.subplot(212)
     origin = ax1.scatter(0, 0, color='b', linewidths = 3)
-    ax1.plot(log.relPosRectRic.loc['I',:], log.relPosRectRic.loc['R',:], color='r', label='Truth')[0]
-    ax1.scatter(log.relPosRectRic.loc['I',log.i], log.relPosRectRic.loc['R',log.i], color='r')
+    ax1.plot(log.relPosRectRic[1,:], log.relPosRectRic[0,:], color='r', label='Truth')[0]
+    ax1.scatter(log.relPosRectRic[1,log.i], log.relPosRectRic[0,log.i], color='r')
     for i in range(len(mcLog)):
-        ax1.plot(mcLog[i].relPosRectRic.loc['I',:], mcLog[i].fswNavRelPosRectRic.loc['R',:], lw=0.5, color='k')[0]
+        ax1.plot(mcLog[i].relPosRectRic[1,:], mcLog[i].fswNavRelPosRectRic[0,:], lw=0.5, color='k')[0]
     ax1.set_xlabel("In-Track [km]")
     ax1.set_ylabel("Radial [km]")
     ax1.set_aspect('equal', adjustable='datalim')
@@ -81,10 +87,10 @@ def RectRicProj_Plot(mcLog, path, tag):
     
     ax2 = plt.subplot(221)
     origin = ax2.scatter(0, 0, color='b', linewidths = 3)
-    ax2.plot(log.relPosRectRic.loc['I',:], log.relPosRectRic.loc['C',:], color='r', label='Truth')[0]
-    ax2.scatter(log.relPosRectRic.loc['I',log.i], log.relPosRectRic.loc['C',log.i], color='r')
+    ax2.plot(log.relPosRectRic[1,:], log.relPosRectRic[2,:], color='r', label='Truth')[0]
+    ax2.scatter(log.relPosRectRic[1,log.i], log.relPosRectRic[2,log.i], color='r')
     for i in range(len(mcLog)):
-        ax2.plot(mcLog[i].relPosRectRic.loc['I',:], mcLog[i].fswNavRelPosRectRic.loc['C',:], lw=0.5, color='k')[0]
+        ax2.plot(mcLog[i].relPosRectRic[1,:], mcLog[i].fswNavRelPosRectRic[2,:], lw=0.5, color='k')[0]
     ax2.set_xlabel("In-Track [km]")
     ax2.set_ylabel("Cross-Track [km]")
     ax2.set_aspect('equal', adjustable='datalim')
@@ -94,10 +100,10 @@ def RectRicProj_Plot(mcLog, path, tag):
     
     ax3 = plt.subplot(222)
     origin = ax3.scatter(0, 0, color='b', linewidths = 3)
-    ax3.plot(log.relPosRectRic.loc['R',:], log.relPosRectRic.loc['C',:], color='r', label='Truth')[0]
-    ax3.scatter(log.relPosRectRic.loc['R',log.i], log.relPosRectRic.loc['C',log.i], color='r')
+    ax3.plot(log.relPosRectRic[0,:], log.relPosRectRic[2,:], color='r', label='Truth')[0]
+    ax3.scatter(log.relPosRectRic[0,log.i], log.relPosRectRic[2,log.i], color='r')
     for i in range(len(mcLog)):
-        ax3.plot(mcLog[i].relPosRectRic.loc['R',:], mcLog[i].fswNavRelPosRectRic.loc['C',:], lw=0.5, color='k')[0]
+        ax3.plot(mcLog[i].relPosRectRic[0,:], mcLog[i].fswNavRelPosRectRic[2,:], lw=0.5, color='k')[0]
     ax3.set_xlabel("Radial [km]")
     ax3.set_ylabel("Cross-Track [km]")
     ax3.set_aspect('equal', adjustable='datalim')
@@ -122,10 +128,10 @@ def CurvRicProj_Plot(mcLog, path, tag):
     
     ax1 = plt.subplot(212)
     origin = ax1.scatter(0, 0, color='b', linewidths = 3)
-    ax1.plot(log.relPosCurvRic.loc['I',:], log.relPosCurvRic.loc['R',:], color='r', label='Truth')[0]
-    ax1.scatter(log.relPosCurvRic.loc['I',log.i], log.relPosCurvRic.loc['R',log.i], color='r')
+    ax1.plot(log.relPosCurvRic[1,:], log.relPosCurvRic[0,:], color='r', label='Truth')[0]
+    ax1.scatter(log.relPosCurvRic[1,log.i], log.relPosCurvRic[0,log.i], color='r')
     for i in range(len(mcLog)):
-        ax1.plot(mcLog[i].relPosCurvRic.loc['I',:], mcLog[i].fswNavRelPosCurvRic.loc['R',:], lw=0.5, color='k')[0]
+        ax1.plot(mcLog[i].relPosCurvRic[1,:], mcLog[i].fswNavRelPosCurvRic[0,:], lw=0.5, color='k')[0]
     ax1.set_xlabel("In-Track [km]")
     ax1.set_ylabel("Radial [km]")
     ax1.set_aspect('equal', adjustable='datalim')
@@ -135,10 +141,10 @@ def CurvRicProj_Plot(mcLog, path, tag):
     
     ax2 = plt.subplot(221)
     origin = ax2.scatter(0, 0, color='b', linewidths = 3)
-    ax2.plot(log.relPosCurvRic.loc['I',:], log.relPosCurvRic.loc['C',:], color='r', label='Truth')[0]
-    ax2.scatter(log.relPosCurvRic.loc['I',log.i], log.relPosCurvRic.loc['C',log.i], color='r')
+    ax2.plot(log.relPosCurvRic[1,:], log.relPosCurvRic[2,:], color='r', label='Truth')[0]
+    ax2.scatter(log.relPosCurvRic[1,log.i], log.relPosCurvRic[2,log.i], color='r')
     for i in range(len(mcLog)):
-        ax2.plot(mcLog[i].relPosCurvRic.loc['I',:], mcLog[i].fswNavRelPosCurvRic.loc['C',:], lw=0.5, color='k')[0]
+        ax2.plot(mcLog[i].relPosCurvRic[1,:], mcLog[i].fswNavRelPosCurvRic[2,:], lw=0.5, color='k')[0]
     ax2.set_xlabel("In-Track [km]")
     ax2.set_ylabel("Cross-Track [km]")
     ax2.set_aspect('equal', adjustable='datalim')
@@ -148,10 +154,10 @@ def CurvRicProj_Plot(mcLog, path, tag):
     
     ax3 = plt.subplot(222)
     origin = ax3.scatter(0, 0, color='b', linewidths = 3)
-    ax3.plot(log.relPosCurvRic.loc['R',:], log.relPosCurvRic.loc['C',:], color='r', label='Truth')[0]
-    ax3.scatter(log.relPosCurvRic.loc['R',log.i], log.relPosCurvRic.loc['C',log.i], color='r')
+    ax3.plot(log.relPosCurvRic[0,:], log.relPosCurvRic[2,:], color='r', label='Truth')[0]
+    ax3.scatter(log.relPosCurvRic[0,log.i], log.relPosCurvRic[2,log.i], color='r')
     for i in range(len(mcLog)):
-        ax3.plot(mcLog[i].relPosCurvRic.loc['R',:], mcLog[i].fswNavRelPosCurvRic.loc['C',:], lw=0.5, color='k')[0]
+        ax3.plot(mcLog[i].relPosCurvRic[0,:], mcLog[i].fswNavRelPosCurvRic[2,:], lw=0.5, color='k')[0]
     ax3.set_xlabel("Radial [km]")
     ax3.set_ylabel("Cross-Track [km]")
     ax3.set_aspect('equal', adjustable='datalim')
@@ -174,21 +180,21 @@ def RectRicPosErr_Plot(mcLog, path, tag):
     
     ax = plt.subplot(3,1,1)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelPosRectRicErr.loc['R',:], lw=0.5, color='C0')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelPosRectRicErr[0,:], lw=0.5, color='C0')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Radial [km]")
     plt.grid()
     
     ax = plt.subplot(3,1,2)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelPosRectRicErr.loc['I',:], lw=0.5, color='C1')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelPosRectRicErr[1,:], lw=0.5, color='C1')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("In-Track [km]")
     plt.grid()
     
     ax = plt.subplot(3,1,3)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelPosRectRicErr.loc['C',:], lw=0.5, color='C2')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelPosRectRicErr[2,:], lw=0.5, color='C2')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Cross-Track [km]")
     plt.grid()
@@ -209,21 +215,21 @@ def RectRicVelErr_Plot(mcLog, path, tag):
     
     ax = plt.subplot(3,1,1)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelVelRectRicErr.loc['R',:], lw=0.5, color='C0')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelVelRectRicErr[0,:], lw=0.5, color='C0')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Radial [km/s]")
     plt.grid()
     
     ax = plt.subplot(3,1,2)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelVelRectRicErr.loc['I',:], lw=0.5, color='C1')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelVelRectRicErr[1,:], lw=0.5, color='C1')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("In-Track [km/s]")
     plt.grid()
     
     ax = plt.subplot(3,1,3)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelVelRectRicErr.loc['C',:], lw=0.5, color='C2')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelVelRectRicErr[2,:], lw=0.5, color='C2')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Cross-Track [km/s]")
     plt.grid()
@@ -244,21 +250,21 @@ def CurvRicPosErr_Plot(mcLog, path, tag):
     
     ax = plt.subplot(3,1,1)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelPosCurvRicErr.loc['R',:], lw=0.5, color='C0')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelPosCurvRicErr[0,:], lw=0.5, color='C0')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Radial [km]")
     plt.grid()
     
     ax = plt.subplot(3,1,2)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelPosCurvRicErr.loc['I',:], lw=0.5, color='C1')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelPosCurvRicErr[1,:], lw=0.5, color='C1')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("In-Track [km]")
     plt.grid()
     
     ax = plt.subplot(3,1,3)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelPosCurvRicErr.loc['C',:], lw=0.5, color='C2')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelPosCurvRicErr[2,:], lw=0.5, color='C2')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Cross-Track [km]")
     plt.grid()
@@ -279,21 +285,21 @@ def CurvRicVelErr_Plot(mcLog, path, tag):
     
     ax = plt.subplot(3,1,1)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelVelCurvRicErr.loc['R',:], lw=0.5, color='C0')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelVelCurvRicErr[0,:], lw=0.5, color='C0')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Radial [km/s]")
     plt.grid()
     
     ax = plt.subplot(3,1,2)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelVelCurvRicErr.loc['I',:], lw=0.5, color='C1')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelVelCurvRicErr[1,:], lw=0.5, color='C1')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("In-Track [km/s]")
     plt.grid()
     
     ax = plt.subplot(3,1,3)
     for i in range(len(mcLog)):
-        ax.plot(mcLog[i].time.loc['simTime',:], mcLog[i].fswNavRelVelCurvRicErr.loc['C',:], lw=0.5, color='C2')[0]
+        ax.plot(mcLog[i].simTime, mcLog[i].fswNavRelVelCurvRicErr[2,:], lw=0.5, color='C2')[0]
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Cross-Track [km/s]")
     plt.grid()
@@ -308,34 +314,14 @@ def RectRicStats_Plot(mcStats, path, tag):
     Rectilinear RIC position and velocity statistics
 
     """
-    
-    fig_rectRic_plt = plt.figure()
-    plt.suptitle(r"Rectilinear RIC 3$\sigma$ Errors")
-    
-    ax = plt.subplot(2,1,1)
-    ax.plot(mcStats['time'], 3*mcStats['relPosRectRicErrStd'][0,:], label='R')[0]
-    ax.plot(mcStats['time'], 3*mcStats['relPosRectRicErrStd'][1,:], label='I')[0]
-    ax.plot(mcStats['time'], 3*mcStats['relPosRectRicErrStd'][2,:], label='C')[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Position [km]")
-    ax.legend()
-    plt.title('Relative Rectilinear RIC Position Error')
-    plt.grid()
-    
-    ax = plt.subplot(2,1,2)
-    ax.plot(mcStats['time'], 3*mcStats['relVelRectRicErrStd'][0,:], label='R')[0]
-    ax.plot(mcStats['time'], 3*mcStats['relVelRectRicErrStd'][1,:], label='I')[0]
-    ax.plot(mcStats['time'], 3*mcStats['relVelRectRicErrStd'][2,:], label='C')[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Velocity [km/s]")
-    ax.legend()
-    plt.title('Relative Rectilinear RIC Velocity Error')
-    plt.grid()
-       
-    fig_rectRic_plt.tight_layout()
-    
-    fullFigPath = path + r"\rectRicStd_" + tag + r".png"
-    plt.savefig(fullFigPath)
+    pg.plotStack(
+        mcStats['time'], 
+        [3*mcStats['relPosRectRicErrStd'],3*mcStats['relVelRectRicErrStd']], 
+        [pg.line_ric,pg.line_ric], 
+        pg.ax_posVel, 
+        ['Relative Rectilinear RIC Position Error','Relative Rectilinear RIC Velocity Error'], 
+        path + r"\rectRicStd_" + tag + r".png",
+        suptitle=r"Rectilinear RIC 3$\sigma$ Errors")
     
     fig_rectRic_plt = plt.figure()
     plt.suptitle(r"Rectilinear RIC Root Mean Square Errors")
@@ -364,34 +350,14 @@ def CurvRicStats_Plot(mcStats, path, tag):
     Curvilinear RIC position and velocity statistics
 
     """
-    
-    fig_curvRic_plt = plt.figure()
-    plt.suptitle(r"Curvilinear RIC 3$\sigma$ Errors")
-    
-    ax = plt.subplot(2,1,1)
-    ax.plot(mcStats['time'], 3*mcStats['relPosCurvRicErrStd'][0,:], label='R')[0]
-    ax.plot(mcStats['time'], 3*mcStats['relPosCurvRicErrStd'][1,:], label='I')[0]
-    ax.plot(mcStats['time'], 3*mcStats['relPosCurvRicErrStd'][2,:], label='C')[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Position [km]")
-    ax.legend()
-    plt.title('Relative Curvilinear RIC Position Error')
-    plt.grid()
-    
-    ax = plt.subplot(2,1,2)
-    ax.plot(mcStats['time'], 3*mcStats['relVelCurvRicErrStd'][0,:], label='R')[0]
-    ax.plot(mcStats['time'], 3*mcStats['relVelCurvRicErrStd'][1,:], label='I')[0]
-    ax.plot(mcStats['time'], 3*mcStats['relVelCurvRicErrStd'][2,:], label='C')[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Velocity [km/s]")
-    ax.legend()
-    plt.title('Relative Curvilinear RIC Velocity Error')
-    plt.grid()
-       
-    fig_curvRic_plt.tight_layout()
-    
-    fullFigPath = path + r"\rectRicStd_" + tag + r".png"
-    plt.savefig(fullFigPath)
+    pg.plotStack(
+        mcStats['time'], 
+        [3*mcStats['relPosCurvRicErrStd'],3*mcStats['relVelCurvRicErrStd']], 
+        [pg.line_ric,pg.line_ric], 
+        pg.ax_posVel, 
+        ['Relative Curvilinear RIC Position Error','Relative Curvilinear RIC Velocity Error'], 
+        path + r"\curvRicStd_" + tag + r".png",
+        suptitle=r"Curvilinear RIC 3$\sigma$ Errors")
     
     fig_curvRic_plt = plt.figure()
     plt.suptitle(r"Curvilinear RIC Root Mean Square Errors")
@@ -420,55 +386,60 @@ def DoeStats_Plot(mcStats, path, tag):
     Delta Keplerian Orbit element statistics
 
     """
+    pg.plotThreeByTwo(
+        mcStats['time'], 
+        3*mcStats['doeErrStd'], 
+        pg.ax_doe, 
+        pg.title_doe, 
+        path + r"\doeStd_" + tag + r".png",
+        suptitle=r"Differential Keplerian Orbit Element 3$\sigma$ Errors")
     
-    fig_doe_plt = plt.figure()
-    plt.suptitle(r"Differential Keplerian Orbit Element 3$\sigma$ Errors")
+def RelCovStats_Plot(mcStats, path, tag):
+    """
+    Relative RIC covariance statistics
     
-    ax = plt.subplot(3,2,1)
-    ax.plot(mcStats['time'], 3*mcStats['doeErrStd'][0,:])[0]
+    """
+    
+    fig = plt.figure()
+    plt.suptitle('Relative RIC Covariance Statistics')
+    
+    ax = plt.subplot(2,2,1)
+    ax.plot(mcStats['time'], np.sqrt(mcStats['avgRelCovDet'][0,:]))[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel(r"$\delta a$ [km]")
-    plt.title('Delta Semimajor-Axis')
+    ax.set_ylabel("[km^3]")
+    plt.title('Average Position Sqrt Determinant')
     plt.grid()
     
-    ax = plt.subplot(3,2,2)
-    ax.plot(mcStats['time'], 3*mcStats['doeErrStd'][1,:])[0]
+    ax = plt.subplot(2,2,2)
+    ax.plot(mcStats['time'], mcStats['avgRelCovTrace'][0,:], label='Trace')[0]
+    ax.plot(mcStats['time'], mcStats['avgRelCovEig'][0,:], label='Max Eig')[0]
+    ax.plot(mcStats['time'], mcStats['avgRelCovFro'][0,:], label='Frobenius Norm')[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel(r"$\delta e$")
-    plt.title('Delta Eccentricity')
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Average Position Covariance Size')
     plt.grid()
     
-    ax = plt.subplot(3,2,3)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['doeErrStd'][2,:]))[0]
+    ax = plt.subplot(2,2,3)
+    ax.plot(mcStats['time'], np.sqrt(mcStats['avgRelCovDet'][1,:]))[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel(r"$\delta i$ [deg]")
-    plt.title('Delta Inclination')
+    ax.set_ylabel("[(km/s)^3]")
+    plt.title('Average Velocity Sqrt Determinant')
     plt.grid()
     
-    ax = plt.subplot(3,2,4)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['doeErrStd'][3,:]))[0]
+    ax = plt.subplot(2,2,4)
+    ax.plot(mcStats['time'], mcStats['avgRelCovTrace'][1,:], label='Trace')[0]
+    ax.plot(mcStats['time'], mcStats['avgRelCovEig'][3,:], label='Max Eig')[0]
+    ax.plot(mcStats['time'], mcStats['avgRelCovFro'][1,:], label='Frobenius Norm')[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel(r"$\delta RAAN$ [deg]")
-    plt.title('Delta RAAN')
-    plt.grid()
-    
-    ax = plt.subplot(3,2,5)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['doeErrStd'][4,:]))[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel(r"$\delta\omega$ [deg]")
-    plt.title('Delta Argument of Perigee')
-    plt.grid()
-    
-    ax = plt.subplot(3,2,6)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['doeErrStd'][5,:]))[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel(r"$\delta M$ [deg]")
-    plt.title('Delta Mean Anomaly')
+    ax.set_ylabel("[(km/s)^2]")
+    ax.legend()
+    plt.title('Average Velocity Covariance Size')
     plt.grid()
        
-    fig_doe_plt.tight_layout()
+    fig.tight_layout()
     
-    fullFigPath = path + r"\doeStd_" + tag + r".png"
+    fullFigPath = path + r"\relCovStats_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def ChiefInrStats_Plot(mcStats, path, tag):
@@ -476,34 +447,14 @@ def ChiefInrStats_Plot(mcStats, path, tag):
     Chief inertial position and velocity statistics
 
     """
-    
-    fig_inr_plt = plt.figure()
-    plt.suptitle(r"Chief Inertial 3$\sigma$ Errors")
-    
-    ax = plt.subplot(2,1,1)
-    ax.plot(mcStats['time'], 3*mcStats['posRsoErrStd'][0,:], label='X')[0]
-    ax.plot(mcStats['time'], 3*mcStats['posRsoErrStd'][1,:], label='Y')[0]
-    ax.plot(mcStats['time'], 3*mcStats['posRsoErrStd'][2,:], label='Z')[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Position [km]")
-    ax.legend()
-    plt.title('Chief Inertial Position Error')
-    plt.grid()
-    
-    ax = plt.subplot(2,1,2)
-    ax.plot(mcStats['time'], 3*mcStats['velRsoErrStd'][0,:], label='X')[0]
-    ax.plot(mcStats['time'], 3*mcStats['velRsoErrStd'][1,:], label='Y')[0]
-    ax.plot(mcStats['time'], 3*mcStats['velRsoErrStd'][2,:], label='Z')[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Velocity [km/s]")
-    ax.legend()
-    plt.title('Chief Inertial Velocity Error')
-    plt.grid()
-       
-    fig_inr_plt.tight_layout()
-    
-    fullFigPath = path + r"\chiefInrStd_" + tag + r".png"
-    plt.savefig(fullFigPath)
+    pg.plotStack(
+        mcStats['time'], 
+        [3*mcStats['posRsoErrStd'],3*mcStats['velRsoErrStd']], 
+        [pg.line_vec,pg.line_vec], 
+        pg.ax_posVel, 
+        ['Chief Inertial Position Error','Chief Inertial Velocity Error'], 
+        path + r"\chiefInrStd_" + tag + r".png",
+        suptitle=r"Chief Inertial 3$\sigma$ Errors")
     
     fig_inr_plt = plt.figure()
     plt.suptitle(r"Chief Inertial Root Mean Square Errors")
@@ -532,55 +483,60 @@ def ChiefOeStats_Plot(mcStats, path, tag):
     Chief Keplerian Element statistics
 
     """
+    pg.plotThreeByTwo(
+        mcStats['time'], 
+        3*mcStats['oeRsoErrStd'], 
+        pg.ax_oe, 
+        pg.title_oe, 
+        path + r"\chiefOeStd_" + tag + r".png",
+        suptitle=r"Chief Orbit Element 3$\sigma$ Errors")
     
-    fig_oe_plt = plt.figure()
-    plt.suptitle(r"Chief Orbit Element 3$\sigma$ Errors")
+def ChiefCovStats_Plot(mcStats, path, tag):
+    """
+    Chief covariance statistics
     
-    ax = plt.subplot(3,2,1)
-    ax.plot(mcStats['time'], 3*mcStats['oeRsoErrStd'][0,:])[0]
+    """
+    
+    fig = plt.figure()
+    plt.suptitle('Chief Covariance Statistics')
+    
+    ax = plt.subplot(2,2,1)
+    ax.plot(mcStats['time'], np.sqrt(mcStats['avgRsoCovDet'][0,:]))[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("a [km]")
-    plt.title('Semimajor-Axis')
+    ax.set_ylabel("[km^3]")
+    plt.title('Average Position Sqrt Determinant')
     plt.grid()
     
-    ax = plt.subplot(3,2,2)
-    ax.plot(mcStats['time'], 3*mcStats['oeRsoErrStd'][1,:])[0]
+    ax = plt.subplot(2,2,2)
+    ax.plot(mcStats['time'], mcStats['avgRsoCovTrace'][0,:], label='Trace')[0]
+    ax.plot(mcStats['time'], mcStats['avgRsoCovEig'][0,:], label='Max Eig')[0]
+    ax.plot(mcStats['time'], mcStats['avgRsoCovFro'][0,:], label='Frobenius Norm')[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("e")
-    plt.title('Eccentricity')
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Average Position Covariance Size')
     plt.grid()
     
-    ax = plt.subplot(3,2,3)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeRsoErrStd'][2,:]))[0]
+    ax = plt.subplot(2,2,3)
+    ax.plot(mcStats['time'], np.sqrt(mcStats['avgRsoCovDet'][1,:]))[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("i [deg]")
-    plt.title('Inclination')
+    ax.set_ylabel("[(km/s)^3]")
+    plt.title('Average Velocity Sqrt Determinant')
     plt.grid()
     
-    ax = plt.subplot(3,2,4)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeRsoErrStd'][3,:]))[0]
+    ax = plt.subplot(2,2,4)
+    ax.plot(mcStats['time'], mcStats['avgRsoCovTrace'][1,:], label='Trace')[0]
+    ax.plot(mcStats['time'], mcStats['avgRsoCovEig'][3,:], label='Max Eig')[0]
+    ax.plot(mcStats['time'], mcStats['avgRsoCovFro'][1,:], label='Frobenius Norm')[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("RAAN [deg]")
-    plt.title('RAAN')
-    plt.grid()
-    
-    ax = plt.subplot(3,2,5)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeRsoErrStd'][4,:]))[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel(r"$\omega$ [deg]")
-    plt.title('Argument of Perigee')
-    plt.grid()
-    
-    ax = plt.subplot(3,2,6)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeRsoErrStd'][5,:]))[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("M [deg]")
-    plt.title('Mean Anomaly')
+    ax.set_ylabel("[(km/s)^2]")
+    ax.legend()
+    plt.title('Average Velocity Covariance Size')
     plt.grid()
        
-    fig_oe_plt.tight_layout()
+    fig.tight_layout()
     
-    fullFigPath = path + r"\chiefOeStd_" + tag + r".png"
+    fullFigPath = path + r"\chiefCovStats_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def DeputyInrStats_Plot(mcStats, path, tag):
@@ -588,34 +544,14 @@ def DeputyInrStats_Plot(mcStats, path, tag):
     Deputy inertial position and velocity statistics
 
     """
-    
-    fig_inr_plt = plt.figure()
-    plt.suptitle(r"Deputy Inertial 3$\sigma$ Errors")
-    
-    ax = plt.subplot(2,1,1)
-    ax.plot(mcStats['time'], 3*mcStats['posVehErrStd'][0,:], label='X')[0]
-    ax.plot(mcStats['time'], 3*mcStats['posVehErrStd'][1,:], label='Y')[0]
-    ax.plot(mcStats['time'], 3*mcStats['posVehErrStd'][2,:], label='Z')[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Position [km]")
-    ax.legend()
-    plt.title('Deputy Inertial Position Error')
-    plt.grid()
-    
-    ax = plt.subplot(2,1,2)
-    ax.plot(mcStats['time'], 3*mcStats['velVehErrStd'][0,:], label='X')[0]
-    ax.plot(mcStats['time'], 3*mcStats['velVehErrStd'][1,:], label='Y')[0]
-    ax.plot(mcStats['time'], 3*mcStats['velVehErrStd'][2,:], label='Z')[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Velocity [km/s]")
-    ax.legend()
-    plt.title('Deputy Inertial Velocity Error')
-    plt.grid()
-       
-    fig_inr_plt.tight_layout()
-    
-    fullFigPath = path + r"\deputyInrStd_" + tag + r".png"
-    plt.savefig(fullFigPath)
+    pg.plotStack(
+        mcStats['time'], 
+        [3*mcStats['posVehErrStd'],3*mcStats['velVehErrStd']], 
+        [pg.line_vec,pg.line_vec], 
+        pg.ax_posVel, 
+        ['Deputy Inertial Position Error','Deputy Inertial Velocity Error'], 
+        path + r"\deputyInrStd_" + tag + r".png",
+        suptitle=r"Deputy Inertial 3$\sigma$ Errors")
     
     fig_inr_plt = plt.figure()
     plt.suptitle(r"Deputy Inertial Root Mean Square Errors")
@@ -644,55 +580,60 @@ def DeputyOeStats_Plot(mcStats, path, tag):
     Deputy Keplerian Element statistics
 
     """
+    pg.plotThreeByTwo(
+        mcStats['time'], 
+        3*mcStats['oeVehErrStd'], 
+        pg.ax_oe, 
+        pg.title_oe, 
+        path + r"\deputyOeStd_" + tag + r".png",
+        suptitle=r"Deputy Orbit Element 3$\sigma$ Errors")
     
-    fig_oe_plt = plt.figure()
-    plt.suptitle(r"Deputy Orbit Element 3$\sigma$ Errors")
+def DeputyCovStats_Plot(mcStats, path, tag):
+    """
+    Deputy covariance statistics
     
-    ax = plt.subplot(3,2,1)
-    ax.plot(mcStats['time'], 3*mcStats['oeVehErrStd'][0,:])[0]
+    """
+    
+    fig = plt.figure()
+    plt.suptitle('Deputy Covariance Statistics')
+    
+    ax = plt.subplot(2,2,1)
+    ax.plot(mcStats['time'], np.sqrt(mcStats['avgVehCovDet'][0,:]))[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("a [km]")
-    plt.title('Semimajor-Axis')
+    ax.set_ylabel("[km^3]")
+    plt.title('Average Position Sqrt Determinant')
     plt.grid()
     
-    ax = plt.subplot(3,2,2)
-    ax.plot(mcStats['time'], 3*mcStats['oeVehErrStd'][1,:])[0]
+    ax = plt.subplot(2,2,2)
+    ax.plot(mcStats['time'], mcStats['avgVehCovTrace'][0,:], label='Trace')[0]
+    ax.plot(mcStats['time'], mcStats['avgVehCovEig'][0,:], label='Max Eig')[0]
+    ax.plot(mcStats['time'], mcStats['avgVehCovFro'][0,:], label='Frobenius Norm')[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("e")
-    plt.title('Eccentricity')
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Average Position Covariance Size')
     plt.grid()
     
-    ax = plt.subplot(3,2,3)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeVehErrStd'][2,:]))[0]
+    ax = plt.subplot(2,2,3)
+    ax.plot(mcStats['time'], np.sqrt(mcStats['avgVehCovDet'][1,:]))[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("i [deg]")
-    plt.title('Inclination')
+    ax.set_ylabel("[(km/s)^3]")
+    plt.title('Average Velocity Sqrt Determinant')
     plt.grid()
     
-    ax = plt.subplot(3,2,4)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeVehErrStd'][3,:]))[0]
+    ax = plt.subplot(2,2,4)
+    ax.plot(mcStats['time'], mcStats['avgVehCovTrace'][1,:], label='Trace')[0]
+    ax.plot(mcStats['time'], mcStats['avgVehCovEig'][3,:], label='Max Eig')[0]
+    ax.plot(mcStats['time'], mcStats['avgVehCovFro'][1,:], label='Frobenius Norm')[0]
     ax.set_xlabel("Time [s]")
-    ax.set_ylabel("RAAN [deg]")
-    plt.title('RAAN')
-    plt.grid()
-    
-    ax = plt.subplot(3,2,5)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeVehErrStd'][4,:]))[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel(r"$\omega$ [deg]")
-    plt.title('Argument of Perigee')
-    plt.grid()
-    
-    ax = plt.subplot(3,2,6)
-    ax.plot(mcStats['time'], 3*np.rad2deg(mcStats['oeVehErrStd'][5,:]))[0]
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("M [deg]")
-    plt.title('Mean Anomaly')
+    ax.set_ylabel("[(km/s)^2]")
+    ax.legend()
+    plt.title('Average Velocity Covariance Size')
     plt.grid()
        
-    fig_oe_plt.tight_layout()
+    fig.tight_layout()
     
-    fullFigPath = path + r"\deputyOeStd_" + tag + r".png"
+    fullFigPath = path + r"\deputyCovStats_" + tag + r".png"
     plt.savefig(fullFigPath)
     
 def ConsistencyStats_Plot(mcStats, path, tag):
@@ -729,8 +670,7 @@ def RectRicStatsComp_Plot(mcStats, mcStr, path, tag):
     """
     Rectilinear RIC position and velocity statistics comparison
 
-    """
-    
+    """    
     fig_rectRic_plt = plt.figure()
     plt.suptitle(r"Rectilinear RIC Root Mean Square Errors")
     
@@ -1132,5 +1072,78 @@ def ConsistencyStatsComp_Plot(mcStats, mcStr, path, tag):
     fig_consistency_plt.tight_layout()
     
     fullFigPath = path + r"\consistencyStatsComp_" + tag + r".png"
+    plt.savefig(fullFigPath)
+    
+def CovarianceStatsComp_Plot(mcStats, mcStr, path, tag):
+    """
+    Covariance Stats comparison
+
+    """
+    
+    fig = plt.figure()
+    
+    ax = plt.subplot(3,2,1)
+    # ax1.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['avgRsoCovDet'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^3]")
+    ax.legend()
+    plt.title('Average Chief Position Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,2)
+    # ax1.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['avgRsoCovTrace'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Average Chief Position Trace')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,3)
+    # ax1.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['avgVehCovDet'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^3]")
+    ax.legend()
+    plt.title('Average Deputy Position Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,4)
+    # ax1.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['avgVehCovTrace'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Average Deputy Position Trace')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,5)
+    # ax1.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['avgRelCovDet'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^3]")
+    ax.legend()
+    plt.title('Average Relative RIC Position Sqrt Determinant')
+    plt.grid()
+    
+    ax = plt.subplot(3,2,6)
+    # ax1.set_prop_cycle(linestyle=["-", "--", "-.", ":"])
+    for ii in range(len(mcStats)):
+        ax.plot(mcStats[ii]['time'], mcStats[ii]['avgRelCovTrace'][0,:], label=mcStr[ii])[0]
+    ax.set_xlabel("Time [s]")
+    ax.set_ylabel("[km^2]")
+    ax.legend()
+    plt.title('Average Relative RIC Position Trace')
+    plt.grid()
+       
+    fig.tight_layout()
+    
+    fullFigPath = path + r"\covarianceStatsComp_" + tag + r".png"
     plt.savefig(fullFigPath)
     
