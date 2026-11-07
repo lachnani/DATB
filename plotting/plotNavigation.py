@@ -40,8 +40,11 @@ def plotAll(log, path, tag, settings):
     MeasResidual_Plot(log, path, tag)
     # Covariance Plots
     ChiefCov_Plot(log, path, tag)
+    ChiefCovMetrics_Plot(log, path, tag)
     DeputyCov_Plot(log, path, tag)
+    DeputyCovMetrics_Plot(log, path, tag)
     RelCov_Plot(log, path, tag)
+    RelCovMetrics_Plot(log, path, tag)
     SmaVariance_Plot(log, path, tag)
     # Filter Consistency Metrics Plots
     Consistency_Plot(log, path, tag)
@@ -358,6 +361,24 @@ def ChiefCov_Plot(log, path, tag):
         ['Chief Inertial Position Covariance','Chief Inertial Velocity Covariance'], 
         path + r"\chiefCovariance_" + tag + r".png") 
     
+def ChiefCovMetrics_Plot(log, path, tag):
+    """
+    Chief position covariance metrics
+    
+    """
+    data = np.block([
+        [np.sqrt(log.fswNavCovRsoEciDet[0,:])],
+        [log.fswNavCovRsoEciTrace[0,:]],
+        [log.fswNavCovRsoEciEig[0,:]],
+        [log.fswNavCovRsoEciFro[0,:]]])
+    pg.plotTwoByTwo(
+        log.simTime, 
+        data, 
+        ['[km^3]','[km^2]','[km^2]','[km^2]'], 
+        ['Sqrt Determinant','Trace','Largest Eigenvalue','Frobenius Norm'], 
+        path + r"\chiefCovarianceMetrics_" + tag + r".png",
+        suptitle='Chief Position Covariance Metrics')
+    
 def DeputyCov_Plot(log, path, tag):
     """
     Deputy covariance diagonal elements
@@ -371,6 +392,24 @@ def DeputyCov_Plot(log, path, tag):
         ['Deputy Inertial Position Covariance','Deputy Inertial Velocity Covariance'], 
         path + r"\deputyCovariance_" + tag + r".png") 
     
+def DeputyCovMetrics_Plot(log, path, tag):
+    """
+    Deputy position covariance metrics
+    
+    """
+    data = np.block([
+        [np.sqrt(log.fswNavCovVehEciDet[0,:])],
+        [log.fswNavCovVehEciTrace[0,:]],
+        [log.fswNavCovVehEciEig[0,:]],
+        [log.fswNavCovVehEciFro[0,:]]])
+    pg.plotTwoByTwo(
+        log.simTime, 
+        data, 
+        ['[km^3]','[km^2]','[km^2]','[km^2]'], 
+        ['Sqrt Determinant','Trace','Largest Eigenvalue','Frobenius Norm'], 
+        path + r"\deputyCovarianceMetrics_" + tag + r".png",
+        suptitle='Deputy Position Covariance Metrics')
+    
 def RelCov_Plot(log, path, tag):
     """
     Relative covariance diagonal elements
@@ -383,6 +422,24 @@ def RelCov_Plot(log, path, tag):
         pg.ax_posVelVar, 
         ['Relative RIC Position Covariance','Realtive RIC Velocity Covariance'], 
         path + r"\relativeCovariance_" + tag + r".png") 
+    
+def RelCovMetrics_Plot(log, path, tag):
+    """
+    Relative position covariance metrics
+    
+    """
+    data = np.block([
+        [np.sqrt(log.fswNavCovRelRicDet[0,:])],
+        [log.fswNavCovRelRicTrace[0,:]],
+        [log.fswNavCovRelRicEig[0,:]],
+        [log.fswNavCovRelRicFro[0,:]]])
+    pg.plotTwoByTwo(
+        log.simTime, 
+        data, 
+        ['[km^3]','[km^2]','[km^2]','[km^2]'], 
+        ['Sqrt Determinant','Trace','Largest Eigenvalue','Frobenius Norm'], 
+        path + r"\relativeCovarianceMetrics_" + tag + r".png",
+        suptitle='Relative RIC Position Covariance Metrics')
     
 def SmaVariance_Plot(log, path, tag):
     """

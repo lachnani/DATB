@@ -65,6 +65,28 @@ def plotThreeByTwo(time, data, axLabels, titles, fullFigPath, suptitle = None):
     
     plt.savefig(fullFigPath)
     
+def plotTwoByTwo(time, data, axLabels, titles, fullFigPath, suptitle = None):
+    """
+    2x2 plot
+
+    """
+    
+    fig = plt.figure()
+    if suptitle is not None:
+        plt.suptitle(suptitle)
+        
+    for ii in range(4):
+        ax = plt.subplot(2,2,ii+1)
+        ax.plot(time, data[ii,:])[0]
+        ax.set_xlabel("Time [s]")
+        ax.set_ylabel(axLabels[ii])
+        plt.title(titles[ii])
+        plt.grid()
+       
+    fig.tight_layout()
+    
+    plt.savefig(fullFigPath)
+    
 def plotThreeByTwoComp(time, data, lineLabels, axLabels, titles, fullFigPath, suptitle = None):
     """
     3x2 comparison plot
